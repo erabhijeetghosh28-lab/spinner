@@ -1,0 +1,116 @@
+/* UploadThing styles */
+@import "@uploadthing/react/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --primary: #f59e0b;
+  --secondary: #1e3a8a;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+/* Template 1 spin wheel gradient (Classic Orange) */
+.spin-wheel-gradient-template-1 {
+  background: conic-gradient(
+    #f48c25 0deg 45deg,
+    #1e293b 45deg 90deg,
+    #f48c25 90deg 135deg,
+    #334155 135deg 180deg,
+    #f48c25 180deg 225deg,
+    #1e293b 225deg 270deg,
+    #f48c25 270deg 315deg,
+    #475569 315deg 360deg
+  );
+}
+
+/* Template 2 spin wheel gradient (Electric Cyan) */
+.spin-wheel-gradient-template-2 {
+  background: conic-gradient(
+    #00f2ff 0deg 45deg,
+    #0a0f1d 45deg 90deg,
+    #00f2ff 90deg 135deg,
+    #161e2e 135deg 180deg,
+    #00f2ff 180deg 225deg,
+    #0a0f1d 225deg 270deg,
+    #00f2ff 270deg 315deg,
+    #161e2e 315deg 360deg
+  );
+}
+
+/* Template 3 spin wheel gradient (Luxury Gold) */
+.spin-wheel-gradient-template-3 {
+  background: conic-gradient(
+    #D4AF37 0deg 45deg,
+    #FFFFFF 45deg 90deg,
+    #D4AF37 90deg 135deg,
+    #FFFFFF 135deg 180deg,
+    #D4AF37 180deg 225deg,
+    #FFFFFF 225deg 270deg,
+    #D4AF37 270deg 315deg,
+    #FFFFFF 315deg 360deg
+  );
+}
+
+/* Template 4 spin wheel gradient (Forest Green) */
+.spin-wheel-gradient-template-4 {
+  background: conic-gradient(
+    #2D5A47 0deg 45deg,
+    #8DAA9D 45deg 90deg,
+    #CD7F63 90deg 135deg,
+    #E3D5CA 135deg 180deg,
+    #2D5A47 180deg 225deg,
+    #8DAA9D 225deg 270deg,
+    #CD7F63 270deg 315deg,
+    #E3D5CA 315deg 360deg
+  );
+}
+
+/* Template 5 spin wheel gradient (Ferrari Red) */
+.spin-wheel-gradient-template-5 {
+  background: conic-gradient(
+    #FF0800 0deg 45deg,
+    #000000 45deg 90deg,
+    #FF0800 90deg 135deg,
+    #1a1a1a 135deg 180deg,
+    #FF0800 180deg 225deg,
+    #000000 225deg 270deg,
+    #FF0800 270deg 315deg,
+    #1a1a1a 315deg 360deg
+  );
+}
+
+/* Gold shimmer for Template 3 */
+.gold-shimmer {
+  background: linear-gradient(135deg, #D4AF37 0%, #F5E1A4 50%, #C5A028 100%);
+}
+
+/* Glass panel for Template 2 */
+.glass-panel {
+  background: rgba(22, 30, 46, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 242, 255, 0.1);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 px-6 rounded-lg transition-all transform hover:scale-105;
+  }
+
+  /* Template-specific utility classes */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

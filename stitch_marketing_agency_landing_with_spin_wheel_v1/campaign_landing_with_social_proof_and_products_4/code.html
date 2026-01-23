@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2D5A47", // Deep Forest Green
+                        "accent": "#CD7F63", // Soft Terracotta
+                        "mint": "#F0F7F4", // Light Mint Green
+                        "background-light": "#F0F7F4",
+                        "background-dark": "#1A2421",
+                        "whatsapp": "#25D366"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .spin-wheel-gradient {
+            background: conic-gradient(
+                #2D5A47 0deg 45deg,
+                #8DAA9D 45deg 90deg,
+                #CD7F63 90deg 135deg,
+                #E3D5CA 135deg 180deg,
+                #2D5A47 180deg 225deg,
+                #8DAA9D 225deg 270deg,
+                #CD7F63 270deg 315deg,
+                #E3D5CA 315deg 360deg
+            );
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#2D3436] dark:text-[#E8F1EE] transition-colors duration-300">
+<div class="layout-container flex h-full grow flex-col">
+<main class="flex flex-1 flex-col items-center">
+<section class="w-full max-w-[1200px] px-6 py-12 md:py-20">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="lg:col-span-5 flex flex-col items-center justify-center relative">
+<div class="absolute -top-4 z-30 bg-white dark:bg-[#1A2421] px-6 py-3 rounded-full shadow-xl border-2 border-primary flex items-center gap-3">
+<span class="material-symbols-outlined text-primary fill-1">nature_people</span>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase font-bold text-[#6B7C75] dark:text-gray-400 leading-none">Energy Remaining</span>
+<span class="text-xl font-black text-primary dark:text-[#E8F1EE] leading-none">02</span>
+</div>
+</div>
+<div class="relative w-72 h-72 md:w-[400px] md:h-[400px] rounded-full border-8 border-primary/20 dark:border-primary/40 shadow-2xl flex items-center justify-center overflow-hidden spin-wheel-gradient group">
+<div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle,#fff_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+<div class="z-10 bg-white dark:bg-[#1A2421] w-20 h-20 md:w-28 md:h-28 rounded-full shadow-xl flex items-center justify-center border-4 border-primary cursor-pointer hover:scale-105 transition-transform">
+<span class="text-primary font-black text-lg md:text-xl tracking-tighter">SPIN</span>
+</div>
+<div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-white z-20"></div>
+</div>
+<div class="mt-8 flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined">eco</span>
+<span>Spin for natural rewards &amp; wellness kits!</span>
+</div>
+</div>
+<div class="lg:col-span-7 flex flex-col gap-8">
+<div class="flex flex-col gap-4">
+<div class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-primary text-xs font-bold uppercase tracking-wider w-fit">
+                        Sustainable Campaign
+                    </div>
+<h1 class="text-primary dark:text-[#E8F1EE] text-5xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
+                        Nature's Choice: Win Your <span class="text-accent">Wellness Kit!</span>
+</h1>
+<p class="text-[#6B7C75] dark:text-gray-400 text-lg leading-relaxed max-w-[500px]">
+                        Embrace a healthier lifestyle. Spin our wheel to win eco-friendly essentials and premium wellness products. Share the love for nature to keep playing.
+                    </p>
+<button class="mt-4 flex min-w-[200px] max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-6 bg-primary text-white text-lg font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95">
+<span class="truncate">Start Your Journey</span>
+</button>
+</div>
+<div class="flex flex-col gap-4 rounded-2xl bg-white dark:bg-[#232F2A] p-6 shadow-sm border border-primary/10">
+<div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
+<div class="flex flex-col">
+<h3 class="text-xl font-black flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-accent">volunteer_activism</span>
+                                Grow Your Chances
+                            </h3>
+<p class="text-[#6B7C75] dark:text-gray-400 text-sm">Help our community grow to earn more spins.</p>
+</div>
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-200 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBQSUPpe2RwJ6kvsICK2tfxg91zUqSKxztsvsirVlFpQxhAIzCSQpWN0D_tNITbiA7ALPdMuNgQcGVMX9ZBYwYv5Zrax9JhK_8QYu1WMBjOv7QwDTPakJ_Icp4QdPIleRSMRlsMCrzj4lOFbzZKdiH36fGaWk7xwVVFaQizHDkitqK1qgbN7uP5Y8GFSTF3jKYPnDwwH9tcckLF6KLrAPscNYggECrxXEuIJS7Bo-DwCWd7Y3_OKIllzLdFcKJ96nQtmZ9sviF3l-s');"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-300 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDYwyGfych2WHdvHl4aug8DJ08ZKR2l8Eo9jJ6Nb9htcFfJwpGmAA928Ypi4xdNn9wTm370TB2TdosxaIN1mnrsyl-9_zvSX8EloBqlGVt_kQpKE3ttUCcK_qPaBf2Rh0GbZuoCMCsZwzEeZiLOGD2gbt5OZQH5UETLeZqqKpRrDLfKaVP2OkaqaKKvSgWX7LbRsGyXOpKJaKGs-I8-nxGV3qBjR9kMU3L9w_Rwd4MkkRQ1ThGkIJ_Ilel0OcY7xE2pJwtD5y7byZA');"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-gray-400 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB6nnEEKB4FwKDgD1747hsVWtCRYVeOwQzPfNQpIxZZ5pKu6UIl1I3vIi2mZV8fDwIy88ADZn6qP0NIT3QFOfzED0r34sVRhhDcRaabHJvaynqKk4zfFgRXKsg7RIVg6RNuEte0ErTBnQsL-KInW6l8OlspisnuOp4bMri8-1ob6Y0eNBaxDXpB1uhMQXe0X_GdQCkYowfvmc4H2rDdnKuyQz1L1NSLO2yfp3zGUjJyjUm1DrSbLi88SJSKCDVNpptHVXiLB2U_eGU');"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-accent flex items-center justify-center text-[10px] text-white font-bold">+12k</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+<div class="flex items-center justify-between p-4 rounded-xl bg-mint dark:bg-background-dark border border-primary/5">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-accent uppercase tracking-tighter">Community</span>
+<span class="font-bold text-sm text-primary">Follow @NatureWell</span>
+</div>
+<button class="h-9 px-4 rounded-lg bg-primary text-white text-xs font-bold hover:bg-opacity-90 transition-colors">
+                                +1 Spin
+                            </button>
+</div>
+<div class="flex flex-col gap-3 p-4 rounded-xl bg-mint dark:bg-background-dark border border-primary/5">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-whatsapp uppercase tracking-tighter">Referral</span>
+<span class="font-bold text-sm text-primary">Invite 5 friends</span>
+</div>
+<div class="bg-whatsapp/10 text-whatsapp px-2 py-1 rounded text-[10px] font-black uppercase">
+                                    +1 Spin
+                                </div>
+</div>
+<button class="w-full h-10 rounded-lg bg-whatsapp text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
+<span class="material-symbols-outlined !text-[18px]">share</span>
+                                Share on WhatsApp
+                            </button>
+<div class="w-full bg-white/50 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden mt-1">
+<div class="bg-whatsapp w-[60%] h-full"></div>
+</div>
+<p class="text-[10px] text-center text-[#6B7C75] dark:text-gray-400">3/5 friends joined</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="w-full bg-primary py-20 overflow-hidden">
+<div class="max-w-[1200px] mx-auto px-6">
+<div class="flex flex-col gap-4 mb-12">
+<h2 class="text-white text-4xl font-black tracking-tight">Featured Highlights</h2>
+<div class="h-1 w-24 bg-accent rounded-full"></div>
+</div>
+<div class="relative group">
+<div class="absolute top-1/2 -left-4 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-accent hover:border-accent transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+<div class="absolute top-1/2 -right-4 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-accent hover:border-accent transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<div class="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-8 pb-10">
+<div class="flex-none w-full snap-center">
+<div class="grid grid-cols-1 lg:grid-cols-2 bg-white/5 rounded-3xl overflow-hidden border border-white/10 backdrop-blur-sm min-h-[500px]">
+<div class="relative overflow-hidden group/img">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCbOI_PCfJlj7oXsGwmsriAuLQalEOKDU0TlFUKsaqLLxt_Te6R3s5bkDxcpUQqKTHRGMy8Bl1RH9yZZKLdwRT4W3BK3OwIH7lmLONWfJiiPWk3ND70zn0i3pK-vNws-WdMVOLm71vy8-seE8N_Nrw7zfMCoXqgwWq-uh4F5cRxOZRObDtxQepEuwtrChFybobsX2EzDV8d0ElvrCkhDFWVHkkm7lwkDFqCTAUg5xcAlcFiBlK_6AvoYDWVpoNbYRVbk0Ue7wCJ8x0');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent"></div>
+<div class="absolute bottom-8 left-8">
+<span class="bg-accent px-3 py-1 rounded text-[10px] font-bold text-white uppercase tracking-widest">Sustainability</span>
+</div>
+</div>
+<div class="p-12 flex flex-col justify-center gap-6">
+<h3 class="text-white text-4xl font-black leading-tight">Pure Origins Collection</h3>
+<p class="text-mint/80 text-lg leading-relaxed">
+                                    Experience the essence of purity. Our Origins collection is meticulously sourced from sustainable farms, ensuring every element supports your wellness journey while honoring the planet.
+                                </p>
+<div class="flex flex-col gap-4 mt-4">
+<div class="flex items-center gap-3 text-mint/60">
+<span class="material-symbols-outlined text-accent">spa</span>
+<span>100% Organic Certified</span>
+</div>
+<div class="flex items-center gap-3 text-mint/60">
+<span class="material-symbols-outlined text-accent">recycling</span>
+<span>Zero-Waste Packaging</span>
+</div>
+<div class="flex items-center gap-3 text-mint/60">
+<span class="material-symbols-outlined text-accent">water_drop</span>
+<span>Cruelty-Free Extraction</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-none w-full snap-center">
+<div class="grid grid-cols-1 lg:grid-cols-2 bg-white/5 rounded-3xl overflow-hidden border border-white/10 backdrop-blur-sm min-h-[500px]">
+<div class="relative overflow-hidden group/img">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuChKmHOle0DNxq4r1KNDIZdiNAFPlYl_9kNIEzmGjzGAs7w7DyVkc8KYWKVC_6rRLCAQ-ER-fJfp-im4QDvY3ETv2U_h9t4PCpu4pGVc2blNog3AugfW-a6iCtAF_8iovDoj2zzGa2CTp_IPWqyTXCowxVCNSd3is3piSeod0dSqqZhjpq8G35ayWDGdYYy7Ha7iUCHEelLxnZ3A4wOr-3QO9j2NlaUa0mWfU2X9_zwVPmsXR8lrKHPizE4RQBvsQxoXIFUSllQ7KU');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent"></div>
+<div class="absolute bottom-8 left-8">
+<span class="bg-accent px-3 py-1 rounded text-[10px] font-bold text-white uppercase tracking-widest">Mindfulness</span>
+</div>
+</div>
+<div class="p-12 flex flex-col justify-center gap-6">
+<h3 class="text-white text-4xl font-black leading-tight">The Rhythm of Nature</h3>
+<p class="text-mint/80 text-lg leading-relaxed">
+                                    Restore your inner balance. Our wellness devices are designed to harmonize with your natural circadian rhythm, using soft light and organic textures to ground you in the present moment.
+                                </p>
+<div class="flex flex-col gap-4 mt-4">
+<div class="flex items-center gap-3 text-mint/60">
+<span class="material-symbols-outlined text-accent">self_improvement</span>
+<span>Guided Breathwork Integration</span>
+</div>
+<div class="flex items-center gap-3 text-mint/60">
+<span class="material-symbols-outlined text-accent">forest</span>
+<span>Natural Wood Construction</span>
+</div>
+<div class="flex items-center gap-3 text-mint/60">
+<span class="material-symbols-outlined text-accent">battery_charging_full</span>
+<span>Ultra-Low EMF Technology</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-center gap-2 mt-4">
+<div class="w-12 h-1 bg-accent rounded-full"></div>
+<div class="w-12 h-1 bg-white/20 rounded-full"></div>
+<div class="w-12 h-1 bg-white/20 rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+<section class="w-full py-24 px-6 bg-mint dark:bg-background-dark relative overflow-hidden">
+<div class="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined !text-[200px] text-primary">eco</span>
+</div>
+<div class="max-w-[800px] mx-auto text-center flex flex-col gap-8 relative z-10">
+<h2 class="text-primary dark:text-white text-4xl font-black">Join the Wellness Movement</h2>
+<p class="text-[#6B7C75] dark:text-gray-400 text-lg">Be the first to explore our upcoming seasonal campaigns and exclusive member rewards.</p>
+<div class="flex flex-col sm:flex-row gap-4 w-full">
+<input class="flex-1 h-16 rounded-xl px-6 border-2 border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-primary placeholder-gray-400" placeholder="Enter your email" type="email"/>
+<button class="h-16 px-10 rounded-xl bg-accent text-white font-bold hover:bg-opacity-90 transition-colors shadow-lg">
+                    Join the Community
+                </button>
+</div>
+<p class="text-[10px] text-[#6B7C75] uppercase font-bold tracking-widest">Proudly Sustainable • Carbon Neutral • Ethically Sourced</p>
+</div>
+</section>
+</main>
+<footer class="w-full py-12 px-6 border-t border-primary/10 dark:border-gray-800">
+<div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">NW</div>
+<span class="font-black text-xl tracking-tight uppercase text-primary dark:text-white">NatureWell</span>
+</div>
+<div class="flex gap-8 text-[#6B7C75] dark:text-gray-400 text-sm font-medium">
+<a class="hover:text-accent transition-colors" href="#">Ethics</a>
+<a class="hover:text-accent transition-colors" href="#">Sustainability Report</a>
+<a class="hover:text-accent transition-colors" href="#">Campaign Terms</a>
+</div>
+<p class="text-sm text-[#6B7C75] dark:text-gray-500">© 2024 NatureWell Collective. Inspired by Earth.</p>
+</div>
+</footer>
+</div>
+
+</body></html>

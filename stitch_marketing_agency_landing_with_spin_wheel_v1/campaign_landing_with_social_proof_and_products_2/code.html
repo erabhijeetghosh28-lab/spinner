@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#00f2ff", // Electric Cyan
+                        "accent": "#0072ff", // Electric Blue
+                        "navy-dark": "#0a0f1d", // Deep Navy
+                        "navy-muted": "#161e2e", // Mid Navy
+                        "charcoal": "#121212",
+                        "whatsapp": "#25D366"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background-color: #0a0f1d;
+        }
+        .spin-wheel-gradient {
+            background: conic-gradient(
+                #00f2ff 0deg 45deg,
+                #0a0f1d 45deg 90deg,
+                #00f2ff 90deg 135deg,
+                #161e2e 135deg 180deg,
+                #00f2ff 180deg 225deg,
+                #0a0f1d 225deg 270deg,
+                #00f2ff 270deg 315deg,
+                #161e2e 315deg 360deg
+            );
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .glass-panel {
+            background: rgba(22, 30, 46, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-navy-dark text-white transition-colors duration-300 selection:bg-primary/30">
+<div class="layout-container flex h-full grow flex-col">
+<main class="flex flex-1 flex-col items-center">
+<section class="w-full max-w-[1200px] px-6 py-12 md:py-20">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="lg:col-span-5 flex flex-col items-center justify-center relative">
+<div class="absolute -top-4 z-30 bg-navy-muted px-6 py-3 rounded-full shadow-[0_0_20px_rgba(0,242,255,0.2)] border-2 border-primary flex items-center gap-3">
+<span class="material-symbols-outlined text-primary fill-1">toll</span>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase font-bold text-gray-400 leading-none">Spins Remaining</span>
+<span class="text-xl font-black text-white leading-none">02</span>
+</div>
+</div>
+<div class="relative w-72 h-72 md:w-[400px] md:h-[400px] rounded-full border-8 border-navy-muted shadow-[0_0_50px_rgba(0,242,255,0.1)] flex items-center justify-center overflow-hidden spin-wheel-gradient group">
+<div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle,white_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+<div class="z-10 bg-navy-muted w-20 h-20 md:w-28 md:h-28 rounded-full shadow-2xl flex items-center justify-center border-4 border-primary cursor-pointer hover:scale-105 transition-transform group-active:scale-95">
+<span class="text-primary font-black text-lg md:text-xl tracking-tighter">SPIN</span>
+</div>
+<div class="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-white z-20"></div>
+</div>
+<div class="mt-8 flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined animate-pulse">auto_awesome</span>
+<span class="tracking-wide">Click to win prizes up to $500!</span>
+</div>
+</div>
+<div class="lg:col-span-7 flex flex-col gap-8">
+<div class="flex flex-col gap-4">
+<div class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-primary text-xs font-bold uppercase tracking-wider w-fit border border-primary/20">
+                            Limited Time Campaign
+                        </div>
+<h1 class="text-white text-5xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
+                            Spin to Win: Your Exclusive <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Brand Giveaway!</span>
+</h1>
+<p class="text-gray-400 text-lg leading-relaxed max-w-[500px]">
+                            Take a spin on our prize wheel for a chance to win exclusive discounts and premium products. High-tech rewards for modern professionals.
+                        </p>
+<button class="mt-4 flex min-w-[240px] max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-6 bg-gradient-to-r from-primary to-accent text-navy-dark text-lg font-extrabold shadow-[0_0_20px_rgba(0,242,255,0.4)] hover:shadow-[0_0_30px_rgba(0,242,255,0.6)] hover:brightness-110 transition-all active:scale-95">
+<span class="truncate">SPIN THE WHEEL NOW</span>
+</button>
+</div>
+<div class="flex flex-col gap-4 rounded-2xl glass-panel p-6 shadow-2xl">
+<div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+<div class="flex flex-col">
+<h3 class="text-xl font-black flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">redeem</span>
+                                    Earn More Spins
+                                </h3>
+<p class="text-gray-400 text-sm">Boost your chances by completing simple tasks below.</p>
+</div>
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full border-2 border-navy-dark bg-gray-200 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBQSUPpe2RwJ6kvsICK2tfxg91zUqSKxztsvsirVlFpQxhAIzCSQpWN0D_tNITbiA7ALPdMuNgQcGVMX9ZBYwYv5Zrax9JhK_8QYu1WMBjOv7QwDTPakJ_Icp4QdPIleRSMRlsMCrzj4lOFbzZKdiH36fGaWk7xwVVFaQizHDkitqK1qgbN7uP5Y8GFSTF3jKYPnDwwH9tcckLF6KLrAPscNYggECrxXEuIJS7Bo-DwCWd7Y3_OKIllzLdFcKJ96nQtmZ9sviF3l-s');"></div>
+<div class="w-8 h-8 rounded-full border-2 border-navy-dark bg-gray-300 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDYwyGfych2WHdvHl4aug8DJ08ZKR2l8Eo9jJ6Nb9htcFfJwpGmAA928Ypi4xdNn9wTm370TB2TdosxaIN1mnrsyl-9_zvSX8EloBqlGVt_kQpKE3ttUCcK_qPaBf2Rh0GbZuoCMCsZwzEeZiLOGD2gbt5OZQH5UETLeZqqKpRrDLfKaVP2OkaqaKKvSgWX7LbRsGyXOpKJaKGs-I8-nxGV3qBjR9kMU3L9w_Rwd4MkkRQ1ThGkIJ_Ilel0OcY7xE2pJwtD5y7byZA');"></div>
+<div class="w-8 h-8 rounded-full border-2 border-navy-dark bg-gray-400 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB6nnEEKB4FwKDgD1747hsVWtCRYVeOwQzPfNQpIxZZ5pKu6UIl1I3vIi2mZV8fDwIy88ADZn6qP0NIT3QFOfzED0r34sVRhhDcRaabHJvaynqKk4zfFgRXKsg7RIVg6RNuEte0ErTBnQsL-KInW6l8OlspisnuOp4bMri8-1ob6Y0eNBaxDXpB1uhMQXe0X_GdQCkYowfvmc4H2rDdnKuyQz1L1NSLO2yfp3zGUjJyjUm1DrSbLi88SJSKCDVNpptHVXiLB2U_eGU');"></div>
+<div class="w-8 h-8 rounded-full border-2 border-navy-dark bg-primary flex items-center justify-center text-[10px] text-navy-dark font-bold">+50k</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+<div class="flex items-center justify-between p-4 rounded-xl bg-navy-dark/40 border border-white/5">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-primary uppercase tracking-tighter">Social Bonus</span>
+<span class="font-bold text-sm">Follow @BrandWheel</span>
+</div>
+<button class="h-9 px-4 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-bold hover:bg-primary hover:text-navy-dark transition-all flex items-center gap-2">
+                                    +1 Spin
+                                </button>
+</div>
+<div class="flex flex-col gap-3 p-4 rounded-xl bg-navy-dark/40 border border-white/5">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-whatsapp uppercase tracking-tighter">Referral Power</span>
+<span class="font-bold text-sm">Invite 5 friends</span>
+</div>
+<div class="bg-whatsapp/10 text-whatsapp px-2 py-1 rounded text-[10px] font-black uppercase">
+                                        +1 Spin
+                                    </div>
+</div>
+<button class="w-full h-10 rounded-lg bg-whatsapp text-white text-sm font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+<span class="material-symbols-outlined !text-[18px]">share</span>
+                                    Share on WhatsApp
+                                </button>
+<div class="w-full bg-navy-muted h-1.5 rounded-full overflow-hidden mt-1">
+<div class="bg-whatsapp w-[60%] h-full shadow-[0_0_8px_rgba(37,211,102,0.5)]"></div>
+</div>
+<p class="text-[10px] text-center text-gray-500">3/5 friends invited</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="w-full bg-charcoal/40 py-20 overflow-hidden border-y border-white/5">
+<div class="max-w-[1200px] mx-auto px-6">
+<div class="flex flex-col gap-4 mb-12">
+<h2 class="text-white text-4xl font-black tracking-tight uppercase italic">Featured <span class="text-primary">Highlights</span></h2>
+<div class="h-1 w-24 bg-gradient-to-r from-primary to-transparent rounded-full"></div>
+</div>
+<div class="relative group">
+<div class="absolute top-1/2 -left-6 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-12 h-12 rounded-full bg-navy-muted/80 backdrop-blur-md border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-navy-dark transition-all shadow-lg">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+<div class="absolute top-1/2 -right-6 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-12 h-12 rounded-full bg-navy-muted/80 backdrop-blur-md border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-navy-dark transition-all shadow-lg">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<div class="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-8 pb-10">
+<div class="flex-none w-full snap-center">
+<div class="grid grid-cols-1 lg:grid-cols-2 glass-panel rounded-3xl overflow-hidden border border-white/5 min-h-[500px]">
+<div class="relative overflow-hidden group/img">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/img:scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCbOI_PCfJlj7oXsGwmsriAuLQalEOKDU0TlFUKsaqLLxt_Te6R3s5bkDxcpUQqKTHRGMy8Bl1RH9yZZKLdwRT4W3BK3OwIH7lmLONWfJiiPWk3ND70zn0i3pK-vNws-WdMVOLm71vy8-seE8N_Nrw7zfMCoXqgwWq-uh4F5cRxOZRObDtxQepEuwtrChFybobsX2EzDV8d0ElvrCkhDFWVHkkm7lwkDFqCTAUg5xcAlcFiBlK_6AvoYDWVpoNbYRVbk0Ue7wCJ8x0');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-navy-dark/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-8 left-8">
+<span class="bg-primary text-navy-dark px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">New Innovation</span>
+</div>
+</div>
+<div class="p-12 flex flex-col justify-center gap-6">
+<h3 class="text-white text-4xl font-black leading-tight">Mastering Sound: The Pro Series</h3>
+<p class="text-gray-400 text-lg leading-relaxed">
+                                        Our latest audio engineering breakthrough delivers crystal clear highs and deep, immersive lows. Crafted for those who refuse to compromise on quality, the Pro Series represents the pinnacle of wireless technology.
+                                    </p>
+<div class="flex flex-col gap-4 mt-4">
+<div class="flex items-center gap-3 text-gray-300">
+<span class="material-symbols-outlined text-primary">verified</span>
+<span>Active Noise Cancellation (ANC)</span>
+</div>
+<div class="flex items-center gap-3 text-gray-300">
+<span class="material-symbols-outlined text-primary">verified</span>
+<span>48-Hour Hybrid Battery Life</span>
+</div>
+<div class="flex items-center gap-3 text-gray-300">
+<span class="material-symbols-outlined text-primary">verified</span>
+<span>Sustainable Recycled Materials</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-none w-full snap-center">
+<div class="grid grid-cols-1 lg:grid-cols-2 glass-panel rounded-3xl overflow-hidden border border-white/5 min-h-[500px]">
+<div class="relative overflow-hidden group/img">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/img:scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuChKmHOle0DNxq4r1KNDIZdiNAFPlYl_9kNIEzmGjzGAs7w7DyVkc8KYWKVC_6rRLCAQ-ER-fJfp-im4QDvY3ETv2U_h9t4PCpu4pGVc2blNog3AugfW-a6iCtAF_8iovDoj2zzGa2CTp_IPWqyTXCowxVCNSd3is3piSeod0dSqqZhjpq8G35ayWDGdYYy7Ha7iUCHEelLxnZ3A4wOr-3QO9j2NlaUa0mWfU2X9_zwVPmsXR8lrKHPizE4RQBvsQxoXIFUSllQ7KU');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-navy-dark/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-8 left-8">
+<span class="bg-primary text-navy-dark px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Wellness Tech</span>
+</div>
+</div>
+<div class="p-12 flex flex-col justify-center gap-6">
+<h3 class="text-white text-4xl font-black leading-tight">The Future of Personal Health</h3>
+<p class="text-gray-400 text-lg leading-relaxed">
+                                        More than just a timepiece. It's your personal health companion, designed to keep you at the top of your game with advanced biometrics and seamless integration into your digital life.
+                                    </p>
+<div class="flex flex-col gap-4 mt-4">
+<div class="flex items-center gap-3 text-gray-300">
+<span class="material-symbols-outlined text-primary">verified</span>
+<span>Next-Gen Heart Rate Sensor</span>
+</div>
+<div class="flex items-center gap-3 text-gray-300">
+<span class="material-symbols-outlined text-primary">verified</span>
+<span>Sapphire Crystal Durability</span>
+</div>
+<div class="flex items-center gap-3 text-gray-300">
+<span class="material-symbols-outlined text-primary">verified</span>
+<span>Always-On Retina Display</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-center gap-3 mt-6">
+<div class="w-12 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(0,242,255,0.6)]"></div>
+<div class="w-12 h-1 bg-white/10 rounded-full hover:bg-white/20 transition-colors cursor-pointer"></div>
+<div class="w-12 h-1 bg-white/10 rounded-full hover:bg-white/20 transition-colors cursor-pointer"></div>
+</div>
+</div>
+</div>
+</section>
+<section class="w-full py-20 px-6">
+<div class="max-w-[800px] mx-auto glass-panel p-10 rounded-[2rem] text-center flex flex-col gap-6 shadow-2xl border-primary/20">
+<h2 class="text-white text-4xl font-black tracking-tight">Join the Tech Revolution</h2>
+<p class="text-gray-400 text-lg">Be the first to hear about our next high-tech campaign and exclusive product highlights.</p>
+<div class="flex flex-col sm:flex-row gap-3 w-full mt-4">
+<input class="flex-1 h-14 rounded-xl px-6 bg-navy-dark border-white/10 focus:ring-2 focus:ring-primary focus:border-transparent text-white placeholder-gray-500" placeholder="Enter your business email" type="email"/>
+<button class="h-14 px-10 rounded-xl bg-primary text-navy-dark font-extrabold hover:brightness-110 transition-all shadow-[0_0_15px_rgba(0,242,255,0.3)]">
+                        GET EARLY ACCESS
+                    </button>
+</div>
+<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Limited slots available for the alpha phase</p>
+</div>
+</section>
+</main>
+<footer class="w-full py-12 px-6 border-t border-white/5 bg-navy-dark">
+<div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center text-navy-dark font-bold">W</div>
+<span class="font-black text-xl tracking-tight uppercase text-white">Brand<span class="text-primary">Wheel</span></span>
+</div>
+<div class="flex gap-8 text-gray-400 text-sm font-medium">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Rules &amp; Regulations</a>
+</div>
+<p class="text-sm text-gray-500">© 2024 BrandWheel Inc. Powered by Electric Innovation.</p>
+</div>
+</footer>
+</div>
+
+</body></html>
