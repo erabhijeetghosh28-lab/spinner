@@ -1,8 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/social-tasks/verify",
+      "path": "/api/cron/verify-social-tasks",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/reset-monthly-limits",
+      "schedule": "0 0 1 * *"
     }
   ]
 }
