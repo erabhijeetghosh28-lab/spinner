@@ -77,10 +77,10 @@ export async function POST(req: NextRequest) {
         const authError = await requireAdminAuth(req);
         if (authError) return authError;
 
-        const { tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, startDate, endDate, prizes, supportMobile, websiteUrl } = await req.json();
+        const { tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, prizes, supportMobile, websiteUrl } = await req.json();
 
-        if (!tenantId || !name || !startDate || !endDate) {
-            return NextResponse.json({ error: 'Tenant ID, name, start date, and end date are required' }, { status: 400 });
+        if (!tenantId || !name) {
+            return NextResponse.json({ error: 'Tenant ID and name are required' }, { status: 400 });
         }
 
         // Get tenant with subscription plan info
@@ -153,19 +153,11 @@ export async function POST(req: NextRequest) {
             }, { status: 403 });
         }
 
-        // Validate dates
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        if (isNaN(start.getTime())) {
-            return NextResponse.json({ error: 'Invalid start date format' }, { status: 400 });
-        }
-        if (isNaN(end.getTime())) {
-            return NextResponse.json({ error: 'Invalid end date format' }, { status: 400 });
-        }
-        if (start >= end) {
-            return NextResponse.json({ error: 'End date must be after start date' }, { status: 400 });
-        }
+        // Auto-calculate dates based on plan's campaignDurationDays
+        const campaignDurationDays = tenant.plan.campaignDurationDays || 30; // Default to 30 days if not set
+        const start = now;
+        const end = new Date(now);
+        end.setDate(end.getDate() + campaignDurationDays);
 
         // Create campaign and prizes in a transaction, and increment usage
         const result = await prisma.$transaction(async (tx) => {
@@ -249,7 +241,7 @@ export async function PUT(req: NextRequest) {
         const authError = await requireAdminAuth(req);
         if (authError) return authError;
 
-        const { campaignId, tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, startDate, endDate, isActive, prizes, supportMobile, websiteUrl } = await req.json();
+        const { campaignId, tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, isActive, prizes, supportMobile, websiteUrl } = await req.json();
 
         if (!campaignId || !tenantId) {
             return NextResponse.json({ error: 'Campaign ID and Tenant ID required' }, { status: 400 });
@@ -279,14 +271,9 @@ export async function PUT(req: NextRequest) {
         if (referralsRequiredForSpin !== undefined) updateData.referralsRequiredForSpin = parseInt(String(referralsRequiredForSpin)) || 0;
         if (typeof isActive === 'boolean') updateData.isActive = isActive;
 
-        if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && start < end) {
-                updateData.startDate = start;
-                updateData.endDate = end;
-            }
-        }
+        // Note: Dates are auto-managed based on plan's campaignDurationDays
+        // When updating, we don't change dates unless explicitly needed
+        // For now, we keep existing dates on update
 
         const updatedCampaign = await prisma.$transaction(async (tx) => {
             // Update campaign basics

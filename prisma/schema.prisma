@@ -19,6 +19,7 @@ model Plan {
   name                   String // e.g., "Basic", "Pro", "Enterprise"
   maxSpins               Int      @default(1000) // Total spins allowed per month
   maxCampaigns           Int      @default(1)
+  campaignDurationDays   Int      @default(30) // How many days a campaign can run
   waIntegrationEnabled   Boolean  @default(true)
   canUseCustomTemplates  Boolean  @default(false)
   allowCustomDomain      Boolean  @default(false) // Gate for custom domain feature

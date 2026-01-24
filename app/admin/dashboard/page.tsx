@@ -936,8 +936,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
         spinLimit: 1,
         spinCooldown: 24,
         referralsRequiredForSpin: 0,
-        startDate: '',
-        endDate: '',
         isActive: true
     });
     const [loading, setLoading] = useState(false);
@@ -1002,8 +1000,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                 spinLimit: campaign.spinLimit,
                 spinCooldown: campaign.spinCooldown,
                 referralsRequiredForSpin: campaign.referralsRequiredForSpin || 0,
-                startDate: campaign.startDate ? new Date(campaign.startDate).toISOString().slice(0, 16) : '',
-                endDate: campaign.endDate ? new Date(campaign.endDate).toISOString().slice(0, 16) : '',
                 isActive: campaign.isActive
             });
 
@@ -1020,9 +1016,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
             }
         } else {
             setEditingCampaign(null);
-            const now = new Date();
-            const future = new Date();
-            future.setDate(future.getDate() + 30);
             setFormData({
                 name: '',
                 description: '',
@@ -1033,8 +1026,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                 spinLimit: 1,
                 spinCooldown: 24,
                 referralsRequiredForSpin: 0,
-                startDate: now.toISOString().slice(0, 16),
-                endDate: future.toISOString().slice(0, 16),
                 isActive: true
             });
             // Initial default prizes for new campaign
@@ -1232,8 +1223,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                             <tr className="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-800">
                                 <th className="pb-4 font-bold">Name</th>
                                 <th className="pb-4 font-bold">Template</th>
-                                <th className="pb-4 font-bold">Start Date</th>
-                                <th className="pb-4 font-bold">End Date</th>
                                 <th className="pb-4 font-bold">Status</th>
                                 <th className="pb-4 font-bold">Prizes</th>
                                 <th className="pb-4 font-bold">Spins</th>
@@ -1252,8 +1241,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                                     <tr key={camp.id} className="hover:bg-slate-800/30">
                                         <td className="py-4 font-bold">{camp.name}</td>
                                         <td className="py-4 text-slate-400">{camp.template?.name || 'None'}</td>
-                                        <td className="py-4 text-sm">{startDate.toLocaleDateString()}</td>
-                                        <td className="py-4 text-sm">{endDate.toLocaleDateString()}</td>
                                         <td className="py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${isActive
                                                 ? 'bg-green-500/10 text-green-500 border border-green-500/30'
@@ -1384,28 +1371,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                                             placeholder="Season Sale 2024"
                                             required
                                         />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Start Date</label>
-                                            <input
-                                                type="datetime-local"
-                                                value={formData.startDate}
-                                                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">End Date</label>
-                                            <input
-                                                type="datetime-local"
-                                                value={formData.endDate}
-                                                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-                                                required
-                                            />
-                                        </div>
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Description</label>

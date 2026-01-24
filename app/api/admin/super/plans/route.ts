@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, maxSpins, maxCampaigns, waIntegrationEnabled, canUseCustomTemplates, allowAnalytics, allowQRCodeGenerator, allowInventoryTracking, price } = await req.json();
+        const { name, maxSpins, maxCampaigns, campaignDurationDays, waIntegrationEnabled, canUseCustomTemplates, allowAnalytics, allowQRCodeGenerator, allowInventoryTracking, price } = await req.json();
 
         if (!name) {
             return NextResponse.json({ error: 'Plan name is required' }, { status: 400 });
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
                 name,
                 maxSpins: maxSpins ?? 1000,
                 maxCampaigns: maxCampaigns ?? 1,
+                campaignDurationDays: campaignDurationDays ?? 30,
                 waIntegrationEnabled: waIntegrationEnabled ?? true,
                 canUseCustomTemplates: canUseCustomTemplates ?? false,
                 allowAnalytics: allowAnalytics ?? false,
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
     try {
-        const { id, name, maxSpins, maxCampaigns, waIntegrationEnabled, canUseCustomTemplates, allowAnalytics, allowQRCodeGenerator, allowInventoryTracking, price } = await req.json();
+        const { id, name, maxSpins, maxCampaigns, campaignDurationDays, waIntegrationEnabled, canUseCustomTemplates, allowAnalytics, allowQRCodeGenerator, allowInventoryTracking, price } = await req.json();
 
         if (!id) {
             return NextResponse.json({ error: 'Plan ID is required' }, { status: 400 });
@@ -66,6 +67,7 @@ export async function PUT(req: NextRequest) {
         if (name) updateData.name = name;
         if (maxSpins !== undefined) updateData.maxSpins = maxSpins;
         if (maxCampaigns !== undefined) updateData.maxCampaigns = maxCampaigns;
+        if (campaignDurationDays !== undefined) updateData.campaignDurationDays = campaignDurationDays;
         if (typeof waIntegrationEnabled === 'boolean') updateData.waIntegrationEnabled = waIntegrationEnabled;
         if (typeof canUseCustomTemplates === 'boolean') updateData.canUseCustomTemplates = canUseCustomTemplates;
         if (typeof allowAnalytics === 'boolean') updateData.allowAnalytics = allowAnalytics;

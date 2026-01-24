@@ -71,7 +71,29 @@ export async function POST(req: NextRequest) {
 
         // REAL WhatsApp Send - use tenant's WhatsApp config if available
         const { sendWhatsAppOTP } = await import('@/lib/whatsapp');
-        await sendWhatsAppOTP(cleanPhone, otp, tenant.id);
+        const whatsappResult = await sendWhatsAppOTP(cleanPhone, otp, tenant.id);
+
+        // Development fallback: Log OTP to console if WhatsApp fails
+        if (!whatsappResult) {
+            console.error('⚠️ WhatsApp OTP send failed. OTP for development:', otp);
+            console.error('📱 Phone:', cleanPhone);
+            console.error('💡 To fix: Configure WHATSAPP_API_KEY, WHATSAPP_SENDER, and WHATSAPP_API_URL in environment variables or database settings.');
+            
+            // In development, still return success but log the OTP
+            if (process.env.NODE_ENV === 'development') {
+                console.log('🔑 DEVELOPMENT MODE: OTP is', otp, 'for phone', cleanPhone);
+                return NextResponse.json({ 
+                    success: true, 
+                    message: 'OTP generated (WhatsApp not configured - check server logs for OTP)',
+                    // Only include OTP in development mode
+                    ...(process.env.NODE_ENV === 'development' ? { otp } : {})
+                });
+            }
+            
+            return NextResponse.json({ 
+                error: 'Failed to send OTP. Please check WhatsApp configuration.' 
+            }, { status: 500 });
+        }
 
         return NextResponse.json({ success: true, message: 'OTP sent successfully via WhatsApp' });
     } catch (error) {

@@ -752,6 +752,7 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
         name: '',
         maxSpins: 1000,
         maxCampaigns: 1,
+        campaignDurationDays: 30,
         waIntegrationEnabled: true,
         allowAnalytics: false,
         allowQRCodeGenerator: false,
@@ -766,6 +767,7 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                 name: plan.name,
                 maxSpins: plan.maxSpins,
                 maxCampaigns: plan.maxCampaigns,
+                campaignDurationDays: plan.campaignDurationDays ?? 30,
                 waIntegrationEnabled: plan.waIntegrationEnabled,
                 allowAnalytics: plan.allowAnalytics ?? false,
                 allowQRCodeGenerator: plan.allowQRCodeGenerator ?? false,
@@ -778,6 +780,7 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                 name: '',
                 maxSpins: 1000,
                 maxCampaigns: 1,
+                campaignDurationDays: 30,
                 waIntegrationEnabled: true,
                 allowAnalytics: false,
                 allowQRCodeGenerator: false,
@@ -853,6 +856,10 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                     <span className="font-bold">{plan.maxCampaigns}</span>
                                 </div>
                                 <div className="flex justify-between">
+                                    <span className="text-slate-400">Campaign Duration:</span>
+                                    <span className="font-bold">{plan.campaignDurationDays ?? 30} days</span>
+                                </div>
+                                <div className="flex justify-between">
                                     <span className="text-slate-400">WA Integration:</span>
                                     <span className={plan.waIntegrationEnabled ? 'text-green-500' : 'text-red-500'}>
                                         {plan.waIntegrationEnabled ? '✓' : '✗'}
@@ -891,7 +898,7 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                 />
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-4">
+                            <div className="grid md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Max Spins</label>
                                     <input
@@ -910,6 +917,17 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                         onChange={(e) => setPlanFormData({ ...planFormData, maxCampaigns: parseInt(e.target.value) })}
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
                                         required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Campaign Duration (Days)</label>
+                                    <input
+                                        type="number"
+                                        value={planFormData.campaignDurationDays}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, campaignDurationDays: parseInt(e.target.value) || 30 })}
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
+                                        required
+                                        min="1"
                                     />
                                 </div>
                             </div>
