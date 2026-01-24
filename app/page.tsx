@@ -48,6 +48,95 @@ export default function CampaignPage() {
         // User must login every time they visit, even if they have a saved session
     }, []);
 
+    // Auto-logout after 1 minute of inactivity (no user action)
+    useEffect(() => {
+        if (!user || !isVerified) return;
+
+        // Initialize expiry time if not set
+        const savedExpiry = localStorage.getItem('offer-wheel-user-expiry');
+        if (!savedExpiry) {
+            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
+        }
+
+        const resetIdleTimer = () => {
+            // Reset expiry time to 1 minute from now
+            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
+        };
+
+        const checkSessionExpiry = () => {
+            const savedExpiry = localStorage.getItem('offer-wheel-user-expiry');
+            if (!savedExpiry) {
+                // Session expired - log out user
+                console.log('[Idle Timeout] Session expired - logging out');
+                setUser(null);
+                setWonPrize(null);
+                setIsVerified(false);
+                setUserStatus(null);
+                setShowLoginModal(true);
+                localStorage.removeItem('offer-wheel-user');
+                localStorage.removeItem('offer-wheel-user-expiry');
+                return;
+            }
+
+            const expiryTime = parseInt(savedExpiry);
+            const now = Date.now();
+            const timeRemaining = expiryTime - now;
+
+            if (now >= expiryTime) {
+                // Session expired due to inactivity - log out user
+                console.log('[Idle Timeout] Session expired due to inactivity - logging out');
+                setUser(null);
+                setWonPrize(null);
+                setIsVerified(false);
+                setUserStatus(null);
+                setShowLoginModal(true);
+                localStorage.removeItem('offer-wheel-user');
+                localStorage.removeItem('offer-wheel-user-expiry');
+            } else {
+                console.log(`[Idle Timeout] Time remaining: ${Math.round(timeRemaining / 1000)}s`);
+            }
+        };
+
+        // Track only intentional user actions (removed mousemove as it's too sensitive)
+        const activityEvents = ['mousedown', 'keydown', 'keypress', 'scroll', 'touchstart', 'click', 'wheel'];
+        
+        // Throttle activity handler to prevent too frequent resets
+        let activityTimeout: NodeJS.Timeout | null = null;
+        const handleActivity = () => {
+            // Only reset timer if it's been at least 5 seconds since last reset
+            if (activityTimeout) return;
+            
+            activityTimeout = setTimeout(() => {
+                activityTimeout = null;
+            }, 5000); // Throttle to max once per 5 seconds
+            
+            resetIdleTimer();
+            console.log('[Idle Timeout] Activity detected - timer reset');
+        };
+
+        // Add event listeners for user activity
+        activityEvents.forEach(event => {
+            window.addEventListener(event, handleActivity, { passive: true });
+        });
+
+        // Check immediately
+        checkSessionExpiry();
+
+        // Check every 5 seconds for expiry (more frequent for better UX)
+        const interval = setInterval(checkSessionExpiry, 5 * 1000);
+
+        return () => {
+            // Cleanup event listeners
+            activityEvents.forEach(event => {
+                window.removeEventListener(event, handleActivity);
+            });
+            if (activityTimeout) clearTimeout(activityTimeout);
+            clearInterval(interval);
+        };
+    }, [user, isVerified]);
+
     const fetchLeaderboard = async () => {
         try {
             const res = await axios.get(`/api/leaderboard`);
@@ -243,8 +332,8 @@ export default function CampaignPage() {
             // Hide login modal immediately after successful login
             setShowLoginModal(false);
             
-            // Save user with 5-minute expiry (for other parts of the app)
-            const expiryTime = Date.now() + (5 * 60 * 1000); // 5 minutes
+            // Save user with 1-minute idle expiry (will be reset on user activity)
+            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
             localStorage.setItem('offer-wheel-user', JSON.stringify(userData));
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
 
@@ -338,10 +427,9 @@ export default function CampaignPage() {
         setWonPrize(null);
         setIsVerified(false);
         setUserStatus(null);
+        setShowLoginModal(true); // Show login modal again
         localStorage.removeItem('offer-wheel-user');
         localStorage.removeItem('offer-wheel-user-expiry');
-        // Refresh page to show login form
-        window.location.reload();
     };
 
     const handleSpinFinished = async (resultPrize?: any) => {
@@ -477,12 +565,26 @@ export default function CampaignPage() {
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay"></div>
             </div>
 
-            {/* Dimmed overlay when login modal is shown */}
+            {/* Dimmed overlay when login modal is shown - lighter so background is more visible */}
             {showLoginModal && !isVerified && (
-                <div className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"></div>
+                <div className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"></div>
             )}
 
-            <div className={`relative z-10 w-full flex flex-col items-center ${showLoginModal && !isVerified ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`relative z-10 w-full flex flex-col items-center ${showLoginModal && !isVerified ? 'opacity-70 pointer-events-none' : 'opacity-100'}`}>
+                {/* Logout Button - Prominent for Testing */}
+                {user && isVerified && (
+                    <div className="fixed top-4 right-4 z-50">
+                        <button
+                            onClick={handleLogout}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
+                            title="Logout (Test)"
+                        >
+                            <span>🚪</span>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* Header & Metadata Section */}
                 <div className="w-full max-w-4xl px-4 pt-12 md:pt-20 pb-8 flex flex-col items-center">
                     <header className="text-center mb-8 relative">
@@ -735,15 +837,25 @@ export default function CampaignPage() {
                                                     className="relative group flex flex-col items-center"
                                                 >
                                                     <div className="absolute -inset-16 bg-amber-500/5 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
-                                                    <SpinWheel
-                                                        prizes={prizes}
-                                                        isSpinning={isSpinning && user ? true : false}
-                                                        onFinished={handleSpinFinished}
-                                                        templateName={campaign.template || 'template_1'}
-                                                        logoUrl={campaign.logoUrl}
-                                                        selectedPrizeIndex={selectedPrizeIndex}
-                                                        onTick={() => soundEffects.playTickSound()}
-                                                    />
+                                                    {prizes.length > 0 ? (
+                                                        <SpinWheel
+                                                            prizes={prizes}
+                                                            isSpinning={isSpinning && user ? true : false}
+                                                            onFinished={handleSpinFinished}
+                                                            templateName={campaign.template || 'template_1'}
+                                                            logoUrl={campaign.logoUrl}
+                                                            selectedPrizeIndex={selectedPrizeIndex}
+                                                            onTick={() => soundEffects.playTickSound()}
+                                                        />
+                                                    ) : (
+                                                        /* Show placeholder spinner when prizes are loading */
+                                                        <div className="relative w-80 h-80 md:w-[400px] md:h-[400px] mx-auto flex items-center justify-center">
+                                                            <div className="w-full h-full rounded-full border-8 border-amber-500/20 animate-spin" style={{ borderTopColor: '#f59e0b' }}></div>
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <div className="text-4xl">🎡</div>
+                                                            </div>
+                                                        </div>
+                                                    )}
 
                                                     {!isSpinning && !wonPrize && (
                                                         <div className="mt-12 flex justify-center relative z-10 w-full">
