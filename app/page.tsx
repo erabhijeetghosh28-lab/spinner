@@ -34,6 +34,7 @@ export default function CampaignPage() {
     const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
     const [statusError, setStatusError] = useState<string | null>(null);
     const [showSupportModal, setShowSupportModal] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(true);
 
     useEffect(() => {
         fetchCampaign();
@@ -43,35 +44,8 @@ export default function CampaignPage() {
         const ref = params.get('ref');
         if (ref) setReferralCode(ref);
 
-        // Check for existing session in localStorage with expiry
-        const savedUser = localStorage.getItem('offer-wheel-user');
-        const savedUserExpiry = localStorage.getItem('offer-wheel-user-expiry');
-        
-        if (savedUser && savedUserExpiry) {
-            try {
-                const expiryTime = parseInt(savedUserExpiry);
-                const now = Date.now();
-                
-                // Check if session expired (5 minutes)
-                if (now > expiryTime) {
-                    // Session expired, clear it
-                    localStorage.removeItem('offer-wheel-user');
-                    localStorage.removeItem('offer-wheel-user-expiry');
-                } else {
-                    // Session still valid
-                    const userData = JSON.parse(savedUser);
-                    setUser(userData);
-                    setIsVerified(true);
-                }
-            } catch (err) {
-                console.error('Error parsing saved user:', err);
-                localStorage.removeItem('offer-wheel-user');
-                localStorage.removeItem('offer-wheel-user-expiry');
-            }
-        } else if (savedUser && !savedUserExpiry) {
-            // Old format without expiry, clear it
-            localStorage.removeItem('offer-wheel-user');
-        }
+        // REMOVED: localStorage check - always show login screen per requirements
+        // User must login every time they visit, even if they have a saved session
     }, []);
 
     const fetchLeaderboard = async () => {
@@ -265,7 +239,11 @@ export default function CampaignPage() {
         const userData = response.data.user;
             setUser(userData);
             setIsVerified(true);
-            // Save user with 5-minute expiry
+            
+            // Hide login modal immediately after successful login
+            setShowLoginModal(false);
+            
+            // Save user with 5-minute expiry (for other parts of the app)
             const expiryTime = Date.now() + (5 * 60 * 1000); // 5 minutes
             localStorage.setItem('offer-wheel-user', JSON.stringify(userData));
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
@@ -499,7 +477,12 @@ export default function CampaignPage() {
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.1] mix-blend-overlay"></div>
             </div>
 
-            <div className="relative z-10 w-full flex flex-col items-center">
+            {/* Dimmed overlay when login modal is shown */}
+            {showLoginModal && !isVerified && (
+                <div className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"></div>
+            )}
+
+            <div className={`relative z-10 w-full flex flex-col items-center ${showLoginModal && !isVerified ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                 {/* Header & Metadata Section */}
                 <div className="w-full max-w-4xl px-4 pt-12 md:pt-20 pb-8 flex flex-col items-center">
                     <header className="text-center mb-8 relative">
@@ -563,44 +546,12 @@ export default function CampaignPage() {
 
                         {/* Left/Main Column: Interaction Area */}
                         <div className="lg:col-span-7 xl:col-span-8 flex flex-col items-center order-1">
-                            <AnimatePresence mode="wait">
-                                {!user && !isVerified ? (
-                                    <motion.div
-                                        key="login"
-                                        initial={{ opacity: 0, scale: 0.98 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, y: -20 }}
-                                        className="w-full max-w-md"
-                                    >
-                                        <div className="bg-slate-900/60 backdrop-blur-2xl border border-white/10 p-8 md:p-12 rounded-[3.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] relative overflow-hidden group">
-                                            {/* Abstract background blobs for premium feel */}
-                                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-                                            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-
-                                            <div className="relative z-10 text-center mb-10">
-                                                <div className="inline-block p-4 bg-slate-800/80 rounded-3xl border border-white/5 mb-6 shadow-inner transform group-hover:scale-110 transition-transform duration-700">
-                                                    <div className="text-5xl">🎡</div>
-                                                </div>
-                                                <h3 className="text-3xl font-black text-white mb-3 tracking-tighter uppercase italic">Ready to Spin?</h3>
-                                                <p className="text-slate-400 text-sm font-medium leading-relaxed max-w-[240px] mx-auto">
-                                                    Verify your details to unlock <br /> <span className="text-amber-500 font-bold">exclusive rewards</span> instantly!
-                                                </p>
-                                            </div>
-
-                                            <div className="relative z-10 px-2">
-                                                <OTPForm onSendOTP={handleSendOTP} onVerify={handleVerifyOTP} />
-                                            </div>
-                                        </div>
-
-                                        <p className="text-center mt-8 text-[10px] text-slate-600 uppercase font-black tracking-[0.3em]">Secure Verification via WhatsApp</p>
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key="interaction"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="w-full flex flex-col items-center space-y-12"
-                                    >
+                            {/* Always show the spinner/wheel UI (will be dimmed when login modal is shown) */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="w-full flex flex-col items-center space-y-12"
+                            >
                                         {/* Status Header */}
                                         {isRefreshingStatus ? (
                                             <div className="flex items-center space-x-4 px-6 py-2 bg-white/5 rounded-full border border-white/5 backdrop-blur-md">
@@ -632,9 +583,9 @@ export default function CampaignPage() {
                                             <SocialTasksPanel campaignId={campaign.id} userId={user.id} />
                                         )}
 
-                                        {/* Interaction Body */}
+                                        {/* Interaction Body - Always show spinner/wheel in background */}
                                         <AnimatePresence mode="wait">
-                                            {(wonPrize && !isSpinning) ? (
+                                            {(wonPrize && !isSpinning && user) ? (
                                                 /* Result View: Above the Fold */
                                                 <motion.div
                                                     key="result-view"
@@ -715,46 +666,8 @@ export default function CampaignPage() {
                                                         );
                                                     })()}
                                                 </motion.div>
-                                            ) : (!userStatus || userStatus?.canSpin) ? (
-                                                <motion.div
-                                                    key="wheel-active"
-                                                    initial={{ opacity: 0, scale: 0.95 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    exit={{ opacity: 0, scale: 0.95 }}
-                                                    className="relative group flex flex-col items-center"
-                                                >
-                                                    <div className="absolute -inset-16 bg-amber-500/5 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
-                                                    <SpinWheel
-                                                        prizes={prizes}
-                                                        isSpinning={isSpinning}
-                                                        onFinished={handleSpinFinished}
-                                                        templateName={campaign.template || 'template_1'}
-                                                        logoUrl={campaign.logoUrl}
-                                                        selectedPrizeIndex={selectedPrizeIndex}
-                                                        onTick={() => soundEffects.playTickSound()}
-                                                    />
-
-                                                    {!isSpinning && !wonPrize && (
-                                                        <div className="mt-12 flex justify-center relative z-10 w-full">
-                                                            <button
-                                                                onClick={startSpin}
-                                                                disabled={!user || !user.id || (userStatus && !userStatus.canSpin) || isRefreshingStatus}
-                                                                className={`px-16 py-6 font-black text-2xl rounded-3xl transition-all uppercase tracking-tighter ${
-                                                                    !user || !user.id || (userStatus && !userStatus.canSpin) || isRefreshingStatus
-                                                                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                                                        : 'bg-gradient-to-r from-amber-600 to-amber-400 text-slate-950 shadow-[0_25px_60px_rgba(245,158,11,0.4)] hover:scale-105 active:scale-95'
-                                                                }`}
-                                                            >
-                                                                {isRefreshingStatus 
-                                                                    ? 'Loading...' 
-                                                                    : userStatus && !userStatus.canSpin 
-                                                                        ? 'No Spins Available' 
-                                                                        : 'Spin Wheel Now'}
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </motion.div>
-                                            ) : (
+                                            ) : user && userStatus && !userStatus.canSpin ? (
+                                                /* Share unlock view - only when user is logged in but can't spin */
                                                 <motion.div
                                                     key="share-unlock"
                                                     initial={{ opacity: 0, scale: 0.95 }}
@@ -812,6 +725,48 @@ export default function CampaignPage() {
                                                         </button>
                                                     </div>
                                                 </motion.div>
+                                            ) : (
+                                                /* Always show spinner/wheel - will be dimmed by parent overlay when not logged in */
+                                                <motion.div
+                                                    key="wheel-active"
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 0.95 }}
+                                                    className="relative group flex flex-col items-center"
+                                                >
+                                                    <div className="absolute -inset-16 bg-amber-500/5 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
+                                                    <SpinWheel
+                                                        prizes={prizes}
+                                                        isSpinning={isSpinning && user ? true : false}
+                                                        onFinished={handleSpinFinished}
+                                                        templateName={campaign.template || 'template_1'}
+                                                        logoUrl={campaign.logoUrl}
+                                                        selectedPrizeIndex={selectedPrizeIndex}
+                                                        onTick={() => soundEffects.playTickSound()}
+                                                    />
+
+                                                    {!isSpinning && !wonPrize && (
+                                                        <div className="mt-12 flex justify-center relative z-10 w-full">
+                                                            <button
+                                                                onClick={startSpin}
+                                                                disabled={!user || !user.id || (userStatus && !userStatus.canSpin) || isRefreshingStatus}
+                                                                className={`px-16 py-6 font-black text-2xl rounded-3xl transition-all uppercase tracking-tighter ${
+                                                                    !user || !user.id || (userStatus && !userStatus.canSpin) || isRefreshingStatus
+                                                                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                                                        : 'bg-gradient-to-r from-amber-600 to-amber-400 text-slate-950 shadow-[0_25px_60px_rgba(245,158,11,0.4)] hover:scale-105 active:scale-95'
+                                                                }`}
+                                                            >
+                                                                {isRefreshingStatus 
+                                                                    ? 'Loading...' 
+                                                                    : !user || !user.id
+                                                                        ? 'Login to Spin'
+                                                                        : userStatus && !userStatus.canSpin 
+                                                                            ? 'No Spins Available' 
+                                                                            : 'Spin Wheel Now'}
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
                                             )}
                                         </AnimatePresence>
 
@@ -826,9 +781,7 @@ export default function CampaignPage() {
                                                 <p className="text-[10px] text-slate-600 font-black tracking-[0.4em] uppercase">Limited Spins - Share to Continue!</p>
                                             </motion.div>
                                         )}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            </motion.div>
                         </div>
 
                         {/* Right Column: Rankings & Profiles */}
@@ -914,6 +867,40 @@ export default function CampaignPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Login Modal Overlay - Centered Card */}
+            {showLoginModal && !isVerified && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="w-full max-w-md"
+                    >
+                        <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 p-8 md:p-12 rounded-[3.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative overflow-hidden group">
+                            {/* Abstract background blobs for premium feel */}
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+                            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+                            <div className="relative z-10 text-center mb-10">
+                                <div className="inline-block p-4 bg-slate-800/80 rounded-3xl border border-white/5 mb-6 shadow-inner transform group-hover:scale-110 transition-transform duration-700">
+                                    <div className="text-5xl">🎡</div>
+                                </div>
+                                <h3 className="text-3xl font-black text-white mb-3 tracking-tighter uppercase italic">Ready to Spin?</h3>
+                                <p className="text-slate-400 text-sm font-medium leading-relaxed max-w-[240px] mx-auto">
+                                    Verify your details to unlock <br /> <span className="text-amber-500 font-bold">exclusive rewards</span> instantly!
+                                </p>
+                            </div>
+
+                            <div className="relative z-10 px-2">
+                                <OTPForm onSendOTP={handleSendOTP} onVerify={handleVerifyOTP} />
+                            </div>
+                        </div>
+
+                        <p className="text-center mt-8 text-[10px] text-slate-400 uppercase font-black tracking-[0.3em]">Secure Verification via WhatsApp</p>
+                    </motion.div>
+                </div>
+            )}
 
             {/* Sticky Support Contact */}
             {campaign.supportMobile && (
