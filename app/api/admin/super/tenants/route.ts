@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
         const tenants = await prisma.tenant.findMany({
             include: {
                 plan: true,
+                subscriptionPlan: true,
                 _count: {
                     select: {
                         campaigns: true,
@@ -209,38 +210,11 @@ export async function PUT(req: NextRequest) {
         }
         if (contactPhone !== undefined) updateData.contactPhone = contactPhone || null;
         
-        // Handle plan ID - check if it's a legacy Plan or SubscriptionPlan
+        // Handle plan ID - only SubscriptionPlan is used now
         if (planId) {
-            console.log('PUT /api/admin/super/tenants - Checking planId:', planId);
-            
-            // Check if it's a legacy Plan ID
-            const legacyPlan = await prisma.plan.findUnique({
-                where: { id: planId }
-            });
-            
-            // Check if it's a SubscriptionPlan ID
-            const subscriptionPlan = await prisma.subscriptionPlan.findUnique({
-                where: { id: planId }
-            });
-            
-            if (legacyPlan) {
-                console.log('PUT /api/admin/super/tenants - Using legacy plan:', legacyPlan.name);
-                updateData.planId = planId;
-                // Clear subscriptionPlanId if switching to legacy plan
-                updateData.subscriptionPlanId = null;
-            } else if (subscriptionPlan) {
-                console.log('PUT /api/admin/super/tenants - Using subscription plan:', subscriptionPlan.name);
-                // For subscription plans, set subscriptionPlanId
-                updateData.subscriptionPlanId = planId;
-                // Don't modify planId - it must remain set to a valid legacy Plan ID
-                // The tenant must always have a valid planId (required field)
-            } else {
-                console.error('PUT /api/admin/super/tenants - Invalid plan ID:', planId);
-                return NextResponse.json({ 
-                    error: 'Invalid plan ID',
-                    details: `Plan ID "${planId}" not found in either Plan or SubscriptionPlan tables`
-                }, { status: 400 });
-            }
+            console.log('PUT /api/admin/super/tenants - Setting subscriptionPlanId:', planId);
+            updateData.subscriptionPlanId = planId;
+            // Note: planId (legacy) remains unchanged as it's a required field
         }
         
         if (typeof isActive === 'boolean') updateData.isActive = isActive;

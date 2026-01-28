@@ -264,7 +264,7 @@ function OverviewTab({ stats }: { stats: any }) {
                         <div key={i} className="flex justify-between items-center p-4 bg-slate-800 rounded-lg">
                             <div>
                                 <div className="font-bold">{tenant.name}</div>
-                                <div className="text-sm text-slate-400">{tenant.slug} • {tenant.plan.name}</div>
+                                <div className="text-sm text-slate-400">{tenant.slug} • {tenant.subscriptionPlan?.name || tenant.plan.name}</div>
                             </div>
                             <div className="text-right">
                                 <div className="text-sm text-slate-400">{tenant._count.campaigns} campaigns</div>
@@ -323,7 +323,7 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                 name: tenant.name,
                 slug: tenant.slug,
                 contactPhone: tenant.contactPhone || '',
-                planId: tenant.planId,
+                planId: tenant.subscriptionPlanId || tenant.planId, // Use subscriptionPlanId if available
                 isActive: tenant.isActive,
                 waApiUrl: waConfig.apiUrl || '',
                 waApiKey: waConfig.apiKey || '',
@@ -433,7 +433,7 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                                 <tr key={tenant.id} className="hover:bg-slate-800/30">
                                     <td className="py-4 font-bold">{tenant.name}</td>
                                     <td className="py-4 text-slate-400 font-mono text-sm">{tenant.slug}</td>
-                                    <td className="py-4">{tenant.plan.name}</td>
+                                    <td className="py-4">{tenant.subscriptionPlan?.name || tenant.plan.name}</td>
                                     <td className="py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${tenant.isActive
                                                 ? 'bg-green-500/10 text-green-500 border border-green-500/30'
