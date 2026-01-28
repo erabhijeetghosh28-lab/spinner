@@ -1,70 +1,75 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { startOfDay, endOfDay } from 'date-fns';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
-        const today = new Date();
-        const dayStart = startOfDay(today);
-        const dayEnd = endOfDay(today);
-
-        // Platform-wide stats
+        // Get total tenants
         const totalTenants = await prisma.tenant.count();
-        const activeTenants = await prisma.tenant.count({ where: { isActive: true } });
-        const totalUsers = await prisma.endUser.count();
-        const totalSpins = await prisma.spin.count();
-        const spinsToday = await prisma.spin.count({
-            where: { spinDate: { gte: dayStart, lte: dayEnd } }
+        
+        // Get active tenants
+        const activeTenants = await prisma.tenant.count({
+            where: { isActive: true }
         });
+        
+        // Get total revenue (sum of all subscription plan prices for active tenants)
+        const tenantsWithPlans = await prisma.tenant.findMany({
+            where: { isActive: true },
+            include: {
+                subscriptionPlan: true
+            }
+        });
+        
+        const totalRevenue = tenantsWithPlans.reduce((sum, tenant) => {
+            if (tenant.subscriptionPlan) {
+                return sum + tenant.subscriptionPlan.price;
+            }
+            return sum;
+        }, 0);
+        
+        // Calculate MRR (Monthly Recurring Revenue)
+        const mrr = tenantsWithPlans.reduce((sum, tenant) => {
+            if (tenant.subscriptionPlan) {
+                // Convert to monthly based on billing cycle
+                if (tenant.subscriptionPlan.billingCycle === 'MONTHLY') {
+                    return sum + tenant.subscriptionPlan.price;
+                } else if (tenant.subscriptionPlan.billingCycle === 'YEARLY') {
+                    return sum + (tenant.subscriptionPlan.price / 12);
+                }
+            }
+            return sum;
+        }, 0);
+        
+        // Get total campaigns
         const totalCampaigns = await prisma.campaign.count();
-        const activeCampaigns = await prisma.campaign.count({ where: { isActive: true } });
-
-        // Recent activity
-        const recentTenants = await prisma.tenant.findMany({
-            take: 5,
-            orderBy: { createdAt: 'desc' },
-            include: {
-                plan: true,
-                _count: {
-                    select: { campaigns: true, endUsers: true }
-                }
-            }
+        
+        // Get active campaigns
+        const activeCampaigns = await prisma.campaign.count({
+            where: { isActive: true }
         });
+        
+        // Get total users
+        const totalUsers = await prisma.endUser.count();
+        
+        // Get total vouchers
+        const totalVouchers = await prisma.voucher.count();
 
-        // Top tenants by user count
-        const topTenants = await prisma.tenant.findMany({
-            take: 5,
-            include: {
-                plan: true,
-                _count: {
-                    select: { endUsers: true, campaigns: true }
-                }
-            },
-            orderBy: {
-                endUsers: {
-                    _count: 'desc'
-                }
-            }
-        });
+        const stats = {
+            totalTenants,
+            activeTenants,
+            totalRevenue,
+            mrr,
+            totalCampaigns,
+            activeCampaigns,
+            totalUsers,
+            totalVouchers
+        };
 
-        return NextResponse.json({
-            stats: {
-                totalTenants,
-                activeTenants,
-                totalUsers,
-                totalSpins,
-                spinsToday,
-                totalCampaigns,
-                activeCampaigns,
-            },
-            recentTenants,
-            topTenants
-        });
+        return NextResponse.json({ stats });
     } catch (error: any) {
-        console.error('Error fetching super admin stats:', error);
+        console.error('Error fetching stats:', error);
         return NextResponse.json({ 
-            error: 'Internal server error',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: 'Failed to fetch stats',
+            details: error.message
         }, { status: 500 });
     }
 }
