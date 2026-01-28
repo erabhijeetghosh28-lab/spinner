@@ -230,9 +230,10 @@ export async function PUT(req: NextRequest) {
                 updateData.subscriptionPlanId = null;
             } else if (subscriptionPlan) {
                 console.log('PUT /api/admin/super/tenants - Using subscription plan:', subscriptionPlan.name);
-                // For subscription plans, we need to keep the existing planId and set subscriptionPlanId
+                // For subscription plans, set subscriptionPlanId
                 updateData.subscriptionPlanId = planId;
-                // Don't change planId - keep the existing one
+                // Don't modify planId - it must remain set to a valid legacy Plan ID
+                // The tenant must always have a valid planId (required field)
             } else {
                 console.error('PUT /api/admin/super/tenants - Invalid plan ID:', planId);
                 return NextResponse.json({ 
