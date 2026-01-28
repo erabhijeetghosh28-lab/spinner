@@ -112,7 +112,7 @@ export default function Template2Hero({ section, campaign, userId }: HeroProps) 
     };
 
     const referralsProgress = userStatus?.referralsProgress || 0;
-    const referralsRequired = userStatus?.referralsRequired || 5;
+    const referralsRequired = userStatus?.referralsRequired ?? campaign?.referralsRequiredForSpin ?? 0;
     const referralPercentage = referralsRequired > 0 ? (referralsProgress / referralsRequired) * 100 : 0;
 
     return (
@@ -180,9 +180,24 @@ export default function Template2Hero({ section, campaign, userId }: HeroProps) 
                                 >
                                     <span className="material-symbols-outlined flex-shrink-0 text-template2-primary fill-1" style={{ fontSize: '24px' }}>toll</span>
                                     <div className="flex flex-col justify-center min-w-0">
-                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-gray-400">Spins Remaining</span>
+                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-gray-400">Spin Remaining</span>
                                         <span className="text-xl font-black leading-none mt-0.5 whitespace-nowrap text-white">
                                             {userStatus?.totalAvailable?.toString().padStart(2, '0') || '02'}
+                                        </span>
+                                    </div>
+                                </motion.div>
+                                {/* Joined Users Badge */}
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="bg-template2-navy-muted px-6 py-3.5 rounded-full shadow-[0_0_20px_rgba(0,242,255,0.2)] border-2 border-template2-primary flex items-center gap-3 overflow-visible"
+                                >
+                                    <span className="material-symbols-outlined flex-shrink-0 text-template2-primary fill-1" style={{ fontSize: '24px' }}>group</span>
+                                    <div className="flex flex-col justify-center min-w-0">
+                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-gray-400">Joined Users</span>
+                                        <span className="text-xl font-black leading-none mt-0.5 whitespace-nowrap text-white">
+                                            {userStatus?.totalReferrals?.toString().padStart(2, '0') || '00'}
                                         </span>
                                     </div>
                                 </motion.div>
@@ -269,33 +284,35 @@ export default function Template2Hero({ section, campaign, userId }: HeroProps) 
                                     </div>
                                 )}
 
-                                <div className="flex flex-col gap-3 p-4 rounded-xl bg-background-light border border-gray-100">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">Referral Power</span>
-                                            <span className="font-bold text-sm text-[#181411]">Invite {referralsRequired} friends</span>
+                                {referralsRequired > 0 && (
+                                    <div className="flex flex-col gap-3 p-4 rounded-xl bg-background-light border border-gray-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">Referral Power</span>
+                                                <span className="font-bold text-sm text-[#181411]">Invite {referralsRequired} friends</span>
+                                            </div>
+                                            <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
+                                                +1 Spin
+                                            </div>
                                         </div>
-                                        <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
-                                            +1 Spin
+                                        <button 
+                                            onClick={handleWhatsAppShare}
+                                            className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all"
+                                        >
+                                            <span className="material-symbols-outlined !text-[18px]">share</span>
+                                            Share on WhatsApp
+                                        </button>
+                                        <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-1">
+                                            <div 
+                                                className="bg-[#25D366] h-full transition-all"
+                                                style={{ width: `${Math.min(referralPercentage, 100)}%` }}
+                                            ></div>
                                         </div>
+                                        <p className="text-[10px] text-center text-[#8a7560]">
+                                            {referralsProgress}/{referralsRequired} friends invited
+                                        </p>
                                     </div>
-                                    <button 
-                                        onClick={handleWhatsAppShare}
-                                        className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all"
-                                    >
-                                        <span className="material-symbols-outlined !text-[18px]">share</span>
-                                        Share on WhatsApp
-                                    </button>
-                                    <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-1">
-                                        <div 
-                                            className="bg-[#25D366] h-full transition-all"
-                                            style={{ width: `${Math.min(referralPercentage, 100)}%` }}
-                                        ></div>
-                                    </div>
-                                    <p className="text-[10px] text-center text-[#8a7560]">
-                                        {referralsProgress}/{referralsRequired} friends invited
-                                    </p>
-                                </div>
+                                )}
                             </div>
                         </motion.div>
                     </div>

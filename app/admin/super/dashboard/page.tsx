@@ -74,13 +74,13 @@ export default function SuperAdminDashboard() {
 
             {/* Tabs */}
             <div className="bg-slate-900 border-b border-slate-800">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex space-x-1">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                    <div className="flex space-x-1 overflow-x-auto no-scrollbar">
                         {(['overview', 'tenants', 'plans'] as const).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-6 py-4 font-semibold text-sm uppercase tracking-wider transition-colors ${activeTab === tab
+                                className={`px-6 py-4 font-semibold text-sm uppercase tracking-wider transition-colors whitespace-nowrap ${activeTab === tab
                                         ? 'text-amber-500 border-b-2 border-amber-500'
                                         : 'text-slate-400 hover:text-slate-300'
                                     }`}
@@ -93,7 +93,7 @@ export default function SuperAdminDashboard() {
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-6 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
                 {activeTab === 'overview' && <OverviewTab stats={stats} />}
                 {activeTab === 'tenants' && <TenantsTab tenants={tenants} onRefresh={fetchData} />}
                 {activeTab === 'plans' && <PlansTab plans={plans} onRefresh={fetchData} />}

@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
         const mrr = tenantsWithPlans.reduce((sum, tenant) => {
             if (tenant.subscriptionPlan) {
                 // Convert to monthly based on billing cycle
-                if (tenant.subscriptionPlan.billingCycle === 'MONTHLY') {
+                if (tenant.subscriptionPlan.interval === 'MONTHLY' || tenant.subscriptionPlan.interval === 'month') {
                     return sum + tenant.subscriptionPlan.price;
-                } else if (tenant.subscriptionPlan.billingCycle === 'YEARLY') {
+                } else if (tenant.subscriptionPlan.interval === 'YEARLY' || tenant.subscriptionPlan.interval === 'year') {
                     return sum + (tenant.subscriptionPlan.price / 12);
                 }
             }

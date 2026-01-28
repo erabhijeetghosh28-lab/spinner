@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { subHours, differenceInMinutes } from 'date-fns';
+import { differenceInMinutes, subHours } from 'date-fns';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Note: Not caching user status as it's user-specific and changes frequently
 export async function GET(req: NextRequest) {
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
 
         // Referral progress toward next bonus
         const referralsRequired = campaign.referralsRequiredForSpin;
-        const referralsProgress = referralsRequired > 0 ? user.successfulReferrals % referralsRequired : 0;
+        const referralsProgress = referralsRequired > 0 ? user.successfulReferrals % referralsRequired : user.successfulReferrals;
 
         return NextResponse.json({
             canSpin,
@@ -99,8 +99,9 @@ export async function GET(req: NextRequest) {
             bonusSpinsAvailable,
             totalAvailable: baseSpinsAvailable + bonusSpinsAvailable,
             nextSpinInHours,
-            referralsRequired,
+            referralsRequired: referralsRequired > 0 ? referralsRequired : 0,
             referralsProgress,
+            totalReferrals: user.successfulReferrals, // Total referrals made by this user
         });
     } catch (error: any) {
         console.error('[user/status] error:', error);

@@ -2,7 +2,7 @@
 
 import AdminNav from '@/components/admin/AdminNav';
 import axios from 'axios';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -89,40 +89,53 @@ export default function ScannerPage() {
     setLoading(false);
   }, [router]);
 
+  const isScannerRunningRef = useRef(false);
+
   useEffect(() => {
+    // Cleanup scanner on unmount
     return () => {
-      // Cleanup scanner on unmount
-      if (html5QrCodeRef.current && scanning) {
-        html5QrCodeRef.current.stop().catch(console.error);
+      if (html5QrCodeRef.current && isScannerRunningRef.current) {
+        html5QrCodeRef.current.stop().catch(err => {
+          console.warn('Failed to stop scanner on unmount:', err);
+        });
       }
     };
-  }, [scanning]);
+  }, []);
 
   const startScanning = async () => {
     try {
       setCameraError('');
       setError('');
       
+      // 1. Show the scanner container first so it has dimensions (clientWidth)
+      setScanning(true);
+      
+      // 2. Wait for React/DOM to render the class change from hidden -> block
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (!html5QrCodeRef.current) {
         html5QrCodeRef.current = new Html5Qrcode(scannerDivId);
       }
 
+      // If already running (marked by our ref), don't start again
+      if (isScannerRunningRef.current) {
+        return;
+      }
+
       const config = {
-        fps: 60, // Maximum FPS for fastest detection
-        qrbox: { width: 300, height: 300 }, // Larger detection box
-        aspectRatio: 1.777778,
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
         videoConstraints: {
           facingMode: 'environment',
-          aspectRatio: 1.777778,
-          // Request higher resolution for better QR detection
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
+          focusMode: 'continuous'
         },
-        formatsToSupport: [0], // QR_CODE only
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
         experimentalFeatures: {
           useBarCodeDetectorIfSupported: true
         },
-        // Disable verbose logging for better performance
         verbose: false
       };
 
@@ -130,48 +143,45 @@ export default function ScannerPage() {
         { facingMode: 'environment' },
         config,
         async (decodedText) => {
-          // QR code detected - stop immediately
           console.log('QR Code detected:', decodedText);
-          
-          // Stop scanner first to prevent multiple detections
-          setScanning(false);
-          if (html5QrCodeRef.current) {
-            try {
-              await html5QrCodeRef.current.stop();
-            } catch (e) {
-              console.log('Scanner already stopped');
-            }
-          }
-          
-          // Then validate the voucher
+          await stopScanning();
           await validateVoucher(decodedText);
         },
         (errorMessage) => {
-          // Scanning errors are normal, ignore them
+          // ignore
         }
       );
 
-      setScanning(true);
+      isScannerRunningRef.current = true;
     } catch (err: any) {
       console.error('Camera error:', err);
       setCameraError(err.message || 'Failed to access camera. Please ensure HTTPS and camera permissions are granted.');
+      isScannerRunningRef.current = false;
+      setScanning(false);
     }
   };
 
   const stopScanning = async () => {
+    if (!html5QrCodeRef.current) return;
+    
+    // Optimistically update UI
+    setScanning(false);
+
     try {
-      if (html5QrCodeRef.current) {
-        // Try to stop the scanner, but don't throw if it's already stopped
-        await html5QrCodeRef.current.stop().catch(() => {
-          // Silently ignore if scanner is already stopped
-          console.log('Scanner already stopped or not running');
-        });
+      if (isScannerRunningRef.current) {
+        isScannerRunningRef.current = false;
+        await html5QrCodeRef.current.stop();
       }
     } catch (err) {
-      console.error('Error stopping scanner:', err);
+      console.warn('Error stopping scanner:', err);
+      // Ensure state is consistent even if stop failed (e.g. already stopped)
+      isScannerRunningRef.current = false;
     } finally {
-      // Always reset the scanning state, regardless of errors
-      setScanning(false);
+      // Clear the ref so we create a new instance next time. 
+      // This is crucial because the <div> might be unmounted/remounted (e.g. when showing validation results),
+      // and checking !html5QrCodeRef.current in startScanning ensures we verify the DOM element exists again.
+      // html5-qrcode might cache the element reference.
+      html5QrCodeRef.current = null;
     }
   };
 
@@ -315,87 +325,192 @@ export default function ScannerPage() {
           <h1 className="text-3xl font-bold text-amber-500">Scan Voucher</h1>
         </div>
 
-        {/* QR Scanner Section */}
+        {/* QR Scanner Section (and Validation Result) */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 mb-6">
-          <h2 className="text-xl font-bold mb-4">QR Code Scanner</h2>
+          <h2 className="text-xl font-bold mb-4">
+            {validationResult ? 'Validation Result' : 'QR Code Scanner'}
+          </h2>
           
-          <div className="mb-6">
-            {scanning && (
-              <div className="mb-4 bg-amber-500/20 border border-amber-500 rounded-lg p-3 text-center">
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-pulse w-3 h-3 bg-amber-500 rounded-full"></div>
-                  <span className="text-amber-500 font-semibold">Scanning for QR codes...</span>
+          {validationResult ? (
+             <div className={`border rounded-xl p-8 ${
+                validationResult.valid 
+                  ? 'bg-green-500/10 border-green-500' 
+                  : 'bg-red-500/10 border-red-500'
+              }`}>
+                <h2 className="text-2xl font-bold mb-6">
+                  {validationResult.valid ? '✓ Valid Voucher' : '✗ Invalid Voucher'}
+                </h2>
+
+                {validationResult.valid && validationResult.voucher ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-400">Voucher Code</p>
+                        <p className="text-xl font-bold text-amber-500">{validationResult.voucher.code}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-400">Status</p>
+                        <p className="text-xl font-bold text-green-500">VALID</p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-700 pt-4">
+                      <p className="text-sm text-slate-400 mb-2">Prize</p>
+                      <p className="text-lg font-bold">{validationResult.voucher.prize.name}</p>
+                      {validationResult.voucher.prize.description && (
+                        <p className="text-sm text-slate-400 mt-1">{validationResult.voucher.prize.description}</p>
+                      )}
+                    </div>
+
+                    <div className="border-t border-slate-700 pt-4">
+                      <p className="text-sm text-slate-400 mb-2">Customer</p>
+                      <p className="font-bold">{validationResult.voucher.customer.name}</p>
+                      <p className="text-sm text-slate-400">{validationResult.voucher.customer.phone}</p>
+                    </div>
+
+                    <div className="border-t border-slate-700 pt-4 grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-400">Expires</p>
+                        <p className="font-bold">{new Date(validationResult.voucher.expiresAt).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-400">Redemptions</p>
+                        <p className="font-bold">
+                          {validationResult.voucher.redemptionCount} / {validationResult.voucher.redemptionLimit}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => redeemVoucher(validationResult.voucher!.code)}
+                      disabled={redeeming}
+                      className="w-full py-4 bg-green-500 hover:bg-green-400 text-white font-bold rounded-xl transition-all mt-6 disabled:opacity-50"
+                    >
+                      {redeeming ? 'Redeeming...' : 'Redeem Voucher'}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setValidationResult(null);
+                        setManualCode('');
+                        startScanning();
+                      }}
+                      className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all mt-3"
+                    >
+                      Scan Another Voucher
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-lg mb-2">
+                      <span className="font-bold">Reason:</span> {validationResult.reason}
+                    </p>
+                    {validationResult.details && (
+                      <div className="text-sm text-slate-400 mt-4">
+                        {validationResult.details.expiresAt && (
+                          <p>Expired on: {new Date(validationResult.details.expiresAt).toLocaleDateString()}</p>
+                        )}
+                        {validationResult.details.redeemedAt && (
+                          <p>Redeemed on: {new Date(validationResult.details.redeemedAt).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                    )}
+                    
+                    <button
+                      onClick={() => {
+                        setValidationResult(null);
+                        setManualCode('');
+                        setError('');
+                        startScanning();
+                      }}
+                      className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all mt-6"
+                    >
+                      Scan Another Voucher
+                    </button>
+                  </div>
+                )}
+              </div>
+          ) : (
+            <>
+              <div className="mb-6">
+                {scanning && (
+                  <div className="mb-4 bg-amber-500/20 border border-amber-500 rounded-lg p-3 text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-pulse w-3 h-3 bg-amber-500 rounded-full"></div>
+                      <span className="text-amber-500 font-semibold">Scanning for QR codes...</span>
+                    </div>
+                    <p className="text-xs text-amber-400 mt-1">Position QR code within the frame</p>
+                  </div>
+                )}
+                
+                <div 
+                  id={scannerDivId} 
+                  className={`${scanning ? 'block' : 'hidden'} w-full rounded-xl overflow-hidden border-4 ${
+                    scanning ? 'border-amber-500 shadow-lg shadow-amber-500/50' : 'border-slate-700'
+                  }`}
+                  style={{ 
+                    minHeight: '400px',
+                    maxWidth: '100%',
+                    position: 'relative'
+                  }}
+                />
+                
+                {!scanning && (
+                  <div className="bg-slate-800 border-2 border-dashed border-slate-700 rounded-xl p-12 text-center min-h-[400px] flex flex-col items-center justify-center">
+                    <svg className="w-16 h-16 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    <p className="text-slate-400">Camera preview will appear here</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Add global CSS for the scanner video element */}
+              <style jsx global>{`
+                #qr-reader video {
+                  width: 100% !important;
+                  height: auto !important;
+                  border-radius: 0.75rem;
+                }
+                #qr-reader {
+                  border-radius: 0.75rem;
+                }
+                #qr-reader__dashboard {
+                  display: none !important;
+                }
+                #qr-reader__dashboard_section {
+                  display: none !important;
+                }
+                #qr-reader__camera_selection {
+                  display: none !important;
+                }
+              `}</style>
+    
+              {cameraError && (
+                <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg mb-4 text-sm">
+                  {cameraError}
                 </div>
-                <p className="text-xs text-amber-400 mt-1">Position QR code within the frame</p>
+              )}
+    
+              <div className="flex gap-4">
+                {!scanning ? (
+                  <button
+                    onClick={startScanning}
+                    className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all"
+                  >
+                    Start Camera
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopScanning}
+                    className="flex-1 py-3 bg-red-500 hover:bg-red-400 text-white font-bold rounded-xl transition-all"
+                  >
+                    Stop Camera
+                  </button>
+                )}
               </div>
-            )}
-            
-            <div 
-              id={scannerDivId} 
-              className={`${scanning ? 'block' : 'hidden'} w-full rounded-xl overflow-hidden border-4 ${
-                scanning ? 'border-amber-500 shadow-lg shadow-amber-500/50' : 'border-slate-700'
-              }`}
-              style={{ 
-                minHeight: '400px',
-                maxWidth: '100%',
-                position: 'relative'
-              }}
-            />
-            
-            {!scanning && (
-              <div className="bg-slate-800 border-2 border-dashed border-slate-700 rounded-xl p-12 text-center min-h-[400px] flex flex-col items-center justify-center">
-                <svg className="w-16 h-16 mx-auto mb-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                </svg>
-                <p className="text-slate-400">Camera preview will appear here</p>
-              </div>
-            )}
-          </div>
-          
-          {/* Add global CSS for the scanner video element */}
-          <style jsx global>{`
-            #qr-reader video {
-              width: 100% !important;
-              height: auto !important;
-              border-radius: 0.75rem;
-            }
-            #qr-reader {
-              border-radius: 0.75rem;
-            }
-            #qr-reader__dashboard {
-              display: none !important;
-            }
-            #qr-reader__dashboard_section {
-              display: none !important;
-            }
-            #qr-reader__camera_selection {
-              display: none !important;
-            }
-          `}</style>
-
-          {cameraError && (
-            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg mb-4 text-sm">
-              {cameraError}
-            </div>
+            </>
           )}
-
-          <div className="flex gap-4">
-            {!scanning ? (
-              <button
-                onClick={startScanning}
-                className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all"
-              >
-                Start Camera
-              </button>
-            ) : (
-              <button
-                onClick={stopScanning}
-                className="flex-1 py-3 bg-red-500 hover:bg-red-400 text-white font-bold rounded-xl transition-all"
-              >
-                Stop Camera
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Manual Entry Section */}
@@ -489,107 +604,6 @@ export default function ScannerPage() {
           </div>
         )}
 
-        {/* Validation Result */}
-        {validationResult && (
-          <div className={`border rounded-2xl p-8 mb-6 ${
-            validationResult.valid 
-              ? 'bg-green-500/10 border-green-500' 
-              : 'bg-red-500/10 border-red-500'
-          }`}>
-            <h2 className="text-2xl font-bold mb-6">
-              {validationResult.valid ? '✓ Valid Voucher' : '✗ Invalid Voucher'}
-            </h2>
-
-            {validationResult.valid && validationResult.voucher ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-slate-400">Voucher Code</p>
-                    <p className="text-xl font-bold text-amber-500">{validationResult.voucher.code}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-400">Status</p>
-                    <p className="text-xl font-bold text-green-500">VALID</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-700 pt-4">
-                  <p className="text-sm text-slate-400 mb-2">Prize</p>
-                  <p className="text-lg font-bold">{validationResult.voucher.prize.name}</p>
-                  {validationResult.voucher.prize.description && (
-                    <p className="text-sm text-slate-400 mt-1">{validationResult.voucher.prize.description}</p>
-                  )}
-                </div>
-
-                <div className="border-t border-slate-700 pt-4">
-                  <p className="text-sm text-slate-400 mb-2">Customer</p>
-                  <p className="font-bold">{validationResult.voucher.customer.name}</p>
-                  <p className="text-sm text-slate-400">{validationResult.voucher.customer.phone}</p>
-                </div>
-
-                <div className="border-t border-slate-700 pt-4 grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-slate-400">Expires</p>
-                    <p className="font-bold">{new Date(validationResult.voucher.expiresAt).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-400">Redemptions</p>
-                    <p className="font-bold">
-                      {validationResult.voucher.redemptionCount} / {validationResult.voucher.redemptionLimit}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => redeemVoucher(validationResult.voucher!.code)}
-                  disabled={redeeming}
-                  className="w-full py-4 bg-green-500 hover:bg-green-400 text-white font-bold rounded-xl transition-all mt-6 disabled:opacity-50"
-                >
-                  {redeeming ? 'Redeeming...' : 'Redeem Voucher'}
-                </button>
-                
-                <button
-                  onClick={() => {
-                    setValidationResult(null);
-                    setManualCode('');
-                    startScanning();
-                  }}
-                  className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all mt-3"
-                >
-                  Scan Another Voucher
-                </button>
-              </div>
-            ) : (
-              <div>
-                <p className="text-lg mb-2">
-                  <span className="font-bold">Reason:</span> {validationResult.reason}
-                </p>
-                {validationResult.details && (
-                  <div className="text-sm text-slate-400 mt-4">
-                    {validationResult.details.expiresAt && (
-                      <p>Expired on: {new Date(validationResult.details.expiresAt).toLocaleDateString()}</p>
-                    )}
-                    {validationResult.details.redeemedAt && (
-                      <p>Redeemed on: {new Date(validationResult.details.redeemedAt).toLocaleDateString()}</p>
-                    )}
-                  </div>
-                )}
-                
-                <button
-                  onClick={() => {
-                    setValidationResult(null);
-                    setManualCode('');
-                    setError('');
-                    startScanning();
-                  }}
-                  className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all mt-6"
-                >
-                  Scan Another Voucher
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
       </div>
     </div>

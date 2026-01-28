@@ -30,6 +30,8 @@ export default function HeroSection({ section, campaign, brandColor, template = 
     // Use brand color or default orange
     const primaryColor = brandColor || '#f48c25';
 
+    const referralsRequired = campaign?.referralsRequiredForSpin ?? 0;
+
     const fetchSocialTasks = () => {
         if (campaign?.id) {
             axios.get(`/api/social-tasks?campaignId=${campaign.id}${userId ? `&userId=${userId}` : ''}`)
@@ -249,26 +251,27 @@ export default function HeroSection({ section, campaign, brandColor, template = 
                                     </div>
                                 )}
 
-                                {/* Referral Power Card */}
-                                <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#221910] border border-gray-100 dark:border-gray-700">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">
-                                                Referral Power
-                                            </span>
-                                            <span className="font-bold text-sm text-[#181411] dark:text-white">
-                                                Invite Friends
-                                            </span>
+                                {referralsRequired > 0 && (
+                                    <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#221910] border border-gray-100 dark:border-gray-700">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">
+                                                    Referral Power
+                                                </span>
+                                                <span className="font-bold text-sm text-[#181411] dark:text-white">
+                                                    Invite Friends
+                                                </span>
+                                            </div>
+                                            <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
+                                                +1 Spin
+                                            </div>
                                         </div>
-                                        <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
-                                            +1 Spin
-                                        </div>
+                                        <button className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
+                                            <span className="material-symbols-outlined !text-[18px]">share</span>
+                                            Share on WhatsApp
+                                        </button>
                                     </div>
-                                    <button className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
-                                        <span className="material-symbols-outlined !text-[18px]">share</span>
-                                        Share on WhatsApp
-                                    </button>
-                                </div>
+                                )}
                             </div>
                         </motion.div>
                     </div>

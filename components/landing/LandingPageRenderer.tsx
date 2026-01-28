@@ -74,8 +74,8 @@ export default function LandingPageRenderer({ campaignId, userId }: LandingPageR
             // Hide login modal immediately after successful login
             setShowLoginModal(false);
 
-            // Save user with 1-minute idle expiry
-            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            // Save user with 24-hour idle expiry
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
             localStorage.setItem('offer-wheel-user', JSON.stringify(userData));
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
         } catch (err: any) {
@@ -98,13 +98,13 @@ export default function LandingPageRenderer({ campaignId, userId }: LandingPageR
         // Initialize expiry time if not set
         const savedExpiry = localStorage.getItem('offer-wheel-user-expiry');
         if (!savedExpiry) {
-            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
         }
 
         const resetIdleTimer = () => {
-            // Reset expiry time to 1 minute from now
-            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            // Reset expiry time to 24 hours from now
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
         };
 
@@ -138,7 +138,8 @@ export default function LandingPageRenderer({ campaignId, userId }: LandingPageR
                 activityTimeout = null;
             }, 5000); // Throttle to max once per 5 seconds
             
-            resetIdleTimer();
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+            localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
         };
 
         // Add event listeners for user activity

@@ -112,7 +112,7 @@ export default function Template3Hero({ section, campaign, userId }: HeroProps) 
     };
 
     const referralsProgress = userStatus?.referralsProgress || 0;
-    const referralsRequired = userStatus?.referralsRequired || 5;
+    const referralsRequired = userStatus?.referralsRequired ?? campaign?.referralsRequiredForSpin ?? 0;
     const referralPercentage = referralsRequired > 0 ? (referralsProgress / referralsRequired) * 100 : 0;
 
     return (
@@ -190,9 +190,24 @@ export default function Template3Hero({ section, campaign, userId }: HeroProps) 
                                 >
                                     <span className="material-symbols-outlined flex-shrink-0 text-template3-primary fill-1" style={{ fontSize: '24px' }}>stars</span>
                                     <div className="flex flex-col justify-center min-w-0">
-                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-gray-400 dark:text-gray-500 tracking-widest">Spins Left</span>
+                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-gray-400 dark:text-gray-500 tracking-widest">Spin Remaining</span>
                                         <span className="text-2xl font-serif font-black leading-none mt-0.5 whitespace-nowrap text-[#181411] dark:text-white">
                                             {userStatus?.totalAvailable?.toString().padStart(2, '0') || '02'}
+                                        </span>
+                                    </div>
+                                </motion.div>
+                                {/* Joined Users Badge */}
+                                <motion.div
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="bg-white dark:bg-[#2C241D] px-8 py-3.5 rounded-none shadow-2xl border border-template3-primary flex items-center gap-4 overflow-visible"
+                                >
+                                    <span className="material-symbols-outlined flex-shrink-0 text-template3-primary fill-1" style={{ fontSize: '24px' }}>group</span>
+                                    <div className="flex flex-col justify-center min-w-0">
+                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-gray-400 dark:text-gray-500 tracking-widest">Joined Users</span>
+                                        <span className="text-2xl font-serif font-black leading-none mt-0.5 whitespace-nowrap text-[#181411] dark:text-white">
+                                            {userStatus?.totalReferrals?.toString().padStart(2, '0') || '00'}
                                         </span>
                                     </div>
                                 </motion.div>
@@ -274,33 +289,35 @@ export default function Template3Hero({ section, campaign, userId }: HeroProps) 
                                     </div>
                                 )}
 
-                                <div className="flex flex-col gap-4 p-5 bg-white dark:bg-background-dark border border-template3-beige-light dark:border-white/5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-whatsapp uppercase tracking-[0.15em]">Ambassador Program</span>
-                                            <span className="font-bold text-sm text-[#181411] dark:text-white">Invite {referralsRequired} Peers</span>
+                                {referralsRequired > 0 && (
+                                    <div className="flex flex-col gap-4 p-5 bg-white dark:bg-background-dark border border-template3-beige-light dark:border-white/5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold text-whatsapp uppercase tracking-[0.15em]">Ambassador Program</span>
+                                                <span className="font-bold text-sm text-[#181411] dark:text-white">Invite {referralsRequired} Peers</span>
+                                            </div>
+                                            <div className="bg-whatsapp/5 text-whatsapp border border-whatsapp/20 px-2 py-1 text-[10px] font-bold uppercase tracking-tighter">
+                                                +1 Spin
+                                            </div>
                                         </div>
-                                        <div className="bg-whatsapp/5 text-whatsapp border border-whatsapp/20 px-2 py-1 text-[10px] font-bold uppercase tracking-tighter">
-                                            +1 Spin
+                                        <button 
+                                            onClick={handleWhatsAppShare}
+                                            className="w-full h-11 bg-whatsapp text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+                                        >
+                                            <span className="material-symbols-outlined !text-[18px]">send</span>
+                                            Share Invitation
+                                        </button>
+                                        <div className="w-full bg-gray-100 dark:bg-gray-800 h-1 mt-1">
+                                            <div 
+                                                className="bg-whatsapp h-full transition-all"
+                                                style={{ width: `${Math.min(referralPercentage, 100)}%` }}
+                                            ></div>
                                         </div>
+                                        <p className="text-[10px] text-center text-gray-500 dark:text-gray-400">
+                                            {referralsProgress}/{referralsRequired} friends invited
+                                        </p>
                                     </div>
-                                    <button 
-                                        onClick={handleWhatsAppShare}
-                                        className="w-full h-11 bg-whatsapp text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:opacity-90 transition-all"
-                                    >
-                                        <span className="material-symbols-outlined !text-[18px]">send</span>
-                                        Share Invitation
-                                    </button>
-                                    <div className="w-full bg-gray-100 dark:bg-gray-800 h-1 mt-1">
-                                        <div 
-                                            className="bg-whatsapp h-full transition-all"
-                                            style={{ width: `${Math.min(referralPercentage, 100)}%` }}
-                                        ></div>
-                                    </div>
-                                    <p className="text-[10px] text-center text-gray-500 dark:text-gray-400">
-                                        {referralsProgress}/{referralsRequired} friends invited
-                                    </p>
-                                </div>
+                                )}
                             </div>
                         </motion.div>
                     </div>

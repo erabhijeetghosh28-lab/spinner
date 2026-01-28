@@ -15,6 +15,8 @@ export default function StitchHeroSection({ campaign, primaryColor = '#f48c25', 
     const [socialTasks, setSocialTasks] = useState<any[]>([]);
     const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
+    const referralsRequired = campaign?.referralsRequiredForSpin ?? 0;
+
     // Determine campaign URL
     const tenantSlug = campaign?.tenant?.slug || 'default';
     const campaignUrl = `/?tenant=${tenantSlug}&spin=true`;
@@ -45,11 +47,22 @@ export default function StitchHeroSection({ campaign, primaryColor = '#f48c25', 
                 {/* Left Column: Spin Wheel Visualization */}
                 <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
                     {/* Spins Remaining Badge */}
-                    <div className="absolute -top-4 z-30 bg-white dark:bg-[#1e293b] px-6 py-3 rounded-full shadow-xl border-2 flex items-center gap-3" style={{ borderColor: primaryColor }}>
-                        <span className="material-symbols-outlined fill-1" style={{ color: primaryColor }}>toll</span>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold text-[#8a7560] dark:text-gray-400 leading-none">Spins Remaining</span>
-                            <span className="text-xl font-black text-[#181411] dark:text-white leading-none">02</span>
+                    <div className="absolute -top-4 z-30 flex gap-4">
+                        {/* Spin Remaining Badge */}
+                        <div className="bg-white dark:bg-[#1e293b] px-6 py-3 rounded-full shadow-xl border-2 flex items-center gap-3" style={{ borderColor: primaryColor }}>
+                            <span className="material-symbols-outlined fill-1" style={{ color: primaryColor }}>toll</span>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-bold text-[#8a7560] dark:text-gray-400 leading-none">Spin Remaining</span>
+                                <span className="text-xl font-black text-[#181411] dark:text-white leading-none">02</span>
+                            </div>
+                        </div>
+                        {/* Joined Users Badge */}
+                         <div className="bg-white dark:bg-[#1e293b] px-6 py-3 rounded-full shadow-xl border-2 flex items-center gap-3" style={{ borderColor: primaryColor }}>
+                            <span className="material-symbols-outlined fill-1" style={{ color: primaryColor }}>group</span>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-bold text-[#8a7560] dark:text-gray-400 leading-none">Joined Users</span>
+                                <span className="text-xl font-black text-[#181411] dark:text-white leading-none">00</span>
+                            </div>
                         </div>
                     </div>
 
@@ -155,21 +168,23 @@ export default function StitchHeroSection({ campaign, primaryColor = '#f48c25', 
                                 </div>
                             )}
 
-                             <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#181411] border border-gray-100 dark:border-gray-700">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex flex-col">
-                                        <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">Referral Power</span>
-                                        <span className="font-bold text-sm text-[#181411] dark:text-white">Invite Friends</span>
+                             {referralsRequired > 0 && (
+                                <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#181411] border border-gray-100 dark:border-gray-700">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">Referral Power</span>
+                                            <span className="font-bold text-sm text-[#181411] dark:text-white">Invite Friends</span>
+                                        </div>
+                                        <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
+                                            +1 Spin
+                                        </div>
                                     </div>
-                                    <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
-                                        +1 Spin
-                                    </div>
+                                    <button className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
+                                        <span className="material-symbols-outlined !text-[18px]">share</span>
+                                        Share on WhatsApp
+                                    </button>
                                 </div>
-                                <button className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
-                                    <span className="material-symbols-outlined !text-[18px]">share</span>
-                                    Share on WhatsApp
-                                </button>
-                            </div>
+                             )}
                         </div>
                     </div>
                 </div>

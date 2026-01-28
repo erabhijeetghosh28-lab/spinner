@@ -333,12 +333,12 @@ export default function AdminDashboard() {
             {/* Header */}
             <AdminNav />
             
-            <div className="p-6 md:p-8 lg:p-12">
+            <div className="p-4 md:p-8 lg:p-12">
             <div className="max-w-[1600px] mx-auto">
 
                 {/* Tabs */}
                 <div className="bg-slate-900 border-b border-slate-800 mb-8">
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                         {(['overview', 'campaigns', ...(planInfo?.allowAnalytics ? ['analytics'] : [])] as ('overview' | 'campaigns' | 'analytics')[]).map((tab) => (
                             <button
                                 key={tab}
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
                                     <h2 className="text-lg font-bold text-indigo-400 mb-1">Customer Campaign Link</h2>
                                     <p className="text-xs text-slate-400 mb-4">Share this unique link with your customers.</p>
 
-                                    <div className="flex items-center space-x-2 bg-black/40 border border-slate-700 rounded-xl p-2">
+                                    <div className="flex items-center space-x-2 bg-black/40 border border-slate-700 rounded-xl p-2 min-w-0">
                                         <code className="flex-1 text-xs text-indigo-300 font-mono truncate px-2">
                                             {typeof window !== 'undefined' ? `${window.location.origin}/?tenant=${tenantSlug}` : 'Loading...'}
                                         </code>
