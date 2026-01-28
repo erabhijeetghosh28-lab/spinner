@@ -1,5 +1,6 @@
 'use client';
 
+import AdminNav from '@/components/admin/AdminNav';
 import axios from 'axios';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useRouter } from 'next/navigation';
@@ -589,6 +590,7 @@ export default function ScannerPage() {
             )}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
