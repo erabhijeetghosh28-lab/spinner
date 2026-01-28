@@ -184,6 +184,16 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
         }
 
+        // Verify tenant exists
+        const existingTenant = await prisma.tenant.findUnique({
+            where: { id }
+        });
+
+        if (!existingTenant) {
+            console.error('PUT /api/admin/super/tenants - Tenant not found:', id);
+            return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+        }
+
         const updateData: any = {};
         if (name) updateData.name = name;
         if (slug) {
@@ -242,10 +252,16 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ success: true, tenant });
     } catch (error: any) {
         console.error('PUT /api/admin/super/tenants - Error updating tenant:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
+        
+        // Return detailed error in all environments for debugging
         return NextResponse.json({ 
             error: 'Failed to update tenant',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: error.message,
+            errorName: error.name,
+            errorCode: error.code
         }, { status: 500 });
     }
 }
