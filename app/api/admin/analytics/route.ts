@@ -41,6 +41,13 @@ export async function GET(req: NextRequest) {
         const end = endDate ? new Date(endDate) : new Date();
         const start = startDate ? new Date(startDate) : subDays(end, 30);
 
+        // Set end date to end of day to include all spins on that day
+        end.setHours(23, 59, 59, 999);
+        // Set start date to beginning of day
+        start.setHours(0, 0, 0, 0);
+
+        console.log('Analytics date range:', { start, end, tenantId });
+
         // Validate dates
         if (isNaN(end.getTime())) {
             return NextResponse.json({ error: 'Invalid end date format' }, { status: 400 });
@@ -174,6 +181,15 @@ export async function GET(req: NextRequest) {
         const chartData = Object.entries(dailyAggregated)
             .map(([date, spins]) => ({ date, spins }))
             .sort((a, b) => a.date.localeCompare(b.date));
+
+        console.log('Analytics results:', {
+            totalSpins,
+            totalUsers,
+            prizesWon,
+            dailySpinsCount: dailySpins.length,
+            chartDataCount: chartData.length,
+            prizeDataCount: prizeData.length
+        });
 
         return NextResponse.json({
             kpis: {
