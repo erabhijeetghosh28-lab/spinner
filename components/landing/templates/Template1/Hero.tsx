@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
+import PrizeModal from '@/components/PrizeModal';
 import { TaskInstructionModal } from '@/components/social/TaskInstructionModal';
 import SpinWheel from '@/components/SpinWheel';
-import PrizeModal from '@/components/PrizeModal';
 import { soundEffects } from '@/lib/soundEffects';
+import axios from 'axios';
 import confetti from 'canvas-confetti';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 interface HeroProps {
     section: any;
@@ -70,13 +69,17 @@ export default function Template1Hero({ section, campaign, userId }: HeroProps) 
         }
     }, [userId, campaign?.id]);
 
-    // Fetch social tasks
-    useEffect(() => {
+    const fetchSocialTasks = () => {
         if (campaign?.id) {
             axios.get(`/api/social-tasks?campaignId=${campaign.id}${userId ? `&userId=${userId}` : ''}`)
                 .then(res => setSocialTasks(res.data.tasks || []))
                 .catch(err => console.error('Failed to fetch social tasks:', err));
         }
+    };
+
+    // Fetch social tasks
+    useEffect(() => {
+        fetchSocialTasks();
     }, [campaign?.id, userId]);
 
     const handleTaskClick = (task: any) => {
@@ -427,6 +430,9 @@ export default function Template1Hero({ section, campaign, userId }: HeroProps) 
                             axios.get(`/api/user/status?userId=${userId}&campaignId=${campaign.id}`)
                                 .then(res => setUserStatus(res.data))
                                 .catch(err => console.error('Failed to refresh user status:', err));
+                            
+                            // Also refresh social tasks so the completed one is hidden
+                            fetchSocialTasks();
                         }
                     }}
                 />

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * GET /api/social-tasks?campaignId=xxx
@@ -10,6 +10,7 @@ import prisma from '@/lib/prisma';
 export async function GET(req: NextRequest) {
     try {
         const campaignId = req.nextUrl.searchParams.get('campaignId');
+        const userId = req.nextUrl.searchParams.get('userId');
 
         if (!campaignId) {
             return NextResponse.json({ error: 'Campaign ID is required' }, { status: 400 });
@@ -31,20 +32,38 @@ export async function GET(req: NextRequest) {
                 campaignId,
                 isActive: true,
             },
-            select: {
-                id: true,
-                platform: true,
-                actionType: true,
-                title: true,
-                targetUrl: true,
-                spinsReward: true,
-                displayOrder: true,
+            include: {
+                completions: userId ? {
+                    where: { userId }
+                } : false
             },
             orderBy: { displayOrder: 'asc' },
         });
 
+        // Filter out verified tasks if userId is provided
+        let filteredTasks = tasks;
+        if (userId) {
+            filteredTasks = tasks.filter(task => {
+                const completion = task.completions?.[0];
+                return completion?.status !== 'VERIFIED';
+            });
+        }
+
+        // Map to simpler format for frontend
+        const resultTasks = filteredTasks.map(task => ({
+            id: task.id,
+            platform: task.platform,
+            actionType: task.actionType,
+            title: task.title,
+            targetUrl: task.targetUrl,
+            spinsReward: task.spinsReward,
+            displayOrder: task.displayOrder,
+            isCompleted: task.completions?.length > 0,
+            completion: task.completions?.[0] || null
+        }));
+
         // Automatic fix: If campaign has active tasks but socialMediaEnabled is false, enable it
-        if (tasks.length > 0 && !campaign.socialMediaEnabled) {
+        if (resultTasks.length > 0 && !campaign.socialMediaEnabled) {
             await prisma.campaign.update({
                 where: { id: campaignId },
                 data: { socialMediaEnabled: true },
@@ -52,11 +71,11 @@ export async function GET(req: NextRequest) {
         }
 
         // Return empty array if social media is disabled and no tasks exist
-        if (!campaign.socialMediaEnabled && tasks.length === 0) {
+        if (!campaign.socialMediaEnabled && (resultTasks?.length || 0) === 0) {
             return NextResponse.json({ tasks: [] });
         }
 
-        return NextResponse.json({ tasks });
+        return NextResponse.json({ tasks: resultTasks });
     } catch (error: any) {
         console.error('Error fetching social tasks:', error);
         return NextResponse.json(

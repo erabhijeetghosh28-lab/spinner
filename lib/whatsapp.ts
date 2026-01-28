@@ -139,7 +139,8 @@ export async function sendWhatsAppMedia(
 
     if (!config.apiKey || !config.sender) {
         console.warn('⚠️ WhatsApp MEDIA configuration missing, falling back to TEXT');
-        return sendWhatsAppMessage(number, `${caption}\n\nView QR Code: ${mediaUrl}`, tenantId);
+        const fallbackMessage = caption.includes(mediaUrl) ? caption : `${caption}\n\nView QR Code: ${mediaUrl}`;
+        return sendWhatsAppMessage(number, fallbackMessage, tenantId);
     }
 
     const formattedNumber = number.startsWith('91') || number.length > 10 ? number : `91${number}`;
@@ -169,7 +170,8 @@ export async function sendWhatsAppMedia(
         }
         // Fallback to text if media fails
         console.warn('⚠️ Falling back to TEXT notification due to media failure');
-        return sendWhatsAppMessage(number, `${caption}\n\nView QR Code: ${mediaUrl}`, tenantId);
+        const fallbackMessage = caption.includes(mediaUrl) ? caption : `${caption}\n\nView QR Code: ${mediaUrl}`;
+        return sendWhatsAppMessage(number, fallbackMessage, tenantId);
     }
 }
 

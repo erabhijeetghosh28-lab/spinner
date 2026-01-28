@@ -1,16 +1,43 @@
 'use client';
 
+import { TaskInstructionModal } from '@/components/social/TaskInstructionModal';
+import axios from 'axios';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface StitchHeroSectionProps {
     campaign: any;
     primaryColor?: string;
+    userId?: string | null;
 }
 
-export default function StitchHeroSection({ campaign, primaryColor = '#f48c25' }: StitchHeroSectionProps) {
+export default function StitchHeroSection({ campaign, primaryColor = '#f48c25', userId }: StitchHeroSectionProps) {
+    const [socialTasks, setSocialTasks] = useState<any[]>([]);
+    const [selectedTask, setSelectedTask] = useState<any | null>(null);
+
     // Determine campaign URL
     const tenantSlug = campaign?.tenant?.slug || 'default';
     const campaignUrl = `/?tenant=${tenantSlug}&spin=true`;
+
+    const fetchSocialTasks = () => {
+        if (campaign?.id) {
+            axios.get(`/api/social-tasks?campaignId=${campaign.id}${userId ? `&userId=${userId}` : ''}`)
+                .then(res => setSocialTasks(res.data.tasks || []))
+                .catch(() => {});
+        }
+    };
+
+    useEffect(() => {
+        fetchSocialTasks();
+    }, [campaign?.id, userId]);
+
+    const handleTaskClick = (task: any) => {
+        if (!userId) { 
+            alert('Please log in');
+            return; 
+        }
+        setSelectedTask(task);
+    };
 
     return (
         <section className="w-full max-w-[1200px] px-6 py-12 md:py-20 mx-auto">
@@ -80,7 +107,7 @@ export default function StitchHeroSection({ campaign, primaryColor = '#f48c25' }
                         </Link>
                     </div>
 
-                    {/* Integrated Social Tasks Card (Static Preview for Landing) */}
+                    {/* Integrated Social Tasks Card (Dynamic Preview for Landing) */}
                     <div className="flex flex-col gap-4 rounded-2xl bg-white dark:bg-[#2c221a] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-800">
                         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-4">
                             <div className="flex flex-col">
@@ -100,28 +127,46 @@ export default function StitchHeroSection({ campaign, primaryColor = '#f48c25' }
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                             <div className="flex items-center justify-between p-4 rounded-xl bg-[#f8f7f5] dark:bg-background-dark border border-gray-100 dark:border-gray-700">
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-bold uppercase tracking-tighter" style={{ color: primaryColor }}>Social Bonus</span>
-                                    <span className="font-bold text-sm">Follow Us</span>
+                            {socialTasks.length > 0 ? (
+                                socialTasks.map((task) => (
+                                    <div key={task.id} className="flex items-center justify-between p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#181411] border border-gray-100 dark:border-gray-700">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold uppercase tracking-tighter" style={{ color: primaryColor }}>Social Bonus</span>
+                                            <span className="font-bold text-sm text-[#181411] dark:text-white">{task.title}</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleTaskClick(task)}
+                                            className="h-9 px-4 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-2" 
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            +{task.spinsReward || 1} Spin
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="flex items-center justify-between p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#181411] border border-gray-100 dark:border-gray-700 opacity-50">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold uppercase tracking-tighter" style={{ color: primaryColor }}>Social Bonus</span>
+                                        <span className="font-bold text-sm text-[#181411] dark:text-white">Visit & Earn</span>
+                                    </div>
+                                    <button className="h-9 px-4 rounded-lg text-white text-xs font-bold opacity-50 cursor-not-allowed" style={{ backgroundColor: primaryColor }}>
+                                        Full
+                                    </button>
                                 </div>
-                                <button className="h-9 px-4 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-2" style={{ backgroundColor: primaryColor }}>
-                                    +1 Spin
-                                </button>
-                            </div>
+                            )}
 
-                            <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#f8f7f5] dark:bg-background-dark border border-gray-100 dark:border-gray-700">
+                             <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#181411] border border-gray-100 dark:border-gray-700">
                                 <div className="flex items-center justify-between">
                                     <div className="flex flex-col">
                                         <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">Referral Power</span>
-                                        <span className="font-bold text-sm">Invite Friends</span>
+                                        <span className="font-bold text-sm text-[#181411] dark:text-white">Invite Friends</span>
                                     </div>
                                     <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
                                         +1 Spin
                                     </div>
                                 </div>
                                 <button className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
-                                    <span className="material-symbols-outlined text-[18px]">share</span>
+                                    <span className="material-symbols-outlined !text-[18px]">share</span>
                                     Share on WhatsApp
                                 </button>
                             </div>
@@ -129,6 +174,19 @@ export default function StitchHeroSection({ campaign, primaryColor = '#f48c25' }
                     </div>
                 </div>
             </div>
+
+            {selectedTask && userId && campaign?.id && (
+                <TaskInstructionModal
+                    task={selectedTask}
+                    userId={userId}
+                    campaignId={campaign.id}
+                    onClose={() => setSelectedTask(null)}
+                    onComplete={() => {
+                        setSelectedTask(null);
+                        fetchSocialTasks();
+                    }}
+                />
+            )}
         </section>
     );
 }

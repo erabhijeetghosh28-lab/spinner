@@ -7,9 +7,10 @@ import StitchHeroSection from '../sections/StitchHeroSection';
 interface StitchTemplateProps {
     landingPage: any;
     campaign: any;
+    userId?: string | null;
 }
 
-export default function StitchTemplate({ landingPage, campaign }: StitchTemplateProps) {
+export default function StitchTemplate({ landingPage, campaign, userId }: StitchTemplateProps) {
     const brandColor = landingPage.brandColor || '#f48c25';
     const offers = landingPage.offers || [];
     const footer = landingPage.footer;
@@ -21,6 +22,7 @@ export default function StitchTemplate({ landingPage, campaign }: StitchTemplate
                 <StitchHeroSection 
                     campaign={campaign}
                     primaryColor={brandColor}
+                    userId={userId}
                 />
                 
                 {/* Featured Highlights (Offers) Section */}

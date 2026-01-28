@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { motion } from 'framer-motion';
+import PrizeModal from '@/components/PrizeModal';
 import { TaskInstructionModal } from '@/components/social/TaskInstructionModal';
 import SpinWheel from '@/components/SpinWheel';
-import PrizeModal from '@/components/PrizeModal';
 import { soundEffects } from '@/lib/soundEffects';
+import axios from 'axios';
 import confetti from 'canvas-confetti';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 interface HeroProps {
     section: any;
@@ -48,12 +48,16 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
         }
     }, [userId, campaign?.id]);
 
-    useEffect(() => {
+    const fetchSocialTasks = () => {
         if (campaign?.id) {
             axios.get(`/api/social-tasks?campaignId=${campaign.id}${userId ? `&userId=${userId}` : ''}`)
                 .then(res => setSocialTasks(res.data.tasks || []))
                 .catch(() => {});
         }
+    };
+
+    useEffect(() => {
+        fetchSocialTasks();
     }, [campaign?.id, userId]);
 
     const handleTaskClick = (task: any) => {
@@ -310,6 +314,9 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
                             axios.get(`/api/user/status?userId=${userId}&campaignId=${campaign.id}`)
                                 .then(res => setUserStatus(res.data))
                                 .catch(() => {});
+                            
+                            // Re-fetch social tasks to hide completed one
+                            fetchSocialTasks();
                         }
                     }}
                 />

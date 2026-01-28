@@ -48,12 +48,16 @@ export default function Template3Hero({ section, campaign, userId }: HeroProps) 
         }
     }, [userId, campaign?.id]);
 
-    useEffect(() => {
+    const fetchSocialTasks = () => {
         if (campaign?.id) {
             axios.get(`/api/social-tasks?campaignId=${campaign.id}${userId ? `&userId=${userId}` : ''}`)
                 .then(res => setSocialTasks(res.data.tasks || []))
                 .catch(() => {});
         }
+    };
+
+    useEffect(() => {
+        fetchSocialTasks();
     }, [campaign?.id, userId]);
 
     const handleTaskClick = (task: any) => {
@@ -315,6 +319,9 @@ export default function Template3Hero({ section, campaign, userId }: HeroProps) 
                             axios.get(`/api/user/status?userId=${userId}&campaignId=${campaign.id}`)
                                 .then(res => setUserStatus(res.data))
                                 .catch(() => {});
+                            
+                            // Re-fetch social tasks to hide completed one
+                            fetchSocialTasks();
                         }
                     }}
                 />

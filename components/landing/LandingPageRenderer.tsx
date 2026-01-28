@@ -1,14 +1,15 @@
 'use client';
 
+import OTPForm from '@/components/OTPForm';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import StitchTemplate from './templates/StitchTemplate';
 import Template1 from './templates/Template1';
 import Template2 from './templates/Template2';
 import Template3 from './templates/Template3';
 import Template4 from './templates/Template4';
 import Template5 from './templates/Template5';
-import OTPForm from '@/components/OTPForm';
 
 interface LandingPageRendererProps {
     campaignId: string;
@@ -250,6 +251,13 @@ export default function LandingPageRenderer({ campaignId, userId }: LandingPageR
                 )}
                 {template === 'template_5' && (
                     <Template5
+                        landingPage={landingPage}
+                        campaign={campaign}
+                        userId={verifiedUserId}
+                    />
+                )}
+                {template === 'stitch' && (
+                    <StitchTemplate
                         landingPage={landingPage}
                         campaign={campaign}
                         userId={verifiedUserId}

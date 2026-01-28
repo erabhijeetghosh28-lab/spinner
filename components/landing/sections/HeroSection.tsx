@@ -1,17 +1,23 @@
 'use client';
 
-import React from 'react';
+import { TaskInstructionModal } from '@/components/social/TaskInstructionModal';
+import axios from 'axios';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface HeroSectionProps {
     section: any;
     campaign: any;
     brandColor: string;
     template?: string;
+    userId?: string | null;
 }
 
-export default function HeroSection({ section, campaign, brandColor, template = 'template_1' }: HeroSectionProps) {
+export default function HeroSection({ section, campaign, brandColor, template = 'template_1', userId }: HeroSectionProps) {
+    const [socialTasks, setSocialTasks] = useState<any[]>([]);
+    const [selectedTask, setSelectedTask] = useState<any | null>(null);
+
     const content = section.content || {};
     const headline = content.headline || campaign?.name || 'Spin to Win!';
     const subheadline = content.subheadline || campaign?.description || 'Take a spin on our prize wheel for a chance to win exclusive discounts and premium products.';
@@ -23,6 +29,26 @@ export default function HeroSection({ section, campaign, brandColor, template = 
 
     // Use brand color or default orange
     const primaryColor = brandColor || '#f48c25';
+
+    const fetchSocialTasks = () => {
+        if (campaign?.id) {
+            axios.get(`/api/social-tasks?campaignId=${campaign.id}${userId ? `&userId=${userId}` : ''}`)
+                .then(res => setSocialTasks(res.data.tasks || []))
+                .catch(() => {});
+        }
+    };
+
+    useEffect(() => {
+        fetchSocialTasks();
+    }, [campaign?.id, userId]);
+
+    const handleTaskClick = (task: any) => {
+        if (!userId) { 
+            alert('Please log in');
+            return; 
+        }
+        setSelectedTask(task);
+    };
 
     return (
         <section className="w-full bg-[#f8f7f5] dark:bg-[#221910] py-12 md:py-20 transition-colors duration-300">
@@ -186,26 +212,42 @@ export default function HeroSection({ section, campaign, brandColor, template = 
 
                             {/* Social Tasks Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                                {/* Social Bonus Card */}
-                                <div className="flex items-center justify-between p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#221910] border border-gray-100 dark:border-gray-700">
-                                    <div className="flex flex-col">
-                                        <span 
-                                            className="text-xs font-bold uppercase tracking-tighter"
-                                            style={{ color: primaryColor }}
-                                        >
-                                            Social Bonus
-                                        </span>
-                                        <span className="font-bold text-sm text-[#181411] dark:text-white">
-                                            Follow @BrandWheel
-                                        </span>
+                                {socialTasks.length > 0 ? (
+                                    socialTasks.map((task) => (
+                                        <div key={task.id} className="flex items-center justify-between p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#221910] border border-gray-100 dark:border-gray-700">
+                                            <div className="flex flex-col">
+                                                <span 
+                                                    className="text-xs font-bold uppercase tracking-tighter"
+                                                    style={{ color: primaryColor }}
+                                                >
+                                                    Social Bonus
+                                                </span>
+                                                <span className="font-bold text-sm text-[#181411] dark:text-white">
+                                                    {task.title}
+                                                </span>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleTaskClick(task)}
+                                                className="h-9 px-4 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-2"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                +{task.spinsReward || 1} Spin
+                                            </button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex items-center justify-between p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#221910] border border-gray-100 dark:border-gray-700 opacity-50">
+                                        <div className="flex flex-col">
+                                            <span 
+                                                className="text-xs font-bold uppercase tracking-tighter"
+                                                style={{ color: primaryColor }}
+                                            >
+                                                Social Bonus
+                                            </span>
+                                            <span className="font-bold text-sm text-[#181411] dark:text-white">No active tasks</span>
+                                        </div>
                                     </div>
-                                    <button 
-                                        className="h-9 px-4 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-2"
-                                        style={{ backgroundColor: primaryColor }}
-                                    >
-                                        +1 Spin
-                                    </button>
-                                </div>
+                                )}
 
                                 {/* Referral Power Card */}
                                 <div className="flex flex-col gap-3 p-4 rounded-xl bg-[#f8f7f5] dark:bg-[#221910] border border-gray-100 dark:border-gray-700">
@@ -215,7 +257,7 @@ export default function HeroSection({ section, campaign, brandColor, template = 
                                                 Referral Power
                                             </span>
                                             <span className="font-bold text-sm text-[#181411] dark:text-white">
-                                                Invite 5 friends
+                                                Invite Friends
                                             </span>
                                         </div>
                                         <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
@@ -223,21 +265,28 @@ export default function HeroSection({ section, campaign, brandColor, template = 
                                         </div>
                                     </div>
                                     <button className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all">
-                                        <span>📱</span>
+                                        <span className="material-symbols-outlined !text-[18px]">share</span>
                                         Share on WhatsApp
                                     </button>
-                                    <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden mt-1">
-                                        <div className="bg-[#25D366] w-[60%] h-full"></div>
-                                    </div>
-                                    <p className="text-[10px] text-center text-[#8a7560] dark:text-gray-400">
-                                        3/5 friends invited
-                                    </p>
                                 </div>
                             </div>
                         </motion.div>
                     </div>
                 </div>
             </div>
+
+            {selectedTask && userId && campaign?.id && (
+                <TaskInstructionModal
+                    task={selectedTask}
+                    userId={userId}
+                    campaignId={campaign.id}
+                    onClose={() => setSelectedTask(null)}
+                    onComplete={() => {
+                        setSelectedTask(null);
+                        fetchSocialTasks();
+                    }}
+                />
+            )}
         </section>
     );
 }
