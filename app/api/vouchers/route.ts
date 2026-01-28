@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     
-    // Get required tenant ID
-    const tenantId = searchParams.get('tenantId');
+    // Get required tenant ID (support both query param and header)
+    const tenantId = searchParams.get('tenantId') || req.headers.get('x-tenant-id');
     if (!tenantId) {
       return NextResponse.json(
         { error: 'Tenant ID is required' },

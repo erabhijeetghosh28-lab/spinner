@@ -146,6 +146,8 @@ export async function sendWhatsAppMedia(
 
     try {
         console.log(`📤 Sending WhatsApp media to ${formattedNumber} via ${config.apiUrl}`);
+        console.log(`🖼️ Media URL: ${mediaUrl}`);
+        
         const response = await axios.post(config.apiUrl, {
             api_key: config.apiKey,
             sender: config.sender,
@@ -158,11 +160,15 @@ export async function sendWhatsAppMedia(
             timeout: 15000 // Media might take longer
         });
 
-        console.log(`✅ WhatsApp media sent to ${formattedNumber}`);
+        console.log(`✅ WhatsApp media request accepted for ${formattedNumber}. Status: ${response.status}. Data:`, JSON.stringify(response.data));
         return response.data;
     } catch (error: any) {
         console.error('❌ Error sending WhatsApp media:', error.message);
+        if (error.response) {
+            console.error('❌ API Error Data:', JSON.stringify(error.response.data));
+        }
         // Fallback to text if media fails
+        console.warn('⚠️ Falling back to TEXT notification due to media failure');
         return sendWhatsAppMessage(number, `${caption}\n\nView QR Code: ${mediaUrl}`, tenantId);
     }
 }
@@ -237,6 +243,11 @@ export async function sendVoucherNotification(
         message += `Voucher Code: *${voucher.code}*\n`;
         message += `Valid until: ${expirationDate}\n\n`;
         message += `Show this code at the store to claim your prize!`;
+
+        // If we have a QR, add a backup link in the caption itself for better reliability
+        if (voucher.qrImageUrl) {
+            message += `\n\nView QR Code: ${voucher.qrImageUrl}`;
+        }
 
         // Send WhatsApp message
         if (voucher.qrImageUrl) {

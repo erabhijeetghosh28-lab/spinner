@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
 import { TaskInstructionModal } from './social/TaskInstructionModal';
 
 interface SocialTask {
@@ -109,8 +109,10 @@ export default function SocialTasksPanel({ campaignId, userId }: SocialTasksPane
             </p>
 
             <div className="space-y-4">
-                {tasks.map((task) => {
-                    const isCompleted = task.isCompleted;
+                {tasks
+                    .filter((task) => task.completion?.status !== 'VERIFIED')
+                    .map((task) => {
+                        const isCompleted = task.isCompleted;
 
                     return (
                         <div
