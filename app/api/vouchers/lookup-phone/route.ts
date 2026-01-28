@@ -27,7 +27,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { phone, tenantId } = body;
+    const { phone } = body;
+    const tenantId = body.tenantId || req.headers.get('x-tenant-id');
 
     // Validate required parameters
     if (!phone || typeof phone !== 'string') {

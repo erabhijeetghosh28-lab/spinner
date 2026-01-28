@@ -107,12 +107,17 @@ export default function ScannerPage() {
       }
 
       const config = {
-        fps: 10,
+        fps: 30, // Increased from 10 to 30 for faster scanning
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.777778, // 16:9 aspect ratio
         videoConstraints: {
           facingMode: 'environment',
           aspectRatio: 1.777778
+        },
+        // Improved detection settings
+        formatsToSupport: [0], // QR_CODE only (faster)
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true // Use native detector if available
         }
       };
 
@@ -122,6 +127,13 @@ export default function ScannerPage() {
         async (decodedText) => {
           // QR code detected
           console.log('QR Code detected:', decodedText);
+          
+          // Stop scanning immediately to prevent multiple scans
+          if (html5QrCodeRef.current && scanning) {
+            await stopScanning();
+          }
+          
+          // Validate the voucher
           await validateVoucher(decodedText);
         },
         (errorMessage) => {
@@ -159,6 +171,14 @@ export default function ScannerPage() {
       return;
     }
 
+    // Get tenantId from state or localStorage
+    const currentTenantId = tenantId || localStorage.getItem('admin-tenant-id');
+    
+    if (!currentTenantId) {
+      setError('Tenant ID not found. Please log in again.');
+      return;
+    }
+
     setValidating(true);
     setError('');
     setValidationResult(null);
@@ -166,7 +186,7 @@ export default function ScannerPage() {
     try {
       const response = await axios.post('/api/vouchers/validate', { 
         code: code.trim(),
-        tenantId: tenantId
+        tenantId: currentTenantId
       });
       setValidationResult(response.data);
       
@@ -187,6 +207,14 @@ export default function ScannerPage() {
       return;
     }
 
+    // Get tenantId from state or localStorage
+    const currentTenantId = tenantId || localStorage.getItem('admin-tenant-id');
+    
+    if (!currentTenantId) {
+      setError('Tenant ID not found. Please log in again.');
+      return;
+    }
+
     setRedeeming(true);
     setError('');
 
@@ -194,7 +222,7 @@ export default function ScannerPage() {
       const response = await axios.post('/api/vouchers/redeem', { 
         code,
         merchantId: merchantId,
-        tenantId: tenantId
+        tenantId: currentTenantId
       });
       
       if (response.data.success) {
@@ -217,6 +245,14 @@ export default function ScannerPage() {
       return;
     }
 
+    // Get tenantId from state or localStorage
+    const currentTenantId = tenantId || localStorage.getItem('admin-tenant-id');
+    
+    if (!currentTenantId) {
+      setError('Tenant ID not found. Please log in again.');
+      return;
+    }
+
     setLookingUp(true);
     setError('');
     setLookupResults([]);
@@ -224,7 +260,7 @@ export default function ScannerPage() {
     try {
       const response = await axios.post('/api/vouchers/lookup-phone', { 
         phone: phoneNumber.trim(),
-        tenantId: tenantId
+        tenantId: currentTenantId
       });
       setLookupResults(response.data.vouchers || []);
       

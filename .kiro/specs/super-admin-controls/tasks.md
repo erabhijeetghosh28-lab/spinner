@@ -78,15 +78,15 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Calculate days until monthly reset
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
   
-  - [~] 4.3 Write property test for usage display accuracy
+  - [ ] 4.3 Write property test for usage display accuracy
     - **Property 5: Usage Display Accuracy**
     - **Validates: Requirements 3.1, 3.2**
   
-  - [~] 4.4 Write property test for days until reset calculation
+  - [ ] 4.4 Write property test for days until reset calculation
     - **Property 6: Days Until Reset Calculation**
     - **Validates: Requirements 3.3**
   
-  - [~] 4.5 Write property test for usage trend calculation
+  - [ ] 4.5 Write property test for usage trend calculation
     - **Property 7: Usage Trend Calculation**
     - **Validates: Requirements 3.4**
 
@@ -105,15 +105,15 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Return updated usage record
     - _Requirements: 4.6_
   
-  - [~] 5.3 Write property test for override grant success
+  - [ ] 5.3 Write property test for override grant success
     - **Property 9: Override Grant Success**
     - **Validates: Requirements 4.1, 4.2**
   
-  - [~] 5.4 Write property test for override reason requirement
+  - [ ] 5.4 Write property test for override reason requirement
     - **Property 10: Override Reason Requirement**
     - **Validates: Requirements 4.3**
   
-  - [~] 5.5 Write property test for usage reset operation
+  - [ ] 5.5 Write property test for usage reset operation
     - **Property 13: Usage Reset Operation**
     - **Validates: Requirements 4.6**
 
@@ -136,23 +136,23 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Return tenants with upcoming renewals
     - _Requirements: 5.4_
   
-  - [~] 6.4 Write property test for MRR calculation accuracy
+  - [ ] 6.4 Write property test for MRR calculation accuracy
     - **Property 15: MRR Calculation Accuracy**
     - **Validates: Requirements 5.1**
   
-  - [~] 6.5 Write property test for new revenue tracking
+  - [ ] 6.5 Write property test for new revenue tracking
     - **Property 16: New Revenue Tracking**
     - **Validates: Requirements 5.2**
   
-  - [~] 6.6 Write property test for churned revenue tracking
+  - [ ] 6.6 Write property test for churned revenue tracking
     - **Property 17: Churned Revenue Tracking**
     - **Validates: Requirements 5.3**
   
-  - [~] 6.7 Write property test for upcoming renewals filter
+  - [ ] 6.7 Write property test for upcoming renewals filter
     - **Property 18: Upcoming Renewals Filter**
     - **Validates: Requirements 5.4**
   
-  - [~] 6.8 Write property test for revenue by plan aggregation
+  - [ ] 6.8 Write property test for revenue by plan aggregation
     - **Property 20: Revenue by Plan Aggregation**
     - **Validates: Requirements 5.6**
 
@@ -180,7 +180,7 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Display success/error messages
     - _Requirements: 4.6_
   
-  - [~]* 7.4 Write unit tests for UI components
+  - [ ]* 7.4 Write unit tests for UI components
     - Test usage display with various data
     - Test override form validation
     - Test reset confirmation flow
@@ -207,13 +207,13 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Highlight urgent issues
     - _Requirements: 5.5_
   
-  - [~]* 8.4 Write unit tests for billing dashboard components
+  - [ ]* 8.4 Write unit tests for billing dashboard components
     - Test revenue display formatting
     - Test renewals list sorting
     - Test failed payments highlighting
     - _Requirements: 5.1-5.7_
 
-- [~]* 9. Checkpoint - Ensure Phase 1 tests pass
+- [ ]* 9. Checkpoint - Ensure Phase 1 tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 2: Oversight & Analytics (Should Have)
@@ -241,19 +241,19 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Return CSV file download
     - _Requirements: 6.9_
   
-  - [~] 10.4 Write property test for global voucher visibility
+  - [ ] 10.4 Write property test for global voucher visibility
     - **Property 22: Global Voucher Visibility**
     - **Validates: Requirements 6.1**
   
-  - [~] 10.5 Write property test for voucher search correctness
+  - [ ] 10.5 Write property test for voucher search correctness
     - **Property 23: Voucher Search Correctness**
     - **Validates: Requirements 6.2, 6.3**
   
-  - [~] 10.6 Write property test for voucher filter correctness
+  - [ ] 10.6 Write property test for voucher filter correctness
     - **Property 24: Voucher Filter Correctness**
     - **Validates: Requirements 6.4, 6.5, 6.6**
   
-  - [~] 10.7 Write property test for voucher void operation
+  - [ ] 10.7 Write property test for voucher void operation
     - **Property 26: Voucher Void Operation**
     - **Validates: Requirements 6.8**
 
@@ -279,15 +279,15 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Create audit log entry
     - _Requirements: 7.7_
   
-  - [~] 11.4 Write property test for global campaign visibility
+  - [ ] 11.4 Write property test for global campaign visibility
     - **Property 28: Global Campaign Visibility**
     - **Validates: Requirements 7.1**
   
-  - [~] 11.5 Write property test for campaign search and filter correctness
+  - [ ] 11.5 Write property test for campaign search and filter correctness
     - **Property 29: Campaign Search and Filter Correctness**
     - **Validates: Requirements 7.2, 7.3, 7.4**
   
-  - [~] 11.6 Write property test for campaign pause/unpause state transition
+  - [ ] 11.6 Write property test for campaign pause/unpause state transition
     - **Property 31: Campaign Pause/Unpause State Transition**
     - **Validates: Requirements 7.6, 7.7**
 
@@ -310,19 +310,19 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Include rank, spins, vouchers, redemption rate
     - _Requirements: 8.4, 8.5_
   
-  - [~] 12.4 Write property test for platform aggregation accuracy
+  - [ ] 12.4 Write property test for platform aggregation accuracy
     - **Property 32: Platform Aggregation Accuracy**
     - **Validates: Requirements 8.1, 8.2**
   
-  - [~] 12.5 Write property test for average redemption rate calculation
+  - [ ] 12.5 Write property test for average redemption rate calculation
     - **Property 33: Average Redemption Rate Calculation**
     - **Validates: Requirements 8.3**
   
-  - [~] 12.6 Write property test for tenant ranking correctness
+  - [ ] 12.6 Write property test for tenant ranking correctness
     - **Property 34: Tenant Ranking Correctness**
     - **Validates: Requirements 8.4, 8.5**
   
-  - [~] 12.7 Write property test for growth trend calculation
+  - [ ] 12.7 Write property test for growth trend calculation
     - **Property 37: Growth Trend Calculation**
     - **Validates: Requirements 8.9**
 
@@ -349,15 +349,15 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Return audit logs with admin and target details
     - _Requirements: 9.8, 9.9, 9.10_
   
-  - [~] 13.4 Write property test for audit log creation
+  - [ ] 13.4 Write property test for audit log creation
     - **Property 38: Audit Log Creation for Admin Actions**
     - **Validates: Requirements 9.1-9.6**
   
-  - [~] 13.5 Write property test for audit log completeness
+  - [ ] 13.5 Write property test for audit log completeness
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.7**
   
-  - [~] 13.6 Write property test for audit log search and filter correctness
+  - [ ] 13.6 Write property test for audit log search and filter correctness
     - **Property 40: Audit Log Search and Filter Correctness**
     - **Validates: Requirements 9.8, 9.9, 9.10**
 
@@ -368,11 +368,11 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Note: Message delivery tracking requires WhatsApp webhook integration (future enhancement)
     - _Requirements: 10.1, 10.2, 10.5_
   
-  - [~] 14.2 Write property test for WhatsApp configuration count accuracy
+  - [ ] 14.2 Write property test for WhatsApp configuration count accuracy
     - **Property 41: WhatsApp Configuration Count Accuracy**
     - **Validates: Requirements 10.1, 10.2**
   
-  - [~] 14.3 Write property test for WhatsApp status display completeness
+  - [ ] 14.3 Write property test for WhatsApp status display completeness
     - **Property 42: WhatsApp Status Display Completeness**
     - **Validates: Requirements 10.5**
 
@@ -413,68 +413,68 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Highlight tenants without WhatsApp configured
     - _Requirements: 10.1, 10.2, 10.5_
   
-  - [~] 15.6 Write unit tests for oversight UI components
+  - [ ] 15.6 Write unit tests for oversight UI components
     - Test voucher table rendering and filtering
     - Test campaign table rendering and actions
     - Test analytics dashboard data display
     - Test audit log table and filtering
     - _Requirements: 6.1-10.5_
 
-- [~] 16. Checkpoint - Ensure Phase 2 tests pass
+- [ ] 16. Checkpoint - Ensure Phase 2 tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Phase 3: Advanced Features (Nice to Have)
 
 - [ ] 17. Implement tenant impersonation
-  - [~] 17.1 Create impersonation session management
+  - [ ] 17.1 Create impersonation session management
     - Create session token with tenant ID
     - Store impersonation state in session/cookie
     - Implement middleware to detect impersonation mode
     - Restrict data access to impersonated tenant scope
     - _Requirements: 11.1, 11.4_
   
-  - [~] 17.2 Create POST /api/admin/super/impersonate endpoint
+  - [ ] 17.2 Create POST /api/admin/super/impersonate endpoint
     - Validate tenant exists
     - Create impersonation session
     - Create audit log entry for impersonation start
     - Return session token
     - _Requirements: 11.1, 11.6_
   
-  - [~] 17.3 Create DELETE /api/admin/super/impersonate endpoint
+  - [ ] 17.3 Create DELETE /api/admin/super/impersonate endpoint
     - End impersonation session
     - Create audit log entry for impersonation end
     - Return success response
     - _Requirements: 11.5, 11.6_
   
-  - [~] 17.4 Update UI to show impersonation banner and tenant dashboard
+  - [ ] 17.4 Update UI to show impersonation banner and tenant dashboard
     - Display prominent banner when impersonation active
     - Show tenant's dashboard view
     - Add "Exit Impersonation" button
     - _Requirements: 11.2, 11.3_
   
-  - [~] 17.5 Write property test for impersonation session creation
+  - [ ] 17.5 Write property test for impersonation session creation
     - **Property 43: Impersonation Session Creation**
     - **Validates: Requirements 11.1, 11.4**
   
-  - [~] 17.6 Write property test for impersonation audit trail
+  - [ ] 17.6 Write property test for impersonation audit trail
     - **Property 46: Impersonation Audit Trail**
     - **Validates: Requirements 11.6**
 
 - [ ] 18. Implement notification management
-  - [~] 18.1 Create Notification model in database schema
+  - [ ] 18.1 Create Notification model in database schema
     - Add Notification table with subject, body, recipient fields
     - Add relation to Admin model
     - Generate and run Prisma migration
     - _Requirements: 12.7_
   
-  - [~] 18.2 Create notification templates
+  - [ ] 18.2 Create notification templates
     - Define template for price increase notification
     - Define template for new feature announcement
     - Define template for maintenance window notification
     - Store templates in database or configuration
     - _Requirements: 12.4, 12.5_
   
-  - [~] 18.3 Create POST /api/admin/super/notifications endpoint
+  - [ ] 18.3 Create POST /api/admin/super/notifications endpoint
     - Accept subject, body, recipientType, recipientId, templateId
     - If templateId provided, populate from template
     - Send email to specified recipients (all tenants or specific tenant)
@@ -482,16 +482,16 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Create audit log entry
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.6_
   
-  - [~] 18.4 Create GET /api/admin/super/notifications/history endpoint
+  - [ ] 18.4 Create GET /api/admin/super/notifications/history endpoint
     - Support pagination
     - Return notification history with recipient counts and timestamps
     - _Requirements: 12.7_
   
-  - [~] 18.5 Write property test for notification composition and sending
+  - [ ] 18.5 Write property test for notification composition and sending
     - **Property 47: Notification Composition and Sending**
     - **Validates: Requirements 12.1, 12.2, 12.3**
   
-  - [~] 18.6 Write property test for notification audit trail
+  - [ ] 18.6 Write property test for notification audit trail
     - **Property 49: Notification Audit Trail**
     - **Validates: Requirements 12.6**
 
@@ -516,15 +516,15 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Return CSV file download
     - _Requirements: 13.5_
   
-  - [~] 19.4 Write property test for bulk plan change operation
+  - [ ] 19.4 Write property test for bulk plan change operation
     - **Property 52: Bulk Plan Change Operation**
     - **Validates: Requirements 13.2**
   
-  - [~] 19.5 Write property test for bulk bonus grant operation
+  - [ ] 19.5 Write property test for bulk bonus grant operation
     - **Property 53: Bulk Bonus Grant Operation**
     - **Validates: Requirements 13.3, 13.4**
   
-  - [~] 19.6 Write property test for bulk operation audit trail
+  - [ ] 19.6 Write property test for bulk operation audit trail
     - **Property 55: Bulk Operation Audit Trail**
     - **Validates: Requirements 13.6**
 
@@ -566,27 +566,27 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Return failed login summaries
     - _Requirements: 14.8_
   
-  - [~] 20.7 Write property test for failed login tracking
+  - [ ] 20.7 Write property test for failed login tracking
     - **Property 56: Failed Login Tracking**
     - **Validates: Requirements 14.1**
   
-  - [~] 20.8 Write property test for security alert generation
+  - [ ] 20.8 Write property test for security alert generation
     - **Property 57: Security Alert Generation**
     - **Validates: Requirements 14.2, 14.3, 14.4**
   
-  - [~] 20.9 Write property test for account lock state transition
+  - [ ] 20.9 Write property test for account lock state transition
     - **Property 58: Account Lock State Transition**
     - **Validates: Requirements 14.5, 14.6**
 
 - [-] 21. Build Super Admin UI for advanced features
-  - [~] 21.1 Create tenant impersonation UI
+  - [ ] 21.1 Create tenant impersonation UI
     - Add "Impersonate" button to tenant details page
     - Display impersonation banner when active
     - Show tenant dashboard view during impersonation
     - Add "Exit Impersonation" button in banner
     - _Requirements: 11.1, 11.2, 11.3, 11.5_
   
-  - [~] 21.2 Create notification management UI
+  - [ ] 21.2 Create notification management UI
     - Notification composition form with subject and body
     - Recipient selection (all tenants or specific tenant)
     - Template selection dropdown
@@ -594,7 +594,7 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Notification history table
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.7_
   
-  - [~] 21.3 Create bulk operations UI
+  - [ ] 21.3 Create bulk operations UI
     - Tenant selection checkboxes in tenant list
     - Bulk action dropdown (change plan, grant bonus, export)
     - Confirmation dialog for bulk operations
@@ -610,14 +610,14 @@ This implementation plan breaks down the Super Admin Controls feature into three
     - Alert resolution controls
     - _Requirements: 14.2, 14.3, 14.4, 14.5, 14.6, 14.8_
   
-  - [~] 21.5 Write unit tests for advanced feature UI components
+  - [ ] 21.5 Write unit tests for advanced feature UI components
     - Test impersonation banner and exit flow
     - Test notification form and template selection
     - Test bulk operation selection and confirmation
     - Test security dashboard alert display
     - _Requirements: 11.1-14.8_
 
-- [~] 22. Final checkpoint - Ensure all tests pass
+- [ ] 22. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
