@@ -208,7 +208,40 @@ export async function PUT(req: NextRequest) {
             updateData.slug = slug;
         }
         if (contactPhone !== undefined) updateData.contactPhone = contactPhone || null;
-        if (planId) updateData.planId = planId;
+        
+        // Handle plan ID - check if it's a legacy Plan or SubscriptionPlan
+        if (planId) {
+            console.log('PUT /api/admin/super/tenants - Checking planId:', planId);
+            
+            // Check if it's a legacy Plan ID
+            const legacyPlan = await prisma.plan.findUnique({
+                where: { id: planId }
+            });
+            
+            // Check if it's a SubscriptionPlan ID
+            const subscriptionPlan = await prisma.subscriptionPlan.findUnique({
+                where: { id: planId }
+            });
+            
+            if (legacyPlan) {
+                console.log('PUT /api/admin/super/tenants - Using legacy plan:', legacyPlan.name);
+                updateData.planId = planId;
+                // Clear subscriptionPlanId if switching to legacy plan
+                updateData.subscriptionPlanId = null;
+            } else if (subscriptionPlan) {
+                console.log('PUT /api/admin/super/tenants - Using subscription plan:', subscriptionPlan.name);
+                // For subscription plans, we need to keep the existing planId and set subscriptionPlanId
+                updateData.subscriptionPlanId = planId;
+                // Don't change planId - keep the existing one
+            } else {
+                console.error('PUT /api/admin/super/tenants - Invalid plan ID:', planId);
+                return NextResponse.json({ 
+                    error: 'Invalid plan ID',
+                    details: `Plan ID "${planId}" not found in either Plan or SubscriptionPlan tables`
+                }, { status: 400 });
+            }
+        }
+        
         if (typeof isActive === 'boolean') updateData.isActive = isActive;
         if (waConfig !== undefined) {
             updateData.waConfig = waConfig ? JSON.parse(JSON.stringify(waConfig)) : null;
@@ -219,7 +252,10 @@ export async function PUT(req: NextRequest) {
         const tenant = await prisma.tenant.update({
             where: { id },
             data: updateData,
-            include: { plan: true }
+            include: { 
+                plan: true,
+                subscriptionPlan: true
+            }
         });
 
         console.log('PUT /api/admin/super/tenants - Tenant updated successfully:', tenant.id);
