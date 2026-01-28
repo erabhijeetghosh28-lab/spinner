@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,24 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// SUPER ADMIN LEVEL MODELS
-// ============================================
-
 model Plan {
   id                     String   @id @default(cuid())
-  name                   String // e.g., "Basic", "Pro", "Enterprise"
-  maxSpins               Int      @default(1000) // Total spins allowed per month
+  name                   String
+  maxSpins               Int      @default(1000)
   maxCampaigns           Int      @default(1)
-  campaignDurationDays   Int      @default(30) // How many days a campaign can run
+  campaignDurationDays   Int      @default(30)
   waIntegrationEnabled   Boolean  @default(true)
   canUseCustomTemplates  Boolean  @default(false)
-  allowCustomDomain      Boolean  @default(false) // Gate for custom domain feature
-  allowEmbedding         Boolean  @default(false) // Gate for iframe embedding
-  allowAnalytics         Boolean  @default(false) // Gate for analytics dashboard
-  allowQRCodeGenerator   Boolean  @default(false) // Gate for QR code generation
-  allowInventoryTracking Boolean  @default(false) // Gate for prize inventory tracking
-  price                  Float? // Monthly subscription price
+  allowCustomDomain      Boolean  @default(false)
+  allowEmbedding         Boolean  @default(false)
+  allowAnalytics         Boolean  @default(false)
+  allowQRCodeGenerator   Boolean  @default(false)
+  allowInventoryTracking Boolean  @default(false)
+  price                  Float?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   tenants                Tenant[]
@@ -36,34 +29,24 @@ model Plan {
 }
 
 model SubscriptionPlan {
-  id       String @id @default(cuid())
-  name     String // "Free", "Starter", "Pro", "Enterprise"
-  price    Int // in paise (₹0, ₹999, ₹4999, etc.)
-  interval String // "MONTHLY", "YEARLY"
-
-  // Campaign limits
-  campaignsPerMonth    Int @default(1)
-  spinsPerCampaign     Int @default(1000)
-  campaignDurationDays Int @default(30) // How many days a campaign can run
-
-  // Usage limits (Super Admin Controls) - null = unlimited
-  spinsPerMonth    Int? @default(5000)    // null = unlimited spins
-  vouchersPerMonth Int? @default(2000)    // null = unlimited vouchers
-
-  // Social media features
-  socialMediaEnabled Boolean @default(false)
-  maxSocialTasks     Int     @default(0)
-
-  // Feature flags
-  customBranding       Boolean @default(false)
-  advancedAnalytics    Boolean @default(false)
-  allowQRCodeGenerator Boolean @default(false) // Allow tenant to generate QR codes for campaigns
-
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  tenants Tenant[]
+  id                   String   @id @default(cuid())
+  name                 String
+  price                Int
+  interval             String
+  campaignsPerMonth    Int      @default(1)
+  spinsPerCampaign     Int      @default(1000)
+  campaignDurationDays Int      @default(30)
+  spinsPerMonth        Int?     @default(5000)
+  vouchersPerMonth     Int?     @default(2000)
+  socialMediaEnabled   Boolean  @default(false)
+  maxSocialTasks       Int      @default(0)
+  customBranding       Boolean  @default(false)
+  advancedAnalytics    Boolean  @default(false)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  allowQRCodeGenerator Boolean  @default(false)
+  tenants              Tenant[]
 
   @@index([name])
   @@index([isActive])
@@ -71,10 +54,10 @@ model SubscriptionPlan {
 
 model WheelTemplate {
   id           String     @id @default(cuid())
-  name         String // e.g., "Classic", "Modern", "Neon"
-  thumbnail    String? // URL to preview image
-  configSchema Json // Template configuration (colors, styles, etc.)
-  componentKey String     @default("Classic") // React component identifier
+  name         String
+  thumbnail    String?
+  configSchema Json
+  componentKey String     @default("Classic")
   isActive     Boolean    @default(true)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -83,59 +66,43 @@ model WheelTemplate {
   @@index([isActive])
 }
 
-// ============================================
-// TENANT LEVEL MODELS
-// ============================================
-
 model Tenant {
-  id           String  @id @default(cuid())
-  name         String // Business name
-  slug         String  @unique // Subdomain or path identifier
-  contactPhone String? // Contact mobile number
-  customDomain String? @unique // e.g., "offer.myshop.com"
-  planId       String
-  plan         Plan    @relation(fields: [planId], references: [id])
-
-  // Subscription fields
+  id                 String                @id @default(cuid())
+  name               String
+  slug               String                @unique
+  contactPhone       String?
+  customDomain       String?               @unique
+  planId             String
   subscriptionPlanId String?
-  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-  subscriptionStatus String            @default("TRIAL") // TRIAL, ACTIVE, CANCELED
+  subscriptionStatus String                @default("TRIAL")
   subscriptionStart  DateTime?
   subscriptionEnd    DateTime?
-
-  isActive     Boolean       @default(true)
-  waConfig     Json? // Override WhatsApp config: { apiUrl, apiKey, sender }
-  
-  // Meta API credentials for Connect verification (Premium feature)
+  isActive           Boolean               @default(true)
+  waConfig           Json?
   facebookPageId     String?
-  facebookToken      String?  @db.Text
+  facebookToken      String?
   instagramAccountId String?
-  instagramToken     String?  @db.Text
-  
-  // API rate limit tracking
-  metaApiUsageHour   Int      @default(0)
-  lastApiUsageReset  DateTime @default(now())
-  
-  // Security tracking (Super Admin Controls)
-  isLocked          Boolean   @default(false)
-  lockedAt          DateTime?
-  lockedBy          String? // Admin ID
-  failedLoginCount  Int       @default(0)
-  lastFailedLogin   DateTime?
-  
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  campaigns    Campaign[]
-  prizes       Prize[]
-  endUsers     EndUser[]
-  tenantAdmins TenantAdmin[]
-  usage        TenantUsage[]
-  vouchers     Voucher[] // Relation to vouchers for this tenant
-  
-  // Super Admin Controls relations
-  monthlyUsage      MonthlyUsage[]
-  limitOverrides    TenantLimitOverride[]
-  securityEvents    SecurityEvent[]
+  instagramToken     String?
+  metaApiUsageHour   Int                   @default(0)
+  lastApiUsageReset  DateTime              @default(now())
+  isLocked           Boolean               @default(false)
+  lockedAt           DateTime?
+  lockedBy           String?
+  failedLoginCount   Int                   @default(0)
+  lastFailedLogin    DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  campaigns          Campaign[]
+  endUsers           EndUser[]
+  monthlyUsage       MonthlyUsage[]
+  prizes             Prize[]
+  securityEvents     SecurityEvent[]
+  plan               Plan                  @relation(fields: [planId], references: [id])
+  subscriptionPlan   SubscriptionPlan?     @relation(fields: [subscriptionPlanId], references: [id])
+  tenantAdmins       TenantAdmin[]
+  limitOverrides     TenantLimitOverride[]
+  usage              TenantUsage[]
+  vouchers           Voucher[]
 
   @@index([slug])
   @@index([isActive])
@@ -146,78 +113,63 @@ model Tenant {
 model TenantAdmin {
   id               String    @id @default(cuid())
   tenantId         String
-  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   email            String    @unique
-  password         String // Hashed with bcrypt
+  password         String
   name             String
   createdAt        DateTime  @default(now())
-  redeemedVouchers Voucher[] // Relation to vouchers redeemed by this admin/merchant
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  redeemedVouchers Voucher[]
 
   @@index([tenantId, email])
 }
 
 model TenantUsage {
-  id       String @id @default(cuid())
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  month            String // "2026-01" format
-  campaignsCreated Int    @default(0)
-  spinsUsed        Int    @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  tenantId         String
+  month            String
+  campaignsCreated Int      @default(0)
+  spinsUsed        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, month])
   @@index([tenantId, month])
 }
 
-// ============================================
-// CAMPAIGN LEVEL MODELS (Tenant-Scoped)
-// ============================================
-
 model Campaign {
   id                       String            @id @default(cuid())
   tenantId                 String
-  tenant                   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   templateId               String?
-  template                 WheelTemplate?    @relation(fields: [templateId], references: [id], onDelete: SetNull)
   name                     String
   description              String?
-  logoUrl                  String? // URL for wheel center logo
-  supportMobile            String? // Contact number for support
-  websiteUrl               String? // Campaign website
+  logoUrl                  String?
+  supportMobile            String?
+  websiteUrl               String?
   isActive                 Boolean           @default(true)
-  isArchived               Boolean           @default(false) // Soft delete flag
-  archivedAt               DateTime? // When campaign was archived
-  spinLimit                Int               @default(1) // Max spins allowed per user
-  spinCooldown             Int               @default(24) // Cooldown in hours
-  referralsRequiredForSpin Int               @default(0) // 0 = disabled, N = invite N friends for bonus spin
+  isArchived               Boolean           @default(false)
+  archivedAt               DateTime?
+  spinLimit                Int               @default(1)
+  spinCooldown             Int               @default(24)
+  referralsRequiredForSpin Int               @default(0)
   startDate                DateTime
   endDate                  DateTime
   createdAt                DateTime          @default(now())
   updatedAt                DateTime          @updatedAt
-  
-  // Referral rewards (admin sets globally)
   referralsForBonus        Int               @default(5)
   referralBonusSpins       Int               @default(1)
-  
-  // WhatsApp notification settings
-  notificationEnabled       Boolean           @default(true)
-  notificationStartHour     Int               @default(9)   // 9 AM
-  notificationEndHour       Int               @default(21)  // 9 PM
-  sendImmediately           Boolean           @default(false) // Override time window
-  
-  // Social media features
-  socialMediaEnabled        Boolean           @default(false)
-  
-  // Default spin rewards per action type (JSON: { "VISIT_PAGE": 2, "VISIT_PROFILE": 2, "VIEW_POST": 1, ... })
-  defaultSpinRewards        Json?             // e.g., { "VISIT_PAGE": 2, "VISIT_PROFILE": 2, "VIEW_POST": 1, "VIEW_DISCUSSION": 1, "VISIT_TO_SHARE": 1 }
-  
-  prizes                   Prize[]
-  spins                    Spin[]
-  socialTasks              SocialMediaTask[]
+  notificationEnabled      Boolean           @default(true)
+  notificationStartHour    Int               @default(9)
+  notificationEndHour      Int               @default(21)
+  sendImmediately          Boolean           @default(false)
+  socialMediaEnabled       Boolean           @default(false)
+  defaultSpinRewards       Json?
+  template                 WheelTemplate?    @relation(fields: [templateId], references: [id])
+  tenant                   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   landingPage              LandingPage?
+  prizes                   Prize[]
+  socialTasks              SocialMediaTask[]
+  spins                    Spin[]
 
   @@index([tenantId, isActive, isArchived])
   @@index([isActive, startDate, endDate])
@@ -227,22 +179,22 @@ model Campaign {
 model EndUser {
   id                    String                 @id @default(cuid())
   tenantId              String
-  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   phone                 String
   name                  String?
   email                 String?
   referralCode          String                 @default(cuid())
   referredById          String?
+  successfulReferrals   Int                    @default(0)
+  sharedWins            Int                    @default(0)
+  bonusSpinsEarned      Int                    @default(0)
+  createdAt             DateTime               @default(now())
   referredBy            EndUser?               @relation("UserReferrals", fields: [referredById], references: [id])
   referrals             EndUser[]              @relation("UserReferrals")
-  successfulReferrals   Int                    @default(0) // Count of referrals who verified & spun
-  sharedWins            Int                    @default(0) // Number of times user shared a win
-  bonusSpinsEarned      Int                    @default(0) // Total bonus spins earned from sharing
-  createdAt             DateTime               @default(now())
-  spins                 Spin[]
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   otpRecords            OTP[]
   socialTaskCompletions SocialTaskCompletion[]
-  vouchers              Voucher[] // Relation to vouchers won by this user
+  spins                 Spin[]
+  vouchers              Voucher[]
 
   @@unique([tenantId, phone])
   @@unique([tenantId, referralCode])
@@ -251,34 +203,31 @@ model EndUser {
 }
 
 model Prize {
-  id                     String   @id @default(cuid())
+  id                     String    @id @default(cuid())
   tenantId               String?
-  tenant                 Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   campaignId             String
-  campaign               Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   name                   String
   description            String?
-  imageUrl               String? // URL for prize image (can be from UploadThing or any image host)
-  couponCode             String? // The actual coupon code to be sent
-  probability            Float    @default(10.0) // Percentage (0-100)
-  dailyLimit             Int      @default(100) // Max wins per day
-  totalLimit             Int? // Total available (null = unlimited)
-  currentStock           Int? // Current inventory stock (null = unlimited, only if plan allows)
-  lowStockAlert          Int? // Alert threshold for low stock (null = disabled)
-  isActive               Boolean  @default(true)
-  showTryAgainMessage    Boolean  @default(false) // If true, show "Sorry, try again in some time" when spinner lands on this prize
-  colorCode              String   @default("#FFA500") // Hex color for wheel segment
-  position               Int // Position on wheel (0-9)
-  
-  // Voucher configuration fields
-  voucherValidityDays    Int      @default(30)
-  voucherRedemptionLimit Int      @default(1)
-  sendQRCode             Boolean  @default(true)
-  
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  imageUrl               String?
+  couponCode             String?
+  probability            Float     @default(10.0)
+  dailyLimit             Int       @default(100)
+  totalLimit             Int?
+  currentStock           Int?
+  lowStockAlert          Int?
+  isActive               Boolean   @default(true)
+  showTryAgainMessage    Boolean   @default(false)
+  colorCode              String    @default("#FFA500")
+  position               Int
+  voucherValidityDays    Int       @default(30)
+  voucherRedemptionLimit Int       @default(1)
+  sendQRCode             Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  campaign               Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  tenant                 Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   spins                  Spin[]
-  vouchers               Voucher[] // Relation to vouchers created from this prize
+  vouchers               Voucher[]
 
   @@unique([campaignId, position])
   @@index([campaignId, isActive])
@@ -288,17 +237,17 @@ model Prize {
 model Spin {
   id              String    @id @default(cuid())
   userId          String
-  user            EndUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaignId      String
-  campaign        Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   prizeId         String?
-  prize           Prize?    @relation(fields: [prizeId], references: [id], onDelete: SetNull)
   wonPrize        Boolean   @default(false)
-  isReferralBonus Boolean   @default(false) // True if this spin was awarded via referral bonus
+  isReferralBonus Boolean   @default(false)
   spinDate        DateTime  @default(now())
   ipAddress       String?
   userAgent       String?
-  vouchers        Voucher[] // Relation to vouchers created from this spin
+  campaign        Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prize           Prize?    @relation(fields: [prizeId], references: [id])
+  user            EndUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vouchers        Voucher[]
 
   @@index([userId, campaignId, spinDate])
   @@index([spinDate])
@@ -307,39 +256,27 @@ model Spin {
 }
 
 model Voucher {
-  id              String    @id @default(cuid())
-  code            String    @unique
+  id              String       @id @default(cuid())
+  code            String       @unique
   qrImageUrl      String?
-  
-  // Relationships
   spinId          String
-  spin            Spin      @relation(fields: [spinId], references: [id], onDelete: Cascade)
-  
   prizeId         String
-  prize           Prize     @relation(fields: [prizeId], references: [id], onDelete: Cascade)
-  
   userId          String
-  user            EndUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
   tenantId        String
-  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  // Redemption tracking
-  isRedeemed      Boolean   @default(false)
+  isRedeemed      Boolean      @default(false)
   redeemedAt      DateTime?
   redeemedBy      String?
-  redeemedByUser  TenantAdmin? @relation(fields: [redeemedBy], references: [id], onDelete: SetNull)
-  
-  // Configuration
   expiresAt       DateTime
-  redemptionLimit Int       @default(1)
-  redemptionCount Int       @default(0)
-  
-  // Timestamps
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  // Indexes for performance
+  redemptionLimit Int          @default(1)
+  redemptionCount Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  prize           Prize        @relation(fields: [prizeId], references: [id], onDelete: Cascade)
+  redeemedByUser  TenantAdmin? @relation(fields: [redeemedBy], references: [id])
+  spin            Spin         @relation(fields: [spinId], references: [id], onDelete: Cascade)
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            EndUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([code])
   @@index([tenantId])
   @@index([userId])
@@ -352,35 +289,31 @@ model Voucher {
 model OTP {
   id        String   @id @default(cuid())
   userId    String?
-  user      EndUser? @relation(fields: [userId], references: [id], onDelete: Cascade)
   phone     String
   otp       String
   expiresAt DateTime
   verified  Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      EndUser? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([phone, expiresAt, verified])
 }
 
-// Super Admin model (platform owner)
 model Admin {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String // Hashed with bcrypt
-  name         String
-  isSuperAdmin Boolean  @default(false) // True for platform owner
-  createdAt    DateTime @default(now())
-  
-  // Super Admin Controls relations
-  auditLogs         AuditLog[]
-  notifications     Notification[]
-  limitOverrides    TenantLimitOverride[]
+  id             String                @id @default(cuid())
+  email          String                @unique
+  password       String
+  name           String
+  isSuperAdmin   Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  auditLogs      AuditLog[]
+  notifications  Notification[]
+  limitOverrides TenantLimitOverride[]
 
   @@index([email])
   @@index([isSuperAdmin])
 }
 
-// Global settings (Super Admin managed)
 model Setting {
   id          String   @id @default(cuid())
   key         String   @unique
@@ -391,66 +324,52 @@ model Setting {
   @@index([key])
 }
 
-// ============================================
-// SOCIAL MEDIA TASKS MODELS
-// ============================================
-
 model SocialMediaTask {
-  id         String   @id @default(cuid())
-  campaignId String
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  platform    String // FACEBOOK, INSTAGRAM, TWITTER, YOUTUBE
-  actionType  String // VISIT_PAGE, VISIT_PROFILE, VIEW_POST, VIEW_DISCUSSION, VISIT_TO_SHARE, CONNECT_ACCOUNT
-                     // @deprecated: LIKE_PAGE, LIKE_POST, FOLLOW, SHARE, COMMENT (use VISIT_* equivalents for policy compliance)
-  title       String
-  description String? // Optional extra context
-  targetUrl   String // CRITICAL: The exact URL user must visit
-  spinsReward Int // 1-10
-
-  isActive     Boolean  @default(true)
-  displayOrder Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  completions SocialTaskCompletion[]
+  id           String                 @id @default(cuid())
+  campaignId   String
+  platform     String
+  actionType   String
+  title        String
+  description  String?
+  targetUrl    String
+  spinsReward  Int
+  isActive     Boolean                @default(true)
+  displayOrder Int                    @default(0)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  campaign     Campaign               @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  completions  SocialTaskCompletion[]
 
   @@index([campaignId, isActive])
   @@index([platform])
 }
 
 model SocialTaskCompletion {
-  id     String          @id @default(cuid())
-  taskId String
-  task   SocialMediaTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  userId String
-  user   EndUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  status       String    @default("PENDING") // PENDING, VERIFIED, FAILED
-  spinsAwarded Int
-  
-  // WhatsApp notification tracking
-  notificationSent     Boolean   @default(false)
-  notificationSentAt   DateTime?
-  notificationDelivered Boolean  @default(false)
-  
-  // Adaptive verification tracking
-  cohortId               String?  // For grouping completions by time window
-  verificationStrategy    String?  // INDIVIDUAL, BATCHED, STATISTICAL, HONOR_SYSTEM
-  sampledForVerification Boolean  @default(false)
-  projectedFromSample    Boolean  @default(false)
-  
-  claimedAt    DateTime  @default(now())
-  clickedAt    DateTime? // Server-side timestamp when user clicked "Visit" link
-  verifiedAt   DateTime?
+  id                     String          @id @default(cuid())
+  taskId                 String
+  userId                 String
+  status                 String          @default("PENDING")
+  spinsAwarded           Int
+  notificationSent       Boolean         @default(false)
+  notificationSentAt     DateTime?
+  notificationDelivered  Boolean         @default(false)
+  cohortId               String?
+  verificationStrategy   String?
+  sampledForVerification Boolean         @default(false)
+  projectedFromSample    Boolean         @default(false)
+  claimedAt              DateTime        @default(now())
+  clickedAt              DateTime?
+  verifiedAt             DateTime?
+  task                   SocialMediaTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user                   EndUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
   @@index([userId, claimedAt])
   @@index([status])
   @@index([taskId])
   @@index([cohortId, status])
-  @@index([claimedAt]) // For traffic detection
-  @@index([clickedAt]) // For time-based verification
+  @@index([claimedAt])
+  @@index([clickedAt])
 }
 
 model SocialMediaCounter {
@@ -464,167 +383,133 @@ model SocialMediaCounter {
   @@index([platform, checkedAt])
 }
 
-// ============================================
-// LANDING PAGE BUILDER MODELS
-// ============================================
-
 model LandingPage {
-  id            String   @id @default(cuid())
-  campaignId    String   @unique
-  campaign      Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  
-  title         String   // Landing page title (mandatory)
-  template      String   @default("template_1") // template_1 through template_5
-  brandColor    String   @default("#f59e0b") // Primary brand color
-  backgroundColor String? // Optional background color/image
-  metaTitle     String   // SEO title (mandatory)
-  metaDescription String // SEO description (mandatory)
-  
-  isPublished   Boolean  @default(false)
-  publishedAt   DateTime?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  sections      LandingPageSection[]
-  offers        OfferShowcase[]
-  footer        CampaignFooter?
-  
+  id              String               @id @default(cuid())
+  campaignId      String               @unique
+  title           String
+  template        String               @default("template_1")
+  brandColor      String               @default("#f59e0b")
+  backgroundColor String?
+  metaTitle       String
+  metaDescription String
+  isPublished     Boolean              @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  footer          CampaignFooter?
+  campaign        Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  sections        LandingPageSection[]
+  offers          OfferShowcase[]
+
   @@index([campaignId])
   @@index([isPublished])
 }
 
 model LandingPageSection {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   landingPageId String
+  type          String
+  displayOrder  Int         @default(0)
+  isVisible     Boolean     @default(true)
+  content       Json
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   landingPage   LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-  
-  type          String   // HERO, SOCIAL_TASKS, OFFERS, FOOTER, CUSTOM
-  displayOrder  Int      @default(0)
-  isVisible     Boolean  @default(true)
-  
-  // Flexible JSON content per section type
-  content       Json     // Section-specific configuration
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+
   @@index([landingPageId, displayOrder])
   @@index([landingPageId, type])
 }
 
 model OfferShowcase {
-  id            String   @id @default(cuid())
-  landingPageId String
-  landingPage   LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-  
-  offerType     String   // PRODUCT, SERVICE, DISCOUNT, VOUCHER, EXPERIENCE
-  title         String
-  description   String? // Full description (shown in modal)
-  shortDescription String? // Brief description (shown in grid)
-  image         String
-  category      String?
-  
-  // Value information
-  originalValue String? // "Worth ₹5,000"
-  discountValue String? // "Get for ₹2,500" or "50% OFF"
-  
-  // External link
-  externalLink  String?
-  
-  displayOrder  Int      @default(0)
-  isActive      Boolean  @default(true)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id               String      @id @default(cuid())
+  landingPageId    String
+  offerType        String
+  title            String
+  description      String?
+  shortDescription String?
+  image            String
+  category         String?
+  originalValue    String?
+  discountValue    String?
+  externalLink     String?
+  displayOrder     Int         @default(0)
+  isActive         Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  landingPage      LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+
   @@index([landingPageId, displayOrder])
   @@index([landingPageId, offerType])
 }
 
 model CampaignFooter {
-  id            String   @id @default(cuid())
-  landingPageId String   @unique
-  landingPage   LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
-  
-  // Brand information
-  companyName   String
-  companyTagline String?
-  logoUrl       String?
-  
-  // Contact information
-  supportEmail  String
-  supportPhone  String?
-  address       String?
-  
-  // Social media links
-  facebookUrl   String?
-  instagramUrl  String?
-  twitterUrl    String?
-  linkedinUrl   String?
-  youtubeUrl    String?
-  
-  // Legal page URLs
-  privacyPolicyUrl String  @default("/privacy")
-  termsUrl         String  @default("/terms")
-  rulesUrl         String  @default("/rules")
+  id               String      @id @default(cuid())
+  landingPageId    String      @unique
+  companyName      String
+  companyTagline   String?
+  logoUrl          String?
+  supportEmail     String
+  supportPhone     String?
+  address          String?
+  facebookUrl      String?
+  instagramUrl     String?
+  twitterUrl       String?
+  linkedinUrl      String?
+  youtubeUrl       String?
+  privacyPolicyUrl String      @default("/privacy")
+  termsUrl         String      @default("/terms")
+  rulesUrl         String      @default("/rules")
   disclaimerUrl    String?
-  
-  // Custom links (JSON array: [{label: "About", url: "/about"}])
-  customLinks   Json?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  customLinks      Json?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  landingPage      LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
 }
 
-// ============================================
-// SUPER ADMIN CONTROLS MODELS
-// ============================================
-
 model MonthlyUsage {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  month         Int      // 1-12
-  year          Int      // 2024, 2025, etc.
-  spinsUsed     Int      @default(0)
-  vouchersUsed  Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id           String   @id @default(cuid())
+  tenantId     String
+  month        Int
+  year         Int
+  spinsUsed    Int      @default(0)
+  vouchersUsed Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, month, year])
   @@index([tenantId, year, month])
 }
 
 model TenantLimitOverride {
-  id              String   @id @default(cuid())
-  tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  bonusSpins      Int      @default(0)
-  bonusVouchers   Int      @default(0)
-  reason          String
-  grantedBy       String   // Admin ID
-  grantedByAdmin  Admin    @relation(fields: [grantedBy], references: [id])
-  expiresAt       DateTime? // Null = permanent, otherwise expires at date
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  
+  id             String    @id @default(cuid())
+  tenantId       String
+  bonusSpins     Int       @default(0)
+  bonusVouchers  Int       @default(0)
+  reason         String
+  grantedBy      String
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  grantedByAdmin Admin     @relation(fields: [grantedBy], references: [id])
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, isActive])
   @@index([expiresAt])
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  adminId     String
-  admin       Admin    @relation(fields: [adminId], references: [id])
-  action      String   // "EDIT_TENANT", "DELETE_TENANT", "GRANT_OVERRIDE", etc.
-  targetType  String   // "Tenant", "Campaign", "Voucher", "SubscriptionPlan"
-  targetId    String
-  changes     Json?    // Stores before/after values or action details
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String
+  changes    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  admin      Admin    @relation(fields: [adminId], references: [id])
+
   @@index([adminId, createdAt])
   @@index([targetType, targetId])
   @@index([action, createdAt])
@@ -632,48 +517,44 @@ model AuditLog {
 }
 
 model Notification {
-  id            String   @id @default(cuid())
-  subject       String
-  body          String   @db.Text
-  recipientType String   // "ALL_TENANTS", "SPECIFIC_TENANT"
-  recipientId   String?  // Tenant ID if specific
-  sentBy        String   // Admin ID
-  sentByAdmin   Admin    @relation(fields: [sentBy], references: [id])
-  recipientCount Int     @default(0)
-  sentAt        DateTime @default(now())
-  
+  id             String   @id @default(cuid())
+  subject        String
+  body           String
+  recipientType  String
+  recipientId    String?
+  sentBy         String
+  recipientCount Int      @default(0)
+  sentAt         DateTime @default(now())
+  sentByAdmin    Admin    @relation(fields: [sentBy], references: [id])
+
   @@index([sentBy, sentAt])
   @@index([recipientType, sentAt])
 }
 
 model SecurityEvent {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  eventType   String   // "FAILED_LOGIN", "SUSPICIOUS_SPINS", "SUSPICIOUS_USERS"
-  severity    String   // "LOW", "MEDIUM", "HIGH"
+  eventType   String
+  severity    String
   description String
-  metadata    Json?    // Additional event details
-  resolved    Boolean  @default(false)
-  resolvedBy  String?  // Admin ID
+  metadata    Json?
+  resolved    Boolean   @default(false)
+  resolvedBy  String?
   resolvedAt  DateTime?
-  createdAt   DateTime @default(now())
-  
+  createdAt   DateTime  @default(now())
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@index([tenantId, resolved])
   @@index([severity, resolved])
   @@index([createdAt])
 }
 
-// ============================================
-// PLATFORM SETTINGS (Global Fallback)
-// ============================================
-
 model PlatformSettings {
   id                 String   @id @default("settings")
   facebookPageId     String?
-  facebookToken      String?  @db.Text
+  facebookToken      String?
   instagramAccountId String?
-  instagramToken     String?  @db.Text
+  instagramToken     String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }

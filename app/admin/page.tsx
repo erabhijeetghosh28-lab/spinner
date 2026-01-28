@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 export default function AdminLogin() {
     const [email, setEmail] = useState('');
@@ -94,6 +94,13 @@ export default function AdminLogin() {
                         {loading ? 'Authenticating...' : 'Sign In'}
                     </button>
                 </form>
+
+                <p className="mt-8 text-center text-slate-500 text-sm">
+                    Don't have an account?{' '}
+                    <a href="/admin/signup" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
+                        Start Free Trial
+                    </a>
+                </p>
             </div>
         </div>
     );

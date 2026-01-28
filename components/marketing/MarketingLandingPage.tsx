@@ -113,9 +113,14 @@ export default function MarketingLandingPage() {
                             </button>
                         </nav>
                         
-                        <Link href="/admin/login" className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-md shadow-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/40 active:scale-95">
-                            Get Started
-                        </Link>
+                        <div className="flex items-center gap-6">
+                            <Link href="/admin" className="text-[15px] font-semibold text-slate-600 hover:text-cyan-500 transition-colors duration-200">
+                                Login
+                            </Link>
+                            <Link href="/admin/signup" className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-md shadow-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/40 active:scale-95">
+                                Get Started
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </header>
