@@ -1,6 +1,15 @@
 'use client';
 
 import AdminNav from '@/components/admin/AdminNav';
+import { HeatmapChart } from '@/components/admin/analytics/HeatmapChart';
+import { MissingVIPsTable } from '@/components/admin/analytics/MissingVIPsTable';
+import { PrizeIntegrityChart } from '@/components/admin/analytics/PrizeIntegrityChart';
+import { RedemptionFunnel } from '@/components/admin/analytics/RedemptionFunnel';
+import { RedemptionTimeChart } from '@/components/admin/analytics/RedemptionTimeChart';
+import { ReferralGrowthChart } from '@/components/admin/analytics/ReferralGrowthChart';
+import { RetentionChart } from '@/components/admin/analytics/RetentionChart';
+import { ROISimulator } from '@/components/admin/analytics/ROISimulator';
+import { ViralGenome } from '@/components/admin/analytics/ViralGenome';
 import ImageUploader from '@/components/admin/ImageUploader';
 import LandingPageBuilder from '@/components/admin/LandingPageBuilder';
 import { UsageStats } from '@/components/admin/UsageStats';
@@ -1862,124 +1871,88 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Date Range Picker */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-4">Date Range</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Start Date</label>
-                        <input
+        <div className="space-y-6 animate-fadeIn pb-12">
+            {/* Header & Date Range */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <div>
+                    <h2 className="text-2xl font-black text-white">Campaign Intelligence</h2>
+                    <p className="text-slate-500 text-sm mt-1">
+                        Deep insights into user behavior, virality, and ROI.
+                    </p>
+                </div>
+                <div className="flex space-x-2">
+                    <div className="relative">
+                         <div className="text-[10px] uppercase text-slate-500 absolute -top-2 left-2 bg-slate-900 px-1 font-bold">Start</div>
+                         <input
                             type="date"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
+                            className="bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-amber-500"
                         />
                     </div>
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">End Date</label>
-                        <input
+                    <div className="relative">
+                         <div className="text-[10px] uppercase text-slate-500 absolute -top-2 left-2 bg-slate-900 px-1 font-bold">End</div>
+                         <input
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
+                            className="bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-amber-500"
                         />
                     </div>
                 </div>
             </div>
 
             {/* KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {[
-                    { label: 'Total Spins', value: analytics.kpis.totalSpins, icon: '🎡', color: 'text-amber-500' },
-                    { label: 'Total Users', value: analytics.kpis.totalUsers, icon: '👥', color: 'text-blue-500' },
-                    { label: 'Prizes Won', value: analytics.kpis.prizesWon, icon: '🏆', color: 'text-green-500' },
-                    { label: 'Conversion Rate', value: `${analytics.kpis.conversionRate}%`, icon: '📈', color: 'text-purple-500' },
-                    { label: 'Referral Spins', value: analytics.kpis.referralSpins, icon: '🎁', color: 'text-pink-500' },
+                    { label: 'Total Spins', value: analytics.kpis.totalSpins, icon: '🎡', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+                    { label: 'Total Users', value: analytics.kpis.totalUsers, icon: '👥', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+                    { label: 'Prizes Won', value: analytics.kpis.prizesWon, icon: '🏆', color: 'bg-green-500/10 text-green-500 border-green-500/20' },
+                    { label: 'Win Rate', value: `${analytics.kpis.conversionRate}%`, icon: '📈', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
+                    { label: 'Viral Spins', value: analytics.kpis.referralSpins, icon: '🎁', color: 'bg-pink-500/10 text-pink-500 border-pink-500/20' },
+                    { label: 'Viral Coeff.', value: analytics.kpis.viralCoefficient, icon: '🦠', color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' },
                 ].map((kpi, i) => (
-                    <div key={i} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                        <div className="text-3xl mb-2">{kpi.icon}</div>
-                        <div className="text-slate-400 text-xs font-medium uppercase mb-1">{kpi.label}</div>
-                        <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
+                    <div key={i} className={`p-4 rounded-2xl border ${kpi.color} backdrop-blur-sm`}>
+                        <div className="text-2xl mb-1">{kpi.icon}</div>
+                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">{kpi.label}</div>
+                        <div className="text-2xl font-black">{kpi.value}</div>
                     </div>
                 ))}
             </div>
 
-            {/* Charts */}
-            <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold mb-4">Daily Spins</h3>
-                    <div className="space-y-2">
-                        {analytics.charts?.dailySpins && analytics.charts.dailySpins.length > 0 ? (
-                            (() => {
-                                const recentData = analytics.charts.dailySpins.slice(-7);
-                                const maxSpins = Math.max(...recentData.map((d: any) => d.spins || 0), 1);
-                                return recentData.map((item: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between">
-                                        <span className="text-sm text-slate-400">{item.date}</span>
-                                        <div className="flex items-center space-x-2">
-                                            <div className="w-32 bg-slate-800 rounded-full h-2">
-                                                <div
-                                                    className="bg-amber-500 h-2 rounded-full"
-                                                    style={{ width: `${((item.spins || 0) / maxSpins) * 100}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-sm font-bold text-white w-8 text-right">{item.spins || 0}</span>
-                                        </div>
-                                    </div>
-                                ));
-                            })()
-                        ) : (
-                            <div className="text-center py-8 text-slate-500 text-sm">No spin data available for this period</div>
-                        )}
-                    </div>
-                </div>
+            {/* ROW 1: Heatmap (Full Width) */}
+            <HeatmapChart data={analytics.charts?.heatmap || {}} />
 
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold mb-4">Prize Distribution</h3>
-                    <div className="space-y-2">
-                        {analytics.charts?.prizeDistribution && analytics.charts.prizeDistribution.length > 0 ? (
-                            analytics.charts.prizeDistribution.map((item: any, i: number) => (
-                                <div key={i} className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-400 truncate flex-1">{item.prizeName || 'Unknown'}</span>
-                                    <span className="text-sm font-bold text-white ml-2">{item.count || 0}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-8 text-slate-500 text-sm">No prize distribution data available</div>
-                        )}
-                    </div>
-                </div>
+            {/* ROW 2: The Action Grid (Funnel + Retention) */}
+            <div className="grid md:grid-cols-2 gap-6 h-full">
+                <RedemptionFunnel data={analytics.charts?.redemptionFunnel || { spins: 0, wins: 0, vouchers: 0, redeemed: 0 }} />
+                <RetentionChart data={analytics.charts?.retention || {}} />
             </div>
 
-            {/* Top Referrers */}
-            {analytics.topReferrers && analytics.topReferrers.length > 0 && (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold mb-4">Top Referrers</h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-800">
-                                    <th className="pb-4 font-bold">Name</th>
-                                    <th className="pb-4 font-bold">Phone</th>
-                                    <th className="pb-4 font-bold">Successful Referrals</th>
-                                    <th className="pb-4 font-bold">Referral Code</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800">
-                                {analytics.topReferrers.map((referrer: any, i: number) => (
-                                    <tr key={i} className="hover:bg-slate-800/30">
-                                        <td className="py-4 font-bold">{referrer.name || 'Anonymous'}</td>
-                                        <td className="py-4 text-slate-400">{referrer.phone}</td>
-                                        <td className="py-4">{referrer.successfulReferrals}</td>
-                                        <td className="py-4 font-mono text-sm text-amber-500">{referrer.referralCode}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+            {/* ROW 3: Viral Engine */}
+            <div className="grid md:grid-cols-3 gap-6">
+                <div className="md:col-span-2">
+                     <ReferralGrowthChart 
+                        data={analytics.charts?.referralGrowth || []} 
+                        viralCoefficient={analytics.kpis.viralCoefficient}
+                    />
                 </div>
-            )}
+                 <div className="md:col-span-1">
+                     <RedemptionTimeChart data={analytics.charts?.redemptionTime || {}} />
+                 </div>
+            </div>
+
+            {/* ROW 4: Network Visualizer & ROI */}
+            <div className="grid lg:grid-cols-2 gap-6">
+                 <ViralGenome data={analytics.deepAnalysis?.viralGenome || []} />
+                 <ROISimulator data={analytics.deepAnalysis?.roiData || { totalUsers: 0, totalRedemptions: 0, totalSpins: 0 }} />
+            </div>
+
+             {/* ROW 5: Audit & Action Lists */}
+             <div className="grid lg:grid-cols-2 gap-6">
+                <PrizeIntegrityChart data={analytics.charts?.prizeIntegrity || []} />
+                <MissingVIPsTable data={analytics.deepAnalysis?.churnCandidates || []} />
+             </div>
         </div>
     );
 }
