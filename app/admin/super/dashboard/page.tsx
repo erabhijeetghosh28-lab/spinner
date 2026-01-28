@@ -35,18 +35,19 @@ export default function SuperAdminDashboard() {
     const fetchData = async () => {
         try {
             const [statsRes, tenantsRes, plansRes, templatesRes] = await Promise.all([
-                axios.get('/api/admin/super/stats'),
-                axios.get('/api/admin/super/tenants'),
-                axios.get('/api/admin/super/plans'),
-                axios.get('/api/admin/super/templates'),
+                axios.get('/api/admin/super/stats').catch(e => { console.error('Stats API failed:', e.response?.data || e.message); throw e; }),
+                axios.get('/api/admin/super/tenants').catch(e => { console.error('Tenants API failed:', e.response?.data || e.message); throw e; }),
+                axios.get('/api/admin/super/plans').catch(e => { console.error('Plans API failed:', e.response?.data || e.message); throw e; }),
+                axios.get('/api/admin/super/templates').catch(e => { console.error('Templates API failed:', e.response?.data || e.message); throw e; }),
             ]);
 
             setStats(statsRes.data);
             setTenants(tenantsRes.data.tenants);
             setPlans(plansRes.data.plans);
             setTemplates(templatesRes.data.templates);
-        } catch (err) {
-            console.error('Failed to fetch data');
+        } catch (err: any) {
+            console.error('Failed to fetch data:', err.message);
+            console.error('Full error:', err);
         } finally {
             setLoading(false);
         }

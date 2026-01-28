@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdminAuth } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
@@ -17,14 +17,20 @@ export async function GET(req: NextRequest) {
         // Get tenant with plan to check if inventory tracking is allowed
         const tenant = await prisma.tenant.findUnique({
             where: { id: tenantId },
-            include: { plan: true }
+            include: { 
+                plan: true,
+                subscriptionPlan: true 
+            }
         });
 
         if (!tenant) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
         }
 
-        if (!tenant.plan.allowInventoryTracking) {
+        // Check subscription plan first, fallback to legacy plan
+        const hasInventoryAccess = tenant.plan.allowInventoryTracking; // Only legacy plan has this feature
+        
+        if (!hasInventoryAccess) {
             return NextResponse.json({ error: 'Inventory Tracking feature not available for your plan' }, { status: 403 });
         }
 

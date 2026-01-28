@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import QRCode from 'qrcode';
 import { requireAdminAuth } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import QRCode from 'qrcode';
 
 export async function GET(req: NextRequest) {
     try {
@@ -17,17 +17,23 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
         }
 
-        // Get tenant with plan to check if QR code generation is allowed
+        // Get tenant with subscription plan to check if QR code generation is allowed
         const tenant = await prisma.tenant.findUnique({
             where: { id: tenantId },
-            include: { plan: true }
+            include: { 
+                plan: true,
+                subscriptionPlan: true 
+            }
         });
 
         if (!tenant) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
         }
 
-        if (!tenant.plan.allowQRCodeGenerator) {
+        // Check subscription plan first, fallback to legacy plan
+        const hasQRAccess = tenant.subscriptionPlan?.allowQRCodeGenerator || tenant.plan.allowQRCodeGenerator;
+        
+        if (!hasQRAccess) {
             return NextResponse.json({ error: 'QR Code Generator feature not available for your plan' }, { status: 403 });
         }
 

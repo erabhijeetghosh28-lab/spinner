@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdminAuth } from '@/lib/auth';
-import { getOrCreateMonthlyUsage, ensureMonthlyUsage } from '@/lib/monthly-reset';
+import { ensureMonthlyUsage, getOrCreateMonthlyUsage } from '@/lib/monthly-reset';
+import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 // GET: List all campaigns for a tenant
 export async function GET(req: NextRequest) {
@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
         // Get tenant with plan info
         const tenant = await prisma.tenant.findUnique({
             where: { id: tenantId },
-            include: { plan: true }
+            include: { 
+                plan: true,
+                subscriptionPlan: true 
+            }
         });
 
         if (!tenant) {
@@ -51,14 +54,19 @@ export async function GET(req: NextRequest) {
             orderBy: { createdAt: 'desc' }
         });
 
+        // Check subscription plan first for features
+        const allowAnalytics = tenant.subscriptionPlan?.advancedAnalytics || tenant.plan.allowAnalytics || false;
+        const allowQRCodeGenerator = tenant.subscriptionPlan?.allowQRCodeGenerator || tenant.plan.allowQRCodeGenerator || false;
+        const allowInventoryTracking = tenant.plan.allowInventoryTracking || false; // Only legacy plan has this
+
         return NextResponse.json({
             campaigns,
             plan: {
                 maxCampaigns: tenant.plan.maxCampaigns,
                 currentCount: campaigns.length,
-                allowAnalytics: tenant.plan.allowAnalytics ?? false,
-                allowQRCodeGenerator: tenant.plan.allowQRCodeGenerator ?? false,
-                allowInventoryTracking: tenant.plan.allowInventoryTracking ?? false
+                allowAnalytics,
+                allowQRCodeGenerator,
+                allowInventoryTracking
             }
         });
     } catch (error: any) {
