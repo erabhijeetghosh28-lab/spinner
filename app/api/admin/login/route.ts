@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { securityService } from '@/lib/security-service';
 import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 

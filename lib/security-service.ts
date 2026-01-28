@@ -106,18 +106,8 @@ export class SecurityService {
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
         select: {
-          name: true,
-          spins: {
-            where: {
-              spinDate: { gte: oneHourAgo }
-            }
-          },
-          endUsers: {
-            where: {
-              createdAt: { gte: oneDayAgo }
-            }
-          }
-        } as any
+          name: true
+        }
       });
 
       if (!tenant) {
@@ -125,7 +115,17 @@ export class SecurityService {
       }
 
       // Check for suspicious spin activity (>1000 spins in 1 hour)
-      const spinsInLastHour = tenant.spins.length;
+      const spinsInLastHour = await prisma.spin.count({
+        where: {
+          campaign: {
+            tenantId
+          },
+          spinDate: {
+            gte: oneHourAgo
+          }
+        }
+      });
+
       if (spinsInLastHour > 1000) {
         const alert = await this.createSecurityEvent({
           tenantId,
@@ -141,7 +141,14 @@ export class SecurityService {
       }
 
       // Check for suspicious user creation (>500 users in 1 day)
-      const usersInLastDay = tenant.endUsers.length;
+      const usersInLastDay = await prisma.endUser.count({
+        where: {
+          tenantId,
+          createdAt: {
+            gte: oneDayAgo
+          }
+        }
+      });
       if (usersInLastDay > 500) {
         const alert = await this.createSecurityEvent({
           tenantId,
