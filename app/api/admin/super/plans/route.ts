@@ -3,13 +3,27 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
-        // Get both Plan models
+        // Get both Plan models with tenant counts
         const [legacyPlans, subscriptionPlans] = await Promise.all([
             prisma.plan.findMany({
+                include: {
+                    _count: {
+                        select: {
+                            tenants: true
+                        }
+                    }
+                },
                 orderBy: { name: 'asc' }
             }),
             prisma.subscriptionPlan.findMany({
                 where: { isActive: true },
+                include: {
+                    _count: {
+                        select: {
+                            tenants: true
+                        }
+                    }
+                },
                 orderBy: { price: 'asc' }
             })
         ]);
