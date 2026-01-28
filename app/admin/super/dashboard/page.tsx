@@ -350,6 +350,9 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
         waApiUrl: '',
         waApiKey: '',
         waSender: '',
+        waMediaApiUrl: '',
+        waMediaApiKey: '',
+        waMediaSender: '',
         tenantAdminPassword: ''
     });
     const [plans, setPlans] = useState<any[]>([]);
@@ -381,6 +384,9 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                 waApiUrl: waConfig.apiUrl || '',
                 waApiKey: waConfig.apiKey || '',
                 waSender: waConfig.sender || '',
+                waMediaApiUrl: waConfig.mediaApiUrl || '',
+                waMediaApiKey: waConfig.mediaApiKey || '',
+                waMediaSender: waConfig.mediaSender || '',
                 tenantAdminPassword: ''
             });
         } else {
@@ -394,6 +400,9 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                 waApiUrl: '',
                 waApiKey: '',
                 waSender: '',
+                waMediaApiUrl: '',
+                waMediaApiKey: '',
+                waMediaSender: '',
                 tenantAdminPassword: ''
             });
         }
@@ -410,10 +419,13 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
         setLoading(true);
         try {
             // Build waConfig object if any WA fields are filled
-            const waConfig = (formData.waApiUrl || formData.waApiKey || formData.waSender) ? {
+            const waConfig = (formData.waApiUrl || formData.waApiKey || formData.waSender || formData.waMediaApiUrl || formData.waMediaApiKey || formData.waMediaSender) ? {
                 apiUrl: formData.waApiUrl || undefined,
                 apiKey: formData.waApiKey || undefined,
-                sender: formData.waSender || undefined
+                sender: formData.waSender || undefined,
+                mediaApiUrl: formData.waMediaApiUrl || undefined,
+                mediaApiKey: formData.waMediaApiKey || undefined,
+                mediaSender: formData.waMediaSender || undefined
             } : null;
 
             const submitData: any = {
@@ -718,6 +730,52 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                                             className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono text-sm outline-none focus:ring-2 focus:ring-amber-500"
                                             placeholder="919899011616"
                                         />
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-700/50">
+                                        <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-4">Media API Override (Optional)</p>
+                                        
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                                    Media API URL
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.waMediaApiUrl}
+                                                    onChange={(e) => setFormData({ ...formData, waMediaApiUrl: e.target.value })}
+                                                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="https://unofficial.cloudwapi.in/send-media"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                                        Media API Key
+                                                    </label>
+                                                    <input
+                                                        type="password"
+                                                        value={formData.waMediaApiKey}
+                                                        onChange={(e) => setFormData({ ...formData, waMediaApiKey: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="••••••••••••"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                                        Media Sender Number
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.waMediaSender}
+                                                        onChange={(e) => setFormData({ ...formData, waMediaSender: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="91XXXXXXXXXX"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

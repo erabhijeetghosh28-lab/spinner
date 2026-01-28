@@ -43,19 +43,42 @@ async function getWhatsAppConfig(type: 'TEXT' | 'MEDIA' = 'TEXT', tenantId?: str
     let apiKey: string | undefined = config[`WHATSAPP_${type}_API_KEY`];
     let sender: string | undefined = config[`WHATSAPP_${type}_SENDER`];
 
-    // Priority 2: Tenant-specific config (Legacy/Override)
-    if ((!apiKey || !sender) && tenantId) {
+    // Priority 2: Tenant-specific config (Overrides)
+    if (tenantId) {
         const tenant = await prisma.tenant.findUnique({
             where: { id: tenantId },
             select: { waConfig: true }
         });
 
         if (tenant?.waConfig) {
-            const waConfig = tenant.waConfig as { apiUrl?: string; apiKey?: string; sender?: string };
-            if (waConfig.apiKey && waConfig.sender) {
-                apiUrl = apiUrl || waConfig.apiUrl;
-                apiKey = waConfig.apiKey;
-                sender = waConfig.sender;
+            const waConfig = tenant.waConfig as { 
+                apiUrl?: string; 
+                apiKey?: string; 
+                sender?: string;
+                mediaApiUrl?: string;
+                mediaApiKey?: string;
+                mediaSender?: string;
+            };
+
+            // If MEDIA requested, look for specific media fields first
+            if (type === 'MEDIA') {
+                if (waConfig.mediaApiKey && waConfig.mediaSender) {
+                    apiUrl = waConfig.mediaApiUrl || apiUrl;
+                    apiKey = waConfig.mediaApiKey;
+                    sender = waConfig.mediaSender;
+                } else if (waConfig.apiKey && waConfig.sender) {
+                    // Fallback to tenant's basic config if media specific missing
+                    apiUrl = waConfig.apiUrl || apiUrl;
+                    apiKey = waConfig.apiKey;
+                    sender = waConfig.sender;
+                }
+            } else {
+                // For TEXT, use basic config
+                if (waConfig.apiKey && waConfig.sender) {
+                    apiUrl = waConfig.apiUrl || apiUrl;
+                    apiKey = waConfig.apiKey;
+                    sender = waConfig.sender;
+                }
             }
         }
     }
