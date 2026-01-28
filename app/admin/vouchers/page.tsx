@@ -1,5 +1,6 @@
 'use client';
 
+import AdminNav from '@/components/admin/AdminNav';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';

@@ -1,5 +1,6 @@
 'use client';
 
+import AdminNav from '@/components/admin/AdminNav';
 import ImageUploader from '@/components/admin/ImageUploader';
 import LandingPageBuilder from '@/components/admin/LandingPageBuilder';
 import { UsageStats } from '@/components/admin/UsageStats';
