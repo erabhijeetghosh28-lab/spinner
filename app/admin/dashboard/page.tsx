@@ -1,9 +1,9 @@
 'use client';
 
-import ImageUploadButton from '@/components/ImageUploadButton';
 import ImageUploader from '@/components/admin/ImageUploader';
 import LandingPageBuilder from '@/components/admin/LandingPageBuilder';
 import { UsageStats } from '@/components/admin/UsageStats';
+import ImageUploadButton from '@/components/ImageUploadButton';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -328,63 +328,12 @@ export default function AdminDashboard() {
     if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-8 lg:p-12">
+        <div className="min-h-screen bg-slate-950 text-white">
+            {/* Header */}
+            <AdminNav />
+            
+            <div className="p-6 md:p-8 lg:p-12">
             <div className="max-w-[1600px] mx-auto">
-                <div className="flex justify-between items-center mb-12">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-slate-900 text-2xl font-black">W</div>
-                        <h1 className="text-3xl font-bold text-amber-500 uppercase tracking-tight">Campaign Manager</h1>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <button
-                            onClick={() => router.push('/admin/scanner')}
-                            className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
-                            title="Scan Voucher"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                            </svg>
-                            <span>Scan Voucher</span>
-                        </button>
-                        <button
-                            onClick={() => router.push('/admin/vouchers')}
-                            className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
-                            title="Voucher Management"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                            </svg>
-                            <span>Vouchers</span>
-                        </button>
-                        <button
-                            onClick={() => { fetchData(); alert('Data refreshed!'); }}
-                            className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
-                            title="Refresh Data"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            <span>Refresh</span>
-                        </button>
-                        <button
-                            onClick={() => setShowPasswordModal(true)}
-                            className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
-                            title="Change Password"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                            </svg>
-                            <span>Change Password</span>
-                        </button>
-                        <button
-                            onClick={() => { localStorage.removeItem('admin-token'); localStorage.removeItem('admin-tenant-id'); localStorage.removeItem('admin-tenant-data'); localStorage.removeItem('admin-data'); router.push('/admin'); }}
-                            className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
-                        >
-                            <span>Logout</span>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                        </button>
-                    </div>
-                </div>
 
                 {/* Tabs */}
                 <div className="bg-slate-900 border-b border-slate-800 mb-8">
@@ -605,6 +554,7 @@ export default function AdminDashboard() {
                         tenantId={tenantId}
                     />
                 )}
+            </div>
             </div>
 
             {/* Change Password Modal */}

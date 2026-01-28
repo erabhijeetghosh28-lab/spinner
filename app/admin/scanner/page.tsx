@@ -303,21 +303,15 @@ export default function ScannerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-8">
+    <div className="min-h-screen bg-slate-950 text-white">
+      {/* Header */}
+      <AdminNav />
+      
+      <div className="p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => router.push('/admin/dashboard')}
-              className="text-slate-400 hover:text-white transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <h1 className="text-3xl font-bold text-amber-500">Scan Voucher</h1>
-          </div>
+        {/* Page Title */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-amber-500">Scan Voucher</h1>
         </div>
 
         {/* QR Scanner Section */}

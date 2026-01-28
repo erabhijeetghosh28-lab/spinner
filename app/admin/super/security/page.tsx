@@ -1,7 +1,6 @@
 'use client';
 
 import axios from 'axios';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -119,12 +118,6 @@ export default function SecurityDashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('super-admin-token');
-    localStorage.removeItem('super-admin-data');
-    router.push('/admin/super');
-  };
-
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'HIGH':
@@ -178,37 +171,7 @@ export default function SecurityDashboardPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
-      <div className="bg-slate-900 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <Link href="/admin/super/dashboard">
-              <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-slate-900 text-2xl font-black cursor-pointer">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-amber-500">Security Dashboard</h1>
-              <p className="text-slate-400 text-sm">Threat monitoring & account management</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Link href="/admin/super/dashboard" className="text-slate-400 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-slate-800">
-              Dashboard
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
-            >
-              <span>Logout</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+      <SuperAdminNav />
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
