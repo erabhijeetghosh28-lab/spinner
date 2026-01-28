@@ -3,12 +3,36 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
-        // Get Plan model (legacy plans used by planId)
-        const plans = await prisma.plan.findMany({
-            orderBy: { name: 'asc' }
-        });
+        // Get both Plan models
+        const [legacyPlans, subscriptionPlans] = await Promise.all([
+            prisma.plan.findMany({
+                orderBy: { name: 'asc' }
+            }),
+            prisma.subscriptionPlan.findMany({
+                where: { isActive: true },
+                orderBy: { price: 'asc' }
+            })
+        ]);
 
-        return NextResponse.json({ plans });
+        // Combine both plan types with a type indicator
+        const allPlans = [
+            ...legacyPlans.map(plan => ({
+                ...plan,
+                type: 'legacy',
+                displayName: `${plan.name} (Legacy)`
+            })),
+            ...subscriptionPlans.map(plan => ({
+                ...plan,
+                type: 'subscription',
+                displayName: plan.name
+            }))
+        ];
+
+        return NextResponse.json({ 
+            plans: allPlans,
+            legacyPlans,
+            subscriptionPlans
+        });
     } catch (error: any) {
         console.error('Error fetching plans:', error);
         return NextResponse.json({ 
