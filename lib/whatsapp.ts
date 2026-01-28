@@ -177,6 +177,7 @@ export async function sendVoucherNotification(
         prize: { name: string };
         expiresAt: Date;
         qrImageUrl: string | null;
+        couponCode?: string; // Add optional static coupon code
     },
     customerPhone: string,
     tenantId: string
@@ -189,29 +190,27 @@ export async function sendVoucherNotification(
             day: 'numeric'
         });
 
-        // Format message with voucher code, prize name, and expiration date
-        // Requirements: 11.3, 11.4, 11.5
-        const message = `🎉 Congratulations! You won: ${voucher.prize.name}
-
-Your voucher code: *${voucher.code}*
-Valid until: ${expirationDate}
-
-Show this code at the store to claim your prize!`;
+        // Format message - consolidated into one clean message
+        // Include static coupon code if present (e.g. ZIGGY50) + unique voucher code
+        let message = `🎉 *Congratulations!* You won: *${voucher.prize.name}*\n\n`;
+        
+        if (voucher.couponCode) {
+            message += `Coupon Code: *${voucher.couponCode}*\n`;
+        }
+        
+        message += `Voucher Code: *${voucher.code}*\n`;
+        message += `Valid until: ${expirationDate}\n\n`;
+        message += `Show this code at the store to claim your prize!`;
 
         // Send WhatsApp message
-        // Requirement 11.2: Include QR image if present
         if (voucher.qrImageUrl) {
-            // Note: The current sendWhatsAppMessage doesn't support images
-            // For now, we'll send the text message with the QR URL
-            // In a production system, you'd need to extend the WhatsApp API
-            // to support image messages or use a different endpoint
             const messageWithQR = `${message}\n\nQR Code: ${voucher.qrImageUrl}`;
             await sendWhatsAppMessage(customerPhone, messageWithQR, tenantId);
         } else {
             await sendWhatsAppMessage(customerPhone, message, tenantId);
         }
 
-        console.log(`✅ Voucher notification sent to ${customerPhone} for voucher ${voucher.code}`);
+        console.log(`✅ Consolidated voucher notification sent to ${customerPhone}`);
     } catch (error) {
         // Requirement 11.6: Log error but don't throw exception
         // This ensures voucher creation succeeds even if WhatsApp delivery fails

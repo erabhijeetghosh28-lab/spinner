@@ -252,15 +252,18 @@ export async function POST(req: NextRequest) {
         // Increment subscription usage counter (Requirements 1.3, 2.2)
         await usageService.incrementSpins(campaign.tenantId);
 
-        // Send WhatsApp notification if prize won
-        if (wonPrize) {
+        // Send WhatsApp notification if prize won AND no voucher is being created
+        // (Voucher notifications are sent below in a consolidated format)
+        const willCreateVoucher = wonPrize && selectedPrize.voucherValidityDays && selectedPrize.voucherValidityDays > 0;
+        
+        if (wonPrize && !willCreateVoucher) {
             const { sendPrizeNotification } = await import('@/lib/whatsapp');
             await sendPrizeNotification(user.phone, selectedPrize.name, selectedPrize.couponCode || undefined, user.tenantId);
         }
 
         // 7.5. Create voucher if prize has voucher settings configured
         // Requirement 1.1, 1.7, 13.1, 13.2
-        if (wonPrize && selectedPrize.voucherValidityDays && selectedPrize.voucherValidityDays > 0) {
+        if (willCreateVoucher) {
             try {
                 const { createVoucher } = await import('@/lib/voucher-service');
                 const { sendVoucherNotification } = await import('@/lib/whatsapp');
@@ -277,13 +280,14 @@ export async function POST(req: NextRequest) {
                     generateQR: selectedPrize.sendQRCode !== false, // Default to true if not set
                 });
 
-                // Send voucher notification via WhatsApp
+                // Send consolidated voucher notification via WhatsApp
                 await sendVoucherNotification(
                     {
                         code: voucher.code,
                         prize: { name: selectedPrize.name },
                         expiresAt: voucher.expiresAt,
                         qrImageUrl: voucher.qrImageUrl,
+                        couponCode: selectedPrize.couponCode || undefined, // Pass static code for consolidation
                     },
                     user.phone,
                     user.tenantId

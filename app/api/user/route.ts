@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -19,17 +19,40 @@ export async function POST(req: NextRequest) {
         const latestSpin = await prisma.spin.findFirst({
             where: { userId, wonPrize: true },
             orderBy: { spinDate: 'desc' },
-            include: { prize: true }
+            include: { 
+                prize: true,
+                vouchers: {
+                    take: 1,
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
         });
 
         if (latestSpin && latestSpin.prize) {
-            const { sendPrizeNotification } = await import('@/lib/whatsapp');
-            await sendPrizeNotification(
-                user.phone, 
-                latestSpin.prize.name, 
-                latestSpin.prize.couponCode || undefined,
-                user.tenantId
-            );
+            const voucher = latestSpin.vouchers?.[0];
+            
+            if (voucher) {
+                const { sendVoucherNotification } = await import('@/lib/whatsapp');
+                await sendVoucherNotification(
+                    {
+                        code: voucher.code,
+                        prize: { name: latestSpin.prize.name },
+                        expiresAt: voucher.expiresAt,
+                        qrImageUrl: voucher.qrImageUrl,
+                        couponCode: latestSpin.prize.couponCode || undefined,
+                    },
+                    user.phone,
+                    user.tenantId
+                );
+            } else {
+                const { sendPrizeNotification } = await import('@/lib/whatsapp');
+                await sendPrizeNotification(
+                    user.phone, 
+                    latestSpin.prize.name, 
+                    latestSpin.prize.couponCode || undefined,
+                    user.tenantId
+                );
+            }
         }
 
         return NextResponse.json({ success: true, user });
