@@ -50,11 +50,25 @@ export default {
             },
             animation: {
                 'spin-wheel': 'spin-wheel 3s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+                'float': 'float 6s ease-in-out infinite',
+                'spin': 'spin 3s linear infinite',
+                'phone-scroll': 'phoneScroll 12s ease-in-out infinite',
             },
             keyframes: {
                 'spin-wheel': {
                     '0%': { transform: 'rotate(0deg)' },
                     '100%': { transform: 'rotate(1800deg)' },
+                },
+                'float': {
+                    '0%, 100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-20px)' },
+                },
+                'phoneScroll': {
+                    '0%': { transform: 'translateY(0)' },
+                    '33%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-40%)' },
+                    '83%': { transform: 'translateY(-40%)' },
+                    '100%': { transform: 'translateY(0)' },
                 }
             }
         },

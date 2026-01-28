@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
-        const plans = await prisma.plan.findMany({
+        const plans = await prisma.subscriptionPlan.findMany({
             include: {
                 _count: {
                     select: { tenants: true }
@@ -24,24 +24,41 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, maxSpins, maxCampaigns, campaignDurationDays, waIntegrationEnabled, canUseCustomTemplates, allowAnalytics, allowQRCodeGenerator, allowInventoryTracking, price } = await req.json();
+        const { 
+            name, 
+            price,
+            interval,
+            campaignsPerMonth,
+            spinsPerCampaign,
+            campaignDurationDays,
+            spinsPerMonth,
+            vouchersPerMonth,
+            socialMediaEnabled,
+            maxSocialTasks,
+            customBranding,
+            advancedAnalytics,
+            allowQRCodeGenerator
+        } = await req.json();
 
         if (!name) {
             return NextResponse.json({ error: 'Plan name is required' }, { status: 400 });
         }
 
-        const plan = await prisma.plan.create({
+        const plan = await prisma.subscriptionPlan.create({
             data: {
                 name,
-                maxSpins: maxSpins ?? 1000,
-                maxCampaigns: maxCampaigns ?? 1,
+                price: price ?? 0,
+                interval: interval ?? 'MONTHLY',
+                campaignsPerMonth: campaignsPerMonth ?? 1,
+                spinsPerCampaign: spinsPerCampaign ?? 1000,
                 campaignDurationDays: campaignDurationDays ?? 30,
-                waIntegrationEnabled: waIntegrationEnabled ?? true,
-                canUseCustomTemplates: canUseCustomTemplates ?? false,
-                allowAnalytics: allowAnalytics ?? false,
+                spinsPerMonth: spinsPerMonth === '' || spinsPerMonth === null ? null : spinsPerMonth,
+                vouchersPerMonth: vouchersPerMonth === '' || vouchersPerMonth === null ? null : vouchersPerMonth,
+                socialMediaEnabled: socialMediaEnabled ?? false,
+                maxSocialTasks: maxSocialTasks ?? 0,
+                customBranding: customBranding ?? false,
+                advancedAnalytics: advancedAnalytics ?? false,
                 allowQRCodeGenerator: allowQRCodeGenerator ?? false,
-                allowInventoryTracking: allowInventoryTracking ?? false,
-                price: price ?? null,
             }
         });
 
@@ -57,25 +74,43 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
     try {
-        const { id, name, maxSpins, maxCampaigns, campaignDurationDays, waIntegrationEnabled, canUseCustomTemplates, allowAnalytics, allowQRCodeGenerator, allowInventoryTracking, price } = await req.json();
+        const { 
+            id, 
+            name, 
+            price,
+            interval,
+            campaignsPerMonth,
+            spinsPerCampaign,
+            campaignDurationDays,
+            spinsPerMonth,
+            vouchersPerMonth,
+            socialMediaEnabled,
+            maxSocialTasks,
+            customBranding,
+            advancedAnalytics,
+            allowQRCodeGenerator
+        } = await req.json();
 
         if (!id) {
             return NextResponse.json({ error: 'Plan ID is required' }, { status: 400 });
         }
 
         const updateData: any = {};
-        if (name) updateData.name = name;
-        if (maxSpins !== undefined) updateData.maxSpins = maxSpins;
-        if (maxCampaigns !== undefined) updateData.maxCampaigns = maxCampaigns;
-        if (campaignDurationDays !== undefined) updateData.campaignDurationDays = campaignDurationDays;
-        if (typeof waIntegrationEnabled === 'boolean') updateData.waIntegrationEnabled = waIntegrationEnabled;
-        if (typeof canUseCustomTemplates === 'boolean') updateData.canUseCustomTemplates = canUseCustomTemplates;
-        if (typeof allowAnalytics === 'boolean') updateData.allowAnalytics = allowAnalytics;
-        if (typeof allowQRCodeGenerator === 'boolean') updateData.allowQRCodeGenerator = allowQRCodeGenerator;
-        if (typeof allowInventoryTracking === 'boolean') updateData.allowInventoryTracking = allowInventoryTracking;
+        if (name !== undefined) updateData.name = name;
         if (price !== undefined) updateData.price = price;
+        if (interval !== undefined) updateData.interval = interval;
+        if (campaignsPerMonth !== undefined) updateData.campaignsPerMonth = campaignsPerMonth;
+        if (spinsPerCampaign !== undefined) updateData.spinsPerCampaign = spinsPerCampaign;
+        if (campaignDurationDays !== undefined) updateData.campaignDurationDays = campaignDurationDays;
+        if (spinsPerMonth !== undefined) updateData.spinsPerMonth = spinsPerMonth === '' || spinsPerMonth === null ? null : spinsPerMonth;
+        if (vouchersPerMonth !== undefined) updateData.vouchersPerMonth = vouchersPerMonth === '' || vouchersPerMonth === null ? null : vouchersPerMonth;
+        if (typeof socialMediaEnabled === 'boolean') updateData.socialMediaEnabled = socialMediaEnabled;
+        if (maxSocialTasks !== undefined) updateData.maxSocialTasks = maxSocialTasks;
+        if (typeof customBranding === 'boolean') updateData.customBranding = customBranding;
+        if (typeof advancedAnalytics === 'boolean') updateData.advancedAnalytics = advancedAnalytics;
+        if (typeof allowQRCodeGenerator === 'boolean') updateData.allowQRCodeGenerator = allowQRCodeGenerator;
 
-        const plan = await prisma.plan.update({
+        const plan = await prisma.subscriptionPlan.update({
             where: { id },
             data: updateData
         });

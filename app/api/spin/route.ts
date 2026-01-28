@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { subHours, startOfDay, endOfDay } from 'date-fns';
+import { usageService } from '@/lib/usage-service';
+import { endOfDay, startOfDay, subHours } from 'date-fns';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -34,6 +35,14 @@ export async function POST(req: NextRequest) {
         // Verify tenant isolation - user must belong to the same tenant as campaign
         if (user.tenantId !== campaign.tenantId) {
             return NextResponse.json({ error: 'Unauthorized: User and campaign must belong to the same tenant' }, { status: 403 });
+        }
+
+        // Check subscription usage limits (Requirements 1.3, 2.2)
+        const canSpin = await usageService.canSpin(campaign.tenantId);
+        if (!canSpin) {
+            return NextResponse.json({
+                error: 'Monthly spin limit reached for your subscription plan. Please upgrade your plan or contact support for assistance.'
+            }, { status: 429 });
         }
 
         // 1. Check spin limits based on campaign configuration
@@ -176,6 +185,9 @@ export async function POST(req: NextRequest) {
                 },
             });
 
+            // Increment subscription usage counter (Requirements 1.3, 2.2)
+            await usageService.incrementSpins(campaign.tenantId);
+
             return NextResponse.json({
                 success: true,
                 tryAgain: true,
@@ -237,10 +249,55 @@ export async function POST(req: NextRequest) {
             },
         });
 
+        // Increment subscription usage counter (Requirements 1.3, 2.2)
+        await usageService.incrementSpins(campaign.tenantId);
+
         // Send WhatsApp notification if prize won
         if (wonPrize) {
             const { sendPrizeNotification } = await import('@/lib/whatsapp');
             await sendPrizeNotification(user.phone, selectedPrize.name, selectedPrize.couponCode || undefined, user.tenantId);
+        }
+
+        // 7.5. Create voucher if prize has voucher settings configured
+        // Requirement 1.1, 1.7, 13.1, 13.2
+        if (wonPrize && selectedPrize.voucherValidityDays && selectedPrize.voucherValidityDays > 0) {
+            try {
+                const { createVoucher } = await import('@/lib/voucher-service');
+                const { sendVoucherNotification } = await import('@/lib/whatsapp');
+
+                // Create voucher with prize configuration
+                const voucher = await createVoucher({
+                    spinId: spin.id,
+                    prizeId: selectedPrize.id,
+                    userId: user.id,
+                    tenantId: user.tenantId,
+                    tenantSlug: user.tenant.slug,
+                    validityDays: selectedPrize.voucherValidityDays,
+                    redemptionLimit: selectedPrize.voucherRedemptionLimit || 1,
+                    generateQR: selectedPrize.sendQRCode !== false, // Default to true if not set
+                });
+
+                // Send voucher notification via WhatsApp
+                await sendVoucherNotification(
+                    {
+                        code: voucher.code,
+                        prize: { name: selectedPrize.name },
+                        expiresAt: voucher.expiresAt,
+                        qrImageUrl: voucher.qrImageUrl,
+                    },
+                    user.phone,
+                    user.tenantId
+                );
+
+                console.log(`✅ Voucher created and sent for spin ${spin.id}: ${voucher.code}`);
+            } catch (error) {
+                // Log error but don't fail the spin - voucher creation is non-critical
+                console.error('❌ Failed to create voucher for spin:', {
+                    spinId: spin.id,
+                    prizeId: selectedPrize.id,
+                    error: error instanceof Error ? error.message : String(error)
+                });
+            }
         }
 
         // 8. Handle referral bonus logic (only for non-bonus spins)

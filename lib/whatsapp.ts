@@ -1,5 +1,5 @@
-import axios from 'axios';
 import prisma from '@/lib/prisma';
+import axios from 'axios';
 
 interface WhatsAppConfig {
     apiUrl: string;
@@ -156,4 +156,70 @@ export async function sendPrizeNotification(number: string, prizeName: string, c
     message += `\n\nShow this message to claim your reward!`;
 
     return sendWhatsAppMessage(number, message, tenantId);
+}
+
+/**
+ * Sends a voucher notification via WhatsApp
+ * 
+ * Formats a message with voucher code, prize name, and expiration date.
+ * If a QR image URL is present, sends the image with the message.
+ * Logs errors but doesn't throw exceptions to ensure voucher creation succeeds.
+ * 
+ * @param voucher - Voucher object with code, prize, expiration, and optional QR image
+ * @param customerPhone - Customer's phone number
+ * @param tenantId - Tenant ID for tenant-specific WhatsApp config
+ * 
+ * Requirements: 1.7, 11.2, 11.3, 11.4, 11.5, 11.6
+ */
+export async function sendVoucherNotification(
+    voucher: {
+        code: string;
+        prize: { name: string };
+        expiresAt: Date;
+        qrImageUrl: string | null;
+    },
+    customerPhone: string,
+    tenantId: string
+) {
+    try {
+        // Format expiration date in a readable format
+        const expirationDate = new Date(voucher.expiresAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Format message with voucher code, prize name, and expiration date
+        // Requirements: 11.3, 11.4, 11.5
+        const message = `🎉 Congratulations! You won: ${voucher.prize.name}
+
+Your voucher code: *${voucher.code}*
+Valid until: ${expirationDate}
+
+Show this code at the store to claim your prize!`;
+
+        // Send WhatsApp message
+        // Requirement 11.2: Include QR image if present
+        if (voucher.qrImageUrl) {
+            // Note: The current sendWhatsAppMessage doesn't support images
+            // For now, we'll send the text message with the QR URL
+            // In a production system, you'd need to extend the WhatsApp API
+            // to support image messages or use a different endpoint
+            const messageWithQR = `${message}\n\nQR Code: ${voucher.qrImageUrl}`;
+            await sendWhatsAppMessage(customerPhone, messageWithQR, tenantId);
+        } else {
+            await sendWhatsAppMessage(customerPhone, message, tenantId);
+        }
+
+        console.log(`✅ Voucher notification sent to ${customerPhone} for voucher ${voucher.code}`);
+    } catch (error) {
+        // Requirement 11.6: Log error but don't throw exception
+        // This ensures voucher creation succeeds even if WhatsApp delivery fails
+        console.error('❌ Failed to send voucher WhatsApp notification:', {
+            voucherCode: voucher.code,
+            customerPhone,
+            error: error instanceof Error ? error.message : String(error)
+        });
+        // Don't throw - just log the error
+    }
 }

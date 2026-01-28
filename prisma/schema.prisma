@@ -42,16 +42,22 @@ model SubscriptionPlan {
   interval String // "MONTHLY", "YEARLY"
 
   // Campaign limits
-  campaignsPerMonth Int @default(1)
-  spinsPerCampaign  Int @default(1000)
+  campaignsPerMonth    Int @default(1)
+  spinsPerCampaign     Int @default(1000)
+  campaignDurationDays Int @default(30) // How many days a campaign can run
+
+  // Usage limits (Super Admin Controls) - null = unlimited
+  spinsPerMonth    Int? @default(5000)    // null = unlimited spins
+  vouchersPerMonth Int? @default(2000)    // null = unlimited vouchers
 
   // Social media features
   socialMediaEnabled Boolean @default(false)
   maxSocialTasks     Int     @default(0)
 
   // Feature flags
-  customBranding    Boolean @default(false)
-  advancedAnalytics Boolean @default(false)
+  customBranding       Boolean @default(false)
+  advancedAnalytics    Boolean @default(false)
+  allowQRCodeGenerator Boolean @default(false) // Allow tenant to generate QR codes for campaigns
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -110,6 +116,13 @@ model Tenant {
   metaApiUsageHour   Int      @default(0)
   lastApiUsageReset  DateTime @default(now())
   
+  // Security tracking (Super Admin Controls)
+  isLocked          Boolean   @default(false)
+  lockedAt          DateTime?
+  lockedBy          String? // Admin ID
+  failedLoginCount  Int       @default(0)
+  lastFailedLogin   DateTime?
+  
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   campaigns    Campaign[]
@@ -117,6 +130,12 @@ model Tenant {
   endUsers     EndUser[]
   tenantAdmins TenantAdmin[]
   usage        TenantUsage[]
+  vouchers     Voucher[] // Relation to vouchers for this tenant
+  
+  // Super Admin Controls relations
+  monthlyUsage      MonthlyUsage[]
+  limitOverrides    TenantLimitOverride[]
+  securityEvents    SecurityEvent[]
 
   @@index([slug])
   @@index([isActive])
@@ -125,13 +144,14 @@ model Tenant {
 }
 
 model TenantAdmin {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  email     String   @unique
-  password  String // Hashed with bcrypt
-  name      String
-  createdAt DateTime @default(now())
+  id               String    @id @default(cuid())
+  tenantId         String
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email            String    @unique
+  password         String // Hashed with bcrypt
+  name             String
+  createdAt        DateTime  @default(now())
+  redeemedVouchers Voucher[] // Relation to vouchers redeemed by this admin/merchant
 
   @@index([tenantId, email])
 }
@@ -222,6 +242,7 @@ model EndUser {
   spins                 Spin[]
   otpRecords            OTP[]
   socialTaskCompletions SocialTaskCompletion[]
+  vouchers              Voucher[] // Relation to vouchers won by this user
 
   @@unique([tenantId, phone])
   @@unique([tenantId, referralCode])
@@ -230,27 +251,34 @@ model EndUser {
 }
 
 model Prize {
-  id                  String   @id @default(cuid())
-  tenantId            String?
-  tenant              Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  campaignId          String
-  campaign            Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  name                String
-  description         String?
-  imageUrl            String? // URL for prize image (can be from UploadThing or any image host)
-  couponCode          String? // The actual coupon code to be sent
-  probability         Float    @default(10.0) // Percentage (0-100)
-  dailyLimit          Int      @default(100) // Max wins per day
-  totalLimit          Int? // Total available (null = unlimited)
-  currentStock        Int? // Current inventory stock (null = unlimited, only if plan allows)
-  lowStockAlert       Int? // Alert threshold for low stock (null = disabled)
-  isActive            Boolean  @default(true)
-  showTryAgainMessage Boolean  @default(false) // If true, show "Sorry, try again in some time" when spinner lands on this prize
-  colorCode           String   @default("#FFA500") // Hex color for wheel segment
-  position            Int // Position on wheel (0-9)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  spins               Spin[]
+  id                     String   @id @default(cuid())
+  tenantId               String?
+  tenant                 Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaignId             String
+  campaign               Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name                   String
+  description            String?
+  imageUrl               String? // URL for prize image (can be from UploadThing or any image host)
+  couponCode             String? // The actual coupon code to be sent
+  probability            Float    @default(10.0) // Percentage (0-100)
+  dailyLimit             Int      @default(100) // Max wins per day
+  totalLimit             Int? // Total available (null = unlimited)
+  currentStock           Int? // Current inventory stock (null = unlimited, only if plan allows)
+  lowStockAlert          Int? // Alert threshold for low stock (null = disabled)
+  isActive               Boolean  @default(true)
+  showTryAgainMessage    Boolean  @default(false) // If true, show "Sorry, try again in some time" when spinner lands on this prize
+  colorCode              String   @default("#FFA500") // Hex color for wheel segment
+  position               Int // Position on wheel (0-9)
+  
+  // Voucher configuration fields
+  voucherValidityDays    Int      @default(30)
+  voucherRedemptionLimit Int      @default(1)
+  sendQRCode             Boolean  @default(true)
+  
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  spins                  Spin[]
+  vouchers               Voucher[] // Relation to vouchers created from this prize
 
   @@unique([campaignId, position])
   @@index([campaignId, isActive])
@@ -258,23 +286,67 @@ model Prize {
 }
 
 model Spin {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   userId          String
-  user            EndUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            EndUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
   campaignId      String
-  campaign        Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign        Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   prizeId         String?
-  prize           Prize?   @relation(fields: [prizeId], references: [id], onDelete: SetNull)
-  wonPrize        Boolean  @default(false)
-  isReferralBonus Boolean  @default(false) // True if this spin was awarded via referral bonus
-  spinDate        DateTime @default(now())
+  prize           Prize?    @relation(fields: [prizeId], references: [id], onDelete: SetNull)
+  wonPrize        Boolean   @default(false)
+  isReferralBonus Boolean   @default(false) // True if this spin was awarded via referral bonus
+  spinDate        DateTime  @default(now())
   ipAddress       String?
   userAgent       String?
+  vouchers        Voucher[] // Relation to vouchers created from this spin
 
   @@index([userId, campaignId, spinDate])
   @@index([spinDate])
   @@index([prizeId, spinDate])
   @@index([campaignId, spinDate])
+}
+
+model Voucher {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  qrImageUrl      String?
+  
+  // Relationships
+  spinId          String
+  spin            Spin      @relation(fields: [spinId], references: [id], onDelete: Cascade)
+  
+  prizeId         String
+  prize           Prize     @relation(fields: [prizeId], references: [id], onDelete: Cascade)
+  
+  userId          String
+  user            EndUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Redemption tracking
+  isRedeemed      Boolean   @default(false)
+  redeemedAt      DateTime?
+  redeemedBy      String?
+  redeemedByUser  TenantAdmin? @relation(fields: [redeemedBy], references: [id], onDelete: SetNull)
+  
+  // Configuration
+  expiresAt       DateTime
+  redemptionLimit Int       @default(1)
+  redemptionCount Int       @default(0)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Indexes for performance
+  @@index([code])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([isRedeemed])
+  @@index([tenantId, userId])
+  @@index([tenantId, isRedeemed])
 }
 
 model OTP {
@@ -298,6 +370,11 @@ model Admin {
   name         String
   isSuperAdmin Boolean  @default(false) // True for platform owner
   createdAt    DateTime @default(now())
+  
+  // Super Admin Controls relations
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  limitOverrides    TenantLimitOverride[]
 
   @@index([email])
   @@index([isSuperAdmin])
@@ -498,6 +575,93 @@ model CampaignFooter {
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ============================================
+// SUPER ADMIN CONTROLS MODELS
+// ============================================
+
+model MonthlyUsage {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  month         Int      // 1-12
+  year          Int      // 2024, 2025, etc.
+  spinsUsed     Int      @default(0)
+  vouchersUsed  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([tenantId, month, year])
+  @@index([tenantId, year, month])
+}
+
+model TenantLimitOverride {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bonusSpins      Int      @default(0)
+  bonusVouchers   Int      @default(0)
+  reason          String
+  grantedBy       String   // Admin ID
+  grantedByAdmin  Admin    @relation(fields: [grantedBy], references: [id])
+  expiresAt       DateTime? // Null = permanent, otherwise expires at date
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  
+  @@index([tenantId, isActive])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  admin       Admin    @relation(fields: [adminId], references: [id])
+  action      String   // "EDIT_TENANT", "DELETE_TENANT", "GRANT_OVERRIDE", etc.
+  targetType  String   // "Tenant", "Campaign", "Voucher", "SubscriptionPlan"
+  targetId    String
+  changes     Json?    // Stores before/after values or action details
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+model Notification {
+  id            String   @id @default(cuid())
+  subject       String
+  body          String   @db.Text
+  recipientType String   // "ALL_TENANTS", "SPECIFIC_TENANT"
+  recipientId   String?  // Tenant ID if specific
+  sentBy        String   // Admin ID
+  sentByAdmin   Admin    @relation(fields: [sentBy], references: [id])
+  recipientCount Int     @default(0)
+  sentAt        DateTime @default(now())
+  
+  @@index([sentBy, sentAt])
+  @@index([recipientType, sentAt])
+}
+
+model SecurityEvent {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventType   String   // "FAILED_LOGIN", "SUSPICIOUS_SPINS", "SUSPICIOUS_USERS"
+  severity    String   // "LOW", "MEDIUM", "HIGH"
+  description String
+  metadata    Json?    // Additional event details
+  resolved    Boolean  @default(false)
+  resolvedBy  String?  // Admin ID
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  
+  @@index([tenantId, resolved])
+  @@index([severity, resolved])
+  @@index([createdAt])
 }
 
 // ============================================

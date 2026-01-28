@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import axios from 'axios';
 import ImageUploadButton from '@/components/ImageUploadButton';
 import ImageUploader from '@/components/admin/ImageUploader';
-import { UsageStats } from '@/components/admin/UsageStats';
 import LandingPageBuilder from '@/components/admin/LandingPageBuilder';
+import { UsageStats } from '@/components/admin/UsageStats';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<'overview' | 'campaigns' | 'analytics'>('overview');
@@ -337,6 +337,26 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex items-center space-x-2">
                         <button
+                            onClick={() => router.push('/admin/scanner')}
+                            className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
+                            title="Scan Voucher"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
+                            <span>Scan Voucher</span>
+                        </button>
+                        <button
+                            onClick={() => router.push('/admin/vouchers')}
+                            className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
+                            title="Voucher Management"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
+                            <span>Vouchers</span>
+                        </button>
+                        <button
                             onClick={() => { fetchData(); alert('Data refreshed!'); }}
                             className="text-slate-400 hover:text-white transition-colors flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-800"
                             title="Refresh Data"
@@ -649,6 +669,9 @@ function PrizeTable({
                             )}
                             <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[100px]">Status</th>
                             <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[120px]">Try Again</th>
+                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[120px]">Voucher Days</th>
+                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[120px]">Redeem Limit</th>
+                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[100px]">QR Code</th>
                             <th className="pb-5 pt-2 px-4 font-bold text-right min-w-[80px]">Actions</th>
                         </tr>
                     </thead>
@@ -751,6 +774,42 @@ function PrizeTable({
                                             </span>
                                         </label>
                                     </td>
+                                    <td className="py-6 px-4">
+                                        <input
+                                            type="number"
+                                            value={prize.voucherValidityDays ?? 30}
+                                            onChange={(e) => onUpdate(idx, 'voucherValidityDays', parseInt(e.target.value) || 30)}
+                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-20 py-2 text-slate-200 text-sm font-medium transition-colors"
+                                            min="1"
+                                            max="365"
+                                            title="Number of days until voucher expires"
+                                        />
+                                    </td>
+                                    <td className="py-6 px-4">
+                                        <input
+                                            type="number"
+                                            value={prize.voucherRedemptionLimit ?? 1}
+                                            onChange={(e) => onUpdate(idx, 'voucherRedemptionLimit', parseInt(e.target.value) || 1)}
+                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-20 py-2 text-slate-200 text-sm font-medium transition-colors"
+                                            min="1"
+                                            max="10"
+                                            title="Maximum number of times voucher can be redeemed"
+                                        />
+                                    </td>
+                                    <td className="py-6 px-4">
+                                        <label className="flex items-center space-x-3 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={prize.sendQRCode ?? true}
+                                                onChange={(e) => onUpdate(idx, 'sendQRCode', e.target.checked)}
+                                                className="w-5 h-5 rounded border-2 border-slate-700 bg-slate-800 text-amber-500 focus:ring-amber-500 focus:ring-2 cursor-pointer transition-all"
+                                                title="Generate and send QR code with voucher"
+                                            />
+                                            <span className="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">
+                                                {prize.sendQRCode ?? true ? 'Yes' : 'No'}
+                                            </span>
+                                        </label>
+                                    </td>
                                     <td className="py-6 px-4 text-right">
                                         <button
                                             onClick={() => onDelete(idx, prize.id)}
@@ -767,7 +826,7 @@ function PrizeTable({
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={allowInventoryTracking ? 10 : 8} className="py-12 text-center text-slate-500">
+                                <td colSpan={allowInventoryTracking ? 13 : 11} className="py-12 text-center text-slate-500">
                                     <div className="flex flex-col items-center space-y-2">
                                         <span className="text-4xl text-slate-700">🎁</span>
                                         <span className="text-sm">No prizes configured yet.</span>

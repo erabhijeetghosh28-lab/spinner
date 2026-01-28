@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
                         id: true,
                         name: true,
                         slug: true,
-                        isActive: true
+                        isActive: true,
+                        isLocked: true
                     }
                 }
             }
@@ -55,6 +56,13 @@ export async function POST(req: NextRequest) {
 
         if (!tenantAdmin) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+        }
+
+        // Check if tenant is locked (security feature)
+        if (tenantAdmin.tenant.isLocked) {
+            return NextResponse.json({ 
+                error: 'Account locked due to security concerns. Please contact support.' 
+            }, { status: 403 });
         }
 
         // Check if tenant is active
@@ -65,8 +73,19 @@ export async function POST(req: NextRequest) {
         const passwordMatch = await bcrypt.compare(password, tenantAdmin.password);
 
         if (!passwordMatch) {
+            // Track failed login attempt
+            await securityService.trackFailedLogin(tenantAdmin.tenantId);
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
+
+        // Reset failed login count on successful login
+        await prisma.tenant.update({
+            where: { id: tenantAdmin.tenantId },
+            data: {
+                failedLoginCount: 0,
+                lastFailedLogin: null
+            }
+        });
 
         return NextResponse.json({
             success: true,

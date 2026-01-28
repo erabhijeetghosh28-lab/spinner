@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
 export default function SuperAdminDashboard() {
     const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'plans'>('overview');
@@ -79,6 +80,29 @@ export default function SuperAdminDashboard() {
                             <p className="text-slate-400 text-sm">Platform Management</p>
                         </div>
                     </div>
+                    
+                    {/* Quick Access Navigation */}
+                    <div className="hidden md:flex items-center space-x-1">
+                        <Link href="/admin/super/vouchers" className="text-slate-400 hover:text-amber-500 transition-colors px-3 py-2 rounded-lg hover:bg-slate-800 text-sm font-medium">
+                            Vouchers
+                        </Link>
+                        <Link href="/admin/super/campaigns" className="text-slate-400 hover:text-amber-500 transition-colors px-3 py-2 rounded-lg hover:bg-slate-800 text-sm font-medium">
+                            Campaigns
+                        </Link>
+                        <Link href="/admin/super/analytics" className="text-slate-400 hover:text-amber-500 transition-colors px-3 py-2 rounded-lg hover:bg-slate-800 text-sm font-medium">
+                            Analytics
+                        </Link>
+                       <Link href="/admin/super/audit-logs" className="text-slate-400 hover:text-amber-500 transition-colors px-3 py-2 rounded-lg hover:bg-slate-800 text-sm font-medium">
+                            Audit Logs
+                        </Link>
+                        <Link href="/admin/super/whatsapp" className="text-slate-400 hover:text-amber-500 transition-colors px-3 py-2 rounded-lg hover:bg-slate-800 text-sm font-medium">
+                            WhatsApp
+                        </Link>
+                        <Link href="/admin/super/security" className="text-slate-400 hover:text-amber-500 transition-colors px-3 py-2 rounded-lg hover:bg-slate-800 text-sm font-medium">
+                            Security
+                        </Link>
+                    </div>
+                    
                     <div className="flex items-center space-x-2">
                         <button
                             onClick={() => setShowPasswordModal(true)}
@@ -633,7 +657,7 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                                 >
                                     {plans.map((plan) => (
                                         <option key={plan.id} value={plan.id}>
-                                            {plan.name} - {plan.price ? `₹${plan.price}` : 'Free'}
+                                            {plan.name} - {plan.price ? `₹${(plan.price / 100).toFixed(0)}` : 'Free'}
                                         </option>
                                     ))}
                                 </select>
@@ -748,16 +772,34 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
 function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void }) {
     const [showPlanModal, setShowPlanModal] = useState(false);
     const [editingPlan, setEditingPlan] = useState<any>(null);
-    const [planFormData, setPlanFormData] = useState({
+    const [planFormData, setPlanFormData] = useState<{
+        name: string;
+        price: number;
+        interval: string;
+        campaignsPerMonth: number;
+        spinsPerCampaign: number;
+        campaignDurationDays: number;
+        spinsPerMonth: number | null;
+        vouchersPerMonth: number | null;
+        socialMediaEnabled: boolean;
+        maxSocialTasks: number;
+        customBranding: boolean;
+        advancedAnalytics: boolean;
+        allowQRCodeGenerator: boolean;
+    }>({
         name: '',
-        maxSpins: 1000,
-        maxCampaigns: 1,
+        price: 0,
+        interval: 'MONTHLY',
+        campaignsPerMonth: 1,
+        spinsPerCampaign: 1000,
         campaignDurationDays: 30,
-        waIntegrationEnabled: true,
-        allowAnalytics: false,
-        allowQRCodeGenerator: false,
-        allowInventoryTracking: false,
-        price: 0
+        spinsPerMonth: 5000,
+        vouchersPerMonth: 2000,
+        socialMediaEnabled: false,
+        maxSocialTasks: 0,
+        customBranding: false,
+        advancedAnalytics: false,
+        allowQRCodeGenerator: false
     });
 
     const handleOpenPlanModal = (plan?: any) => {
@@ -765,27 +807,35 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
             setEditingPlan(plan);
             setPlanFormData({
                 name: plan.name,
-                maxSpins: plan.maxSpins,
-                maxCampaigns: plan.maxCampaigns,
+                price: plan.price ? plan.price / 100 : 0, // Convert paise to rupees for display
+                interval: plan.interval || 'MONTHLY',
+                campaignsPerMonth: plan.campaignsPerMonth || 1,
+                spinsPerCampaign: plan.spinsPerCampaign || 1000,
                 campaignDurationDays: plan.campaignDurationDays ?? 30,
-                waIntegrationEnabled: plan.waIntegrationEnabled,
-                allowAnalytics: plan.allowAnalytics ?? false,
-                allowQRCodeGenerator: plan.allowQRCodeGenerator ?? false,
-                allowInventoryTracking: plan.allowInventoryTracking ?? false,
-                price: plan.price || 0
+                spinsPerMonth: plan.spinsPerMonth ?? 5000,
+                vouchersPerMonth: plan.vouchersPerMonth ?? 2000,
+                socialMediaEnabled: plan.socialMediaEnabled ?? false,
+                maxSocialTasks: plan.maxSocialTasks ?? 0,
+                customBranding: plan.customBranding ?? false,
+                advancedAnalytics: plan.advancedAnalytics ?? false,
+                allowQRCodeGenerator: plan.allowQRCodeGenerator ?? false
             });
         } else {
             setEditingPlan(null);
             setPlanFormData({
                 name: '',
-                maxSpins: 1000,
-                maxCampaigns: 1,
+                price: 0,
+                interval: 'MONTHLY',
+                campaignsPerMonth: 1,
+                spinsPerCampaign: 1000,
                 campaignDurationDays: 30,
-                waIntegrationEnabled: true,
-                allowAnalytics: false,
-                allowQRCodeGenerator: false,
-                allowInventoryTracking: false,
-                price: 0
+                spinsPerMonth: 5000,
+                vouchersPerMonth: 2000,
+                socialMediaEnabled: false,
+                maxSocialTasks: 0,
+                customBranding: false,
+                advancedAnalytics: false,
+                allowQRCodeGenerator: false
             });
         }
         setShowPlanModal(true);
@@ -799,13 +849,20 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
     const handlePlanSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Convert price from rupees to paise before sending to API
+            const priceInPaise = Math.round(planFormData.price * 100);
+            
             if (editingPlan) {
                 await axios.put('/api/admin/super/plans', {
                     id: editingPlan.id,
-                    ...planFormData
+                    ...planFormData,
+                    price: priceInPaise
                 });
             } else {
-                await axios.post('/api/admin/super/plans', planFormData);
+                await axios.post('/api/admin/super/plans', {
+                    ...planFormData,
+                    price: priceInPaise
+                });
             }
             handleClosePlanModal();
             onRefresh();
@@ -833,7 +890,7 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                 <h3 className="text-xl font-bold">{plan.name}</h3>
                                 <div className="flex items-center space-x-2">
                                     <div className="text-2xl font-bold text-amber-500">
-                                        {plan.price ? `₹${plan.price}` : 'Free'}
+                                        {plan.price ? `₹${(plan.price / 100).toFixed(0)}` : 'Free'}
                                     </div>
                                     <button
                                         onClick={() => handleOpenPlanModal(plan)}
@@ -848,21 +905,25 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                             </div>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Max Spins:</span>
-                                    <span className="font-bold">{plan.maxSpins.toLocaleString()}</span>
+                                    <span className="text-slate-400">Spins/Month:</span>
+                                    <span className="font-bold">{plan.spinsPerMonth === null ? '∞ Unlimited' : plan.spinsPerMonth.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Max Campaigns:</span>
-                                    <span className="font-bold">{plan.maxCampaigns}</span>
+                                    <span className="text-slate-400">Vouchers/Month:</span>
+                                    <span className="font-bold">{plan.vouchersPerMonth === null ? '∞ Unlimited' : plan.vouchersPerMonth.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Campaigns/Month:</span>
+                                    <span className="font-bold">{plan.campaignsPerMonth}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Campaign Duration:</span>
                                     <span className="font-bold">{plan.campaignDurationDays ?? 30} days</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">WA Integration:</span>
-                                    <span className={plan.waIntegrationEnabled ? 'text-green-500' : 'text-red-500'}>
-                                        {plan.waIntegrationEnabled ? '✓' : '✗'}
+                                    <span className="text-slate-400">Social Media:</span>
+                                    <span className={plan.socialMediaEnabled ? 'text-green-500' : 'text-red-500'}>
+                                        {plan.socialMediaEnabled ? '✓' : '✗'}
                                     </span>
                                 </div>
                                 <div className="pt-4 border-t border-slate-700">
@@ -900,23 +961,29 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
 
                             <div className="grid md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Max Spins</label>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                        Max Spins/Month
+                                        <span className="text-slate-600 normal-case ml-1">(blank = unlimited)</span>
+                                    </label>
                                     <input
                                         type="number"
-                                        value={planFormData.maxSpins}
-                                        onChange={(e) => setPlanFormData({ ...planFormData, maxSpins: parseInt(e.target.value) })}
+                                        value={planFormData.spinsPerMonth === null ? '' : planFormData.spinsPerMonth}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, spinsPerMonth: e.target.value === '' ? null : parseInt(e.target.value) })}
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
-                                        required
+                                        placeholder="Unlimited"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Max Campaigns</label>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                        Max Vouchers/Month
+                                        <span className="text-slate-600 normal-case ml-1">(blank = unlimited)</span>
+                                    </label>
                                     <input
                                         type="number"
-                                        value={planFormData.maxCampaigns}
-                                        onChange={(e) => setPlanFormData({ ...planFormData, maxCampaigns: parseInt(e.target.value) })}
+                                        value={planFormData.vouchersPerMonth === null ? '' : planFormData.vouchersPerMonth}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, vouchersPerMonth: e.target.value === '' ? null : parseInt(e.target.value) })}
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
-                                        required
+                                        placeholder="Unlimited"
                                     />
                                 </div>
                                 <div>
@@ -933,34 +1000,50 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Price (₹)</label>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                    Price (₹)
+                                    <span className="text-slate-600 normal-case ml-1">(in rupees, e.g., 4999 for ₹4,999)</span>
+                                </label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={planFormData.price}
                                     onChange={(e) => setPlanFormData({ ...planFormData, price: parseFloat(e.target.value) || 0 })}
                                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
+                                    placeholder="e.g., 4999 for ₹4,999"
                                 />
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Enter amount in rupees. Example: 4999 = ₹4,999/month
+                                </p>
                             </div>
 
                             <div className="space-y-3">
                                 <label className="flex items-center space-x-2">
                                     <input
                                         type="checkbox"
-                                        checked={planFormData.waIntegrationEnabled}
-                                        onChange={(e) => setPlanFormData({ ...planFormData, waIntegrationEnabled: e.target.checked })}
+                                        checked={planFormData.socialMediaEnabled}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, socialMediaEnabled: e.target.checked })}
                                         className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
                                     />
-                                    <span className="text-sm text-slate-300">WhatsApp Integration Enabled</span>
+                                    <span className="text-sm text-slate-300">Social Media Enabled</span>
                                 </label>
                                 <label className="flex items-center space-x-2">
                                     <input
                                         type="checkbox"
-                                        checked={planFormData.allowAnalytics}
-                                        onChange={(e) => setPlanFormData({ ...planFormData, allowAnalytics: e.target.checked })}
+                                        checked={planFormData.customBranding}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, customBranding: e.target.checked })}
                                         className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
                                     />
-                                    <span className="text-sm text-slate-300">Analytics Dashboard</span>
+                                    <span className="text-sm text-slate-300">Custom Branding</span>
+                                </label>
+                                <label className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={planFormData.advancedAnalytics}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, advancedAnalytics: e.target.checked })}
+                                        className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
+                                    />
+                                    <span className="text-sm text-slate-300">Advanced Analytics</span>
                                 </label>
                                 <label className="flex items-center space-x-2">
                                     <input
@@ -970,15 +1053,6 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                         className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
                                     />
                                     <span className="text-sm text-slate-300">QR Code Generator</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={planFormData.allowInventoryTracking}
-                                        onChange={(e) => setPlanFormData({ ...planFormData, allowInventoryTracking: e.target.checked })}
-                                        className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
-                                    />
-                                    <span className="text-sm text-slate-300">Prize Inventory Tracking</span>
                                 </label>
                             </div>
 

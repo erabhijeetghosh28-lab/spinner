@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import SpinWheel from '@/components/SpinWheel';
 import OTPForm from '@/components/OTPForm';
 import PrizeModal from '@/components/PrizeModal';
 import SocialStatsBar from '@/components/SocialStatsBar';
 import SocialTasksPanel from '@/components/SocialTasksPanel';
+import SpinWheel from '@/components/SpinWheel';
 import LandingPageRenderer from '@/components/landing/LandingPageRenderer';
-import { motion, AnimatePresence } from 'framer-motion';
+import MarketingLandingPage from '@/components/marketing/MarketingLandingPage';
 import { soundEffects } from '@/lib/soundEffects';
+import axios from 'axios';
 import confetti from 'canvas-confetti';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 
 export default function CampaignPage() {
+    const [showMarketingPage, setShowMarketingPage] = useState(false);
     const [campaign, setCampaign] = useState<any>(null);
     const [showLandingPage, setShowLandingPage] = useState(false);
     const [prizes, setPrizes] = useState<any[]>([]);
@@ -264,7 +266,14 @@ export default function CampaignPage() {
         try {
             setInitialLoading(true);
             const params = new URLSearchParams(window.location.search);
-            const tenantSlug = params.get('tenant') || 'default';
+            const tenantSlug = params.get('tenant');
+            
+            // If no tenant parameter, show marketing landing page
+            if (!tenantSlug) {
+                setShowMarketingPage(true);
+                setInitialLoading(false);
+                return;
+            }
 
             const response = await axios.get(`/api/campaigns?tenantSlug=${tenantSlug}`);
 
@@ -527,6 +536,11 @@ export default function CampaignPage() {
 
         // Referral bonuses are now awarded only on registration
     };
+
+    // Show marketing landing page for non-tenant URLs
+    if (showMarketingPage) {
+        return <MarketingLandingPage />;
+    }
 
     if (initialLoading) {
         return (
