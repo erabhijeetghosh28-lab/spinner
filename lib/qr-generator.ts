@@ -103,8 +103,14 @@ export async function createAndUploadQR(voucherCode: string): Promise<string | n
     
     return url;
   } catch (error) {
-    // Log error but return null for graceful degradation
+    // Log error and fallback to a public QR API (Requirement 3.4 fallback)
     console.error(`Failed to create and upload QR code for voucher ${voucherCode}:`, error);
-    return null;
+    
+    // Fallback: Use a reliable public QR API that doesn't require uploading
+    // This ensures the user still gets a QR code even if our storage service is down
+    const fallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(voucherCode)}`;
+    console.log(`🔄 Using fallback QR service: ${fallbackUrl}`);
+    
+    return fallbackUrl;
   }
 }
