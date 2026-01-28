@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
@@ -174,9 +174,13 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
     try {
-        const { id, name, slug, contactPhone, planId, isActive, waConfig, tenantAdminPassword } = await req.json();
+        const body = await req.json();
+        const { id, name, slug, contactPhone, planId, isActive, waConfig, tenantAdminPassword } = body;
+
+        console.log('PUT /api/admin/super/tenants - Request body:', JSON.stringify(body, null, 2));
 
         if (!id) {
+            console.error('PUT /api/admin/super/tenants - Missing tenant ID');
             return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
         }
 
@@ -188,6 +192,7 @@ export async function PUT(req: NextRequest) {
                 where: { slug, id: { not: id } }
             });
             if (existing) {
+                console.error('PUT /api/admin/super/tenants - Slug already exists:', slug);
                 return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
             }
             updateData.slug = slug;
@@ -199,15 +204,20 @@ export async function PUT(req: NextRequest) {
             updateData.waConfig = waConfig ? JSON.parse(JSON.stringify(waConfig)) : null;
         }
 
+        console.log('PUT /api/admin/super/tenants - Update data:', JSON.stringify(updateData, null, 2));
+
         const tenant = await prisma.tenant.update({
             where: { id },
             data: updateData,
             include: { plan: true }
         });
 
+        console.log('PUT /api/admin/super/tenants - Tenant updated successfully:', tenant.id);
+
         // Update Tenant Admin password if provided
         if (tenantAdminPassword && tenantAdminPassword.trim()) {
             if (tenantAdminPassword.length < 6) {
+                console.error('PUT /api/admin/super/tenants - Password too short');
                 return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
             }
 
@@ -223,12 +233,16 @@ export async function PUT(req: NextRequest) {
                     where: { id: tenantAdmin.id },
                     data: { password: hashedPassword }
                 });
+                console.log('PUT /api/admin/super/tenants - Tenant admin password updated');
+            } else {
+                console.warn('PUT /api/admin/super/tenants - No tenant admin found for tenant:', id);
             }
         }
 
         return NextResponse.json({ success: true, tenant });
     } catch (error: any) {
-        console.error('Error updating tenant:', error);
+        console.error('PUT /api/admin/super/tenants - Error updating tenant:', error);
+        console.error('Error stack:', error.stack);
         return NextResponse.json({ 
             error: 'Failed to update tenant',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
