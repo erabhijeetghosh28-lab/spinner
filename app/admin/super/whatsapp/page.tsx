@@ -10,6 +10,13 @@ export default function WhatsAppMonitoringPage() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<any>(null);
+  const [globalSettings, setGlobalSettings] = useState<any>({
+    WHATSAPP_TEXT_API_KEY: '',
+    WHATSAPP_TEXT_SENDER: '',
+    WHATSAPP_MEDIA_API_KEY: '',
+    WHATSAPP_MEDIA_SENDER: ''
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -25,6 +32,7 @@ export default function WhatsAppMonitoringPage() {
     }
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     fetchStatus();
+    fetchGlobalSettings();
   }, [mounted]);
 
   const fetchStatus = async () => {
@@ -36,6 +44,37 @@ export default function WhatsAppMonitoringPage() {
       console.error('Failed to fetch WhatsApp status');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGlobalSettings = async () => {
+    try {
+      const res = await axios.get('/api/admin/super/settings');
+      if (res.data.settings) {
+        setGlobalSettings({
+          WHATSAPP_TEXT_API_KEY: res.data.settings.WHATSAPP_TEXT_API_KEY || '',
+          WHATSAPP_TEXT_SENDER: res.data.settings.WHATSAPP_TEXT_SENDER || '',
+          WHATSAPP_MEDIA_API_KEY: res.data.settings.WHATSAPP_MEDIA_API_KEY || '',
+          WHATSAPP_MEDIA_SENDER: res.data.settings.WHATSAPP_MEDIA_SENDER || ''
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch global settings');
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      await axios.post('/api/admin/super/settings', {
+        settings: globalSettings
+      });
+      alert('✅ Global WhatsApp settings saved successfully!');
+    } catch (err) {
+      alert('❌ Failed to save settings');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -88,16 +127,110 @@ export default function WhatsAppMonitoringPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        
+        {/* Global Configuration Card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                <div className="text-8xl">⚙️</div>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                <span className="bg-amber-500/10 text-amber-500 p-2 rounded-lg mr-3">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                </span>
+                Global API Configuration
+            </h2>
+
+            <form onSubmit={handleSaveSettings} className="grid md:grid-cols-2 gap-8">
+                {/* Text API */}
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-2 text-amber-400 font-bold mb-2">
+                        <span>📱 CloudWA Text API (cloudwa_api)</span>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">API Key</label>
+                        <input 
+                            type="password"
+                            value={globalSettings.WHATSAPP_TEXT_API_KEY}
+                            onChange={(e) => setGlobalSettings({...globalSettings, WHATSAPP_TEXT_API_KEY: e.target.value})}
+                            required
+                            placeholder="Enter CloudWA API Key"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition-all"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sender Phone</label>
+                        <input 
+                            type="text"
+                            value={globalSettings.WHATSAPP_TEXT_SENDER}
+                            onChange={(e) => setGlobalSettings({...globalSettings, WHATSAPP_TEXT_SENDER: e.target.value})}
+                            required
+                            placeholder="e.g. 9170XXXXXXXX"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition-all"
+                        />
+                    </div>
+                </div>
+
+                {/* Media API */}
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-2 text-blue-400 font-bold mb-2">
+                        <span>🖼️ CloudWA Media API (cloudwaimg_api)</span>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">API Key</label>
+                        <input 
+                            type="password"
+                            value={globalSettings.WHATSAPP_MEDIA_API_KEY}
+                            onChange={(e) => setGlobalSettings({...globalSettings, WHATSAPP_MEDIA_API_KEY: e.target.value})}
+                            placeholder="Enter Media API Key (Optional if same)"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sender Phone</label>
+                        <input 
+                            type="text"
+                            value={globalSettings.WHATSAPP_MEDIA_SENDER}
+                            onChange={(e) => setGlobalSettings({...globalSettings, WHATSAPP_MEDIA_SENDER: e.target.value})}
+                            placeholder="e.g. 9170XXXXXXXX"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                        />
+                    </div>
+                </div>
+
+                <div className="md:col-span-2 flex justify-end pt-4">
+                    <button
+                        type="submit"
+                        disabled={savingSettings}
+                        className={`bg-amber-500 hover:bg-amber-400 text-slate-900 font-black px-10 py-4 rounded-xl shadow-lg shadow-amber-500/20 transform active:scale-95 transition-all flex items-center space-x-2 ${savingSettings ? 'opacity-50' : ''}`}
+                    >
+                        {savingSettings ? (
+                             <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                            <>
+                                <span>Save Platform Configuration</span>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
+        </div>
+
         {/* Summary Stats */}
         <div className="grid md:grid-cols-3 gap-6">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
             <div className="text-3xl mb-4">✅</div>
             <div className="text-slate-400 text-xs font-medium uppercase mb-1">Configured</div>
             <div className="text-3xl font-bold text-green-500">
-              {status.configuredCount || 0}
+              {status?.summary?.configuredCount || 0}
             </div>
             <div className="text-sm text-slate-400 mt-2">
-              {status.configurationRate?.toFixed(1) || 0}% of tenants
+              {status?.summary?.configurationRate?.toFixed(1) || 0}% of tenants
             </div>
           </div>
           
@@ -105,7 +238,7 @@ export default function WhatsAppMonitoringPage() {
             <div className="text-3xl mb-4">❌</div>
             <div className="text-slate-400 text-xs font-medium uppercase mb-1">Not Configured</div>
             <div className="text-3xl font-bold text-red-500">
-              {status.unconfiguredCount || 0}
+              {status?.summary?.unconfiguredCount || 0}
             </div>
             <div className="text-sm text-slate-400 mt-2">
               Need WhatsApp setup
@@ -116,7 +249,7 @@ export default function WhatsAppMonitoringPage() {
             <div className="text-3xl mb-4">🏢</div>
             <div className="text-slate-400 text-xs font-medium uppercase mb-1">Total Tenants</div>
             <div className="text-3xl font-bold text-blue-500">
-              {(status.configuredCount || 0) + (status.unconfiguredCount || 0)}
+              {status?.summary?.totalTenants || 0}
             </div>
           </div>
         </div>
@@ -137,34 +270,34 @@ export default function WhatsAppMonitoringPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {status.tenantStatus?.map((tenant: any) => (
+                {status?.tenantStatus?.map((tenant: any) => (
                   <tr key={tenant.id} className="hover:bg-slate-800/30">
                     <td className="py-4 font-bold">{tenant.name}</td>
                     <td className="py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        tenant.configured
+                        tenant.hasWhatsAppConfig
                           ? 'bg-green-500/10 text-green-500 border border-green-500/30'
                           : 'bg-red-500/10 text-red-500 border border-red-500/30'
                       }`}>
-                        {tenant.configured ? '✓ Configured' : '✗ Not Configured'}
+                        {tenant.hasWhatsAppConfig ? '✓ Configured' : '✗ Not Configured'}
                       </span>
                     </td>
                     <td className="py-4">
-                      {tenant.hasApiUrl ? (
+                      {tenant.configDetails?.hasApiUrl ? (
                         <span className="text-green-500">✓</span>
                       ) : (
                         <span className="text-red-500">✗</span>
                       )}
                     </td>
                     <td className="py-4">
-                      {tenant.hasApiKey ? (
+                      {tenant.configDetails?.hasApiKey ? (
                         <span className="text-green-500">✓</span>
                       ) : (
                         <span className="text-red-500">✗</span>
                       )}
                     </td>
                     <td className="py-4">
-                      {tenant.hasSender ? (
+                      {tenant.configDetails?.hasSender ? (
                         <span className="text-green-500">✓</span>
                       ) : (
                         <span className="text-red-500">✗</span>
@@ -187,8 +320,8 @@ export default function WhatsAppMonitoringPage() {
                 This page shows which tenants have WhatsApp configured for sending voucher notifications.
               </p>
               <p className="text-sm text-slate-400">
-                <strong>Note:</strong> Message delivery tracking requires WhatsApp webhook integration, 
-                which is planned for a future enhancement.
+                <strong>Advanced Routing:</strong> QR Code vouchers use the <code>cloudwaimg_api</code> (Media) if configured, 
+                otherwise they fallback to <code>cloudwa_api</code> (Text).
               </p>
             </div>
           </div>

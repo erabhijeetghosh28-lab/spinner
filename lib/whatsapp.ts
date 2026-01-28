@@ -9,53 +9,28 @@ interface WhatsAppConfig {
 
 /**
  * Fetches WhatsApp configuration from database
- * Priority: Tenant waConfig > Global Settings > Environment Variables
+ * Priority: 
+ * 1. Specific API Type (TEXT/MEDIA) from Global Settings
+ * 2. Tenant waConfig (Legacy/Specific)
+ * 3. Environment Variables (Legacy)
  */
-async function getWhatsAppConfig(tenantId?: string): Promise<WhatsAppConfig> {
-    console.log('🔍 Getting WhatsApp config for tenantId:', tenantId || 'none (using global)');
+async function getWhatsAppConfig(type: 'TEXT' | 'MEDIA' = 'TEXT', tenantId?: string): Promise<WhatsAppConfig> {
+    console.log(`🔍 Getting WhatsApp ${type} config`);
     
-    // If tenantId provided, check for tenant-specific config first
-    if (tenantId) {
-        const tenant = await prisma.tenant.findUnique({
-            where: { id: tenantId },
-            select: { waConfig: true, name: true, slug: true }
-        });
-
-        if (tenant?.waConfig) {
-            const waConfig = tenant.waConfig as { apiUrl?: string; apiKey?: string; sender?: string };
-            console.log('📋 Tenant-specific waConfig found for', tenant.name || tenant.slug, ':', {
-                apiUrl: waConfig.apiUrl ? '✅ Set' : '❌ Missing',
-                apiKey: waConfig.apiKey ? '✅ Set' : '❌ Missing',
-                sender: waConfig.sender ? '✅ Set' : '❌ Missing'
-            });
-            
-            if (waConfig.apiUrl && waConfig.apiKey && waConfig.sender) {
-                console.log('✅ Using tenant-specific WhatsApp config');
-                return {
-                    apiUrl: waConfig.apiUrl,
-                    apiKey: waConfig.apiKey,
-                    sender: waConfig.sender
-                };
-            } else {
-                console.log('⚠️ Tenant waConfig incomplete, falling back to global settings');
-            }
-        } else {
-            console.log('ℹ️ No tenant-specific waConfig, checking global settings');
-        }
-    }
-
-    // Fall back to global settings
+    // 1. Check Global Settings for the requested type first (New standard)
     const settings = await prisma.setting.findMany({
         where: {
             key: {
-                in: ['WHATSAPP_API_URL', 'WHATSAPP_API_KEY', 'WHATSAPP_SENDER']
+                in: [
+                    `WHATSAPP_${type}_API_URL`, 
+                    `WHATSAPP_${type}_API_KEY`, 
+                    `WHATSAPP_${type}_SENDER`,
+                    'WHATSAPP_API_URL', 
+                    'WHATSAPP_API_KEY', 
+                    'WHATSAPP_SENDER'
+                ]
             }
         }
-    });
-
-    console.log('📋 Global Settings found:', settings.length, 'entries');
-    settings.forEach((s: { key: string; value: string }) => {
-        console.log(`   - ${s.key}: ${s.value ? '✅ Set (' + s.value.substring(0, 10) + '...)' : '❌ Missing'}`);
     });
 
     const config: Record<string, string> = {};
@@ -63,76 +38,114 @@ async function getWhatsAppConfig(tenantId?: string): Promise<WhatsAppConfig> {
         config[s.key] = s.value;
     });
 
-    const finalConfig = {
-        apiUrl: config['WHATSAPP_API_URL'] || process.env.WHATSAPP_API_URL || 'https://unofficial.cloudwapi.in/send-message',
-        apiKey: config['WHATSAPP_API_KEY'] || process.env.WHATSAPP_API_KEY || null,
-        sender: config['WHATSAPP_SENDER'] || process.env.WHATSAPP_SENDER || null
-    };
+    // Priority 1: Type-specific global settings
+    let apiUrl: string | undefined = config[`WHATSAPP_${type}_API_URL`];
+    let apiKey: string | undefined = config[`WHATSAPP_${type}_API_KEY`];
+    let sender: string | undefined = config[`WHATSAPP_${type}_SENDER`];
 
-    console.log('🔧 Final WhatsApp config:', {
-        apiUrl: finalConfig.apiUrl,
-        apiKey: finalConfig.apiKey ? '✅ Set' : '❌ Missing',
-        sender: finalConfig.sender ? '✅ Set' : '❌ Missing'
-    });
+    // Priority 2: Tenant-specific config (Legacy/Override)
+    if ((!apiKey || !sender) && tenantId) {
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { waConfig: true }
+        });
+
+        if (tenant?.waConfig) {
+            const waConfig = tenant.waConfig as { apiUrl?: string; apiKey?: string; sender?: string };
+            if (waConfig.apiKey && waConfig.sender) {
+                apiUrl = apiUrl || waConfig.apiUrl;
+                apiKey = waConfig.apiKey;
+                sender = waConfig.sender;
+            }
+        }
+    }
+
+    // Priority 3: Legacy global settings / Environment variables
+    const finalConfig: WhatsAppConfig = {
+        apiUrl: apiUrl || config['WHATSAPP_API_URL'] || process.env.WHATSAPP_API_URL || 
+                (type === 'MEDIA' ? 'https://unofficial.cloudwapi.in/send-media' : 'https://unofficial.cloudwapi.in/send-message'),
+        apiKey: apiKey || config['WHATSAPP_API_KEY'] || process.env.WHATSAPP_API_KEY || null,
+        sender: sender || config['WHATSAPP_SENDER'] || process.env.WHATSAPP_SENDER || null
+    };
 
     return finalConfig;
 }
 
 /**
  * Sends a WhatsApp message using the configured device and API
- * @param number - Phone number (with or without country code)
- * @param message - Message content
- * @param tenantId - Optional tenant ID for tenant-specific WhatsApp config
  */
 export async function sendWhatsAppMessage(number: string, message: string, tenantId?: string) {
-    const config = await getWhatsAppConfig(tenantId);
+    const config = await getWhatsAppConfig('TEXT', tenantId);
 
     if (!config.apiKey || !config.sender) {
-        console.error('❌ WhatsApp configuration missing:');
-        console.error('   - API URL:', config.apiUrl);
-        console.error('   - API Key:', config.apiKey ? '✅ Set' : '❌ Missing');
-        console.error('   - Sender:', config.sender ? '✅ Set' : '❌ Missing');
-        console.error('💡 Configure via:');
-        console.error('   1. Environment variables: WHATSAPP_API_KEY, WHATSAPP_SENDER, WHATSAPP_API_URL');
-        console.error('   2. Database Settings table: WHATSAPP_API_KEY, WHATSAPP_SENDER, WHATSAPP_API_URL');
-        console.error('   3. Tenant waConfig (JSON field in Tenant table)');
+        console.error('❌ WhatsApp TEXT configuration missing');
         return null;
     }
 
-    // Ensure number has 91 prefix if not present (assuming India)
     const formattedNumber = number.startsWith('91') || number.length > 10 ? number : `91${number}`;
 
     try {
-        console.log(`📤 Sending WhatsApp message to ${formattedNumber} via ${config.apiUrl}`);
         const response = await axios.post(config.apiUrl, {
             api_key: config.apiKey,
             sender: config.sender,
             number: formattedNumber,
             message: message
         }, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            timeout: 10000 // 10 second timeout
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 10000
         });
 
-        console.log(`✅ WhatsApp message sent to ${formattedNumber}:`, response.data);
         return response.data;
     } catch (error: any) {
-        console.error('❌ Error sending WhatsApp message:');
-        console.error('   - URL:', config.apiUrl);
-        console.error('   - Phone:', formattedNumber);
-        console.error('   - Error:', error.response?.data || error.message);
-        console.error('   - Status:', error.response?.status);
+        console.error('❌ Error sending WhatsApp message:', error.message);
         return null;
     }
 }
 
 /**
+ * Sends a WhatsApp Media message (Image/QR)
+ */
+export async function sendWhatsAppMedia(
+    number: string, 
+    mediaUrl: string, 
+    caption: string, 
+    mediaType: 'image' | 'video' | 'audio' | 'document' = 'image',
+    tenantId?: string
+) {
+    const config = await getWhatsAppConfig('MEDIA', tenantId);
+
+    if (!config.apiKey || !config.sender) {
+        console.warn('⚠️ WhatsApp MEDIA configuration missing, falling back to TEXT');
+        return sendWhatsAppMessage(number, `${caption}\n\nView QR Code: ${mediaUrl}`, tenantId);
+    }
+
+    const formattedNumber = number.startsWith('91') || number.length > 10 ? number : `91${number}`;
+
+    try {
+        console.log(`📤 Sending WhatsApp media to ${formattedNumber} via ${config.apiUrl}`);
+        const response = await axios.post(config.apiUrl, {
+            api_key: config.apiKey,
+            sender: config.sender,
+            number: formattedNumber,
+            media_type: mediaType,
+            caption: caption,
+            url: mediaUrl
+        }, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 15000 // Media might take longer
+        });
+
+        console.log(`✅ WhatsApp media sent to ${formattedNumber}`);
+        return response.data;
+    } catch (error: any) {
+        console.error('❌ Error sending WhatsApp media:', error.message);
+        // Fallback to text if media fails
+        return sendWhatsAppMessage(number, `${caption}\n\nView QR Code: ${mediaUrl}`, tenantId);
+    }
+}
+
+/**
  * Sends an OTP via WhatsApp
- * @param number - Phone number
- * @param otp - OTP code
- * @param tenantId - Optional tenant ID for tenant-specific WhatsApp config
  */
 export async function sendWhatsAppOTP(number: string, otp: string, tenantId?: string) {
     const message = `Your Spin & Win verification code is: ${otp}. Valid for 5 minutes. DO NOT share this code with anyone.`;
@@ -204,8 +217,8 @@ export async function sendVoucherNotification(
 
         // Send WhatsApp message
         if (voucher.qrImageUrl) {
-            const messageWithQR = `${message}\n\nQR Code: ${voucher.qrImageUrl}`;
-            await sendWhatsAppMessage(customerPhone, messageWithQR, tenantId);
+            // Use the new Media API for QR codes
+            await sendWhatsAppMedia(customerPhone, voucher.qrImageUrl, message, 'image', tenantId);
         } else {
             await sendWhatsAppMessage(customerPhone, message, tenantId);
         }
