@@ -107,37 +107,46 @@ export default function ScannerPage() {
       }
 
       const config = {
-        fps: 30, // Increased from 10 to 30 for faster scanning
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.777778, // 16:9 aspect ratio
+        fps: 60, // Maximum FPS for fastest detection
+        qrbox: { width: 300, height: 300 }, // Larger detection box
+        aspectRatio: 1.777778,
         videoConstraints: {
           facingMode: 'environment',
-          aspectRatio: 1.777778
+          aspectRatio: 1.777778,
+          // Request higher resolution for better QR detection
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
         },
-        // Improved detection settings
-        formatsToSupport: [0], // QR_CODE only (faster)
+        formatsToSupport: [0], // QR_CODE only
         experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true // Use native detector if available
-        }
+          useBarCodeDetectorIfSupported: true
+        },
+        // Disable verbose logging for better performance
+        verbose: false
       };
 
       await html5QrCodeRef.current.start(
-        { facingMode: 'environment' }, // Use rear camera
+        { facingMode: 'environment' },
         config,
         async (decodedText) => {
-          // QR code detected
+          // QR code detected - stop immediately
           console.log('QR Code detected:', decodedText);
           
-          // Stop scanning immediately to prevent multiple scans
-          if (html5QrCodeRef.current && scanning) {
-            await stopScanning();
+          // Stop scanner first to prevent multiple detections
+          setScanning(false);
+          if (html5QrCodeRef.current) {
+            try {
+              await html5QrCodeRef.current.stop();
+            } catch (e) {
+              console.log('Scanner already stopped');
+            }
           }
           
-          // Validate the voucher
+          // Then validate the voucher
           await validateVoucher(decodedText);
         },
         (errorMessage) => {
-          // Scanning error (can be ignored, happens frequently)
+          // Scanning errors are normal, ignore them
         }
       );
 
@@ -179,6 +188,11 @@ export default function ScannerPage() {
       return;
     }
 
+    // Ensure scanner is stopped before validation
+    if (scanning) {
+      await stopScanning();
+    }
+
     setValidating(true);
     setError('');
     setValidationResult(null);
@@ -189,11 +203,6 @@ export default function ScannerPage() {
         tenantId: currentTenantId
       });
       setValidationResult(response.data);
-      
-      // Stop scanning after successful detection
-      if (scanning) {
-        await stopScanning();
-      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to validate voucher');
       setValidationResult(null);
@@ -227,8 +236,13 @@ export default function ScannerPage() {
       
       if (response.data.success) {
         alert('Voucher redeemed successfully!');
+        // Clear validation result and manual code
         setValidationResult(null);
         setManualCode('');
+        // Automatically start scanning again for next voucher
+        setTimeout(() => {
+          startScanning();
+        }, 500);
       } else {
         setError(response.data.error || 'Failed to redeem voucher');
       }
@@ -311,9 +325,21 @@ export default function ScannerPage() {
           <h2 className="text-xl font-bold mb-4">QR Code Scanner</h2>
           
           <div className="mb-6">
+            {scanning && (
+              <div className="mb-4 bg-amber-500/20 border border-amber-500 rounded-lg p-3 text-center">
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-pulse w-3 h-3 bg-amber-500 rounded-full"></div>
+                  <span className="text-amber-500 font-semibold">Scanning for QR codes...</span>
+                </div>
+                <p className="text-xs text-amber-400 mt-1">Position QR code within the frame</p>
+              </div>
+            )}
+            
             <div 
               id={scannerDivId} 
-              className={`${scanning ? 'block' : 'hidden'} w-full rounded-xl overflow-hidden border-2 border-amber-500`}
+              className={`${scanning ? 'block' : 'hidden'} w-full rounded-xl overflow-hidden border-4 ${
+                scanning ? 'border-amber-500 shadow-lg shadow-amber-500/50' : 'border-slate-700'
+              }`}
               style={{ 
                 minHeight: '400px',
                 maxWidth: '100%',
@@ -526,6 +552,17 @@ export default function ScannerPage() {
                 >
                   {redeeming ? 'Redeeming...' : 'Redeem Voucher'}
                 </button>
+                
+                <button
+                  onClick={() => {
+                    setValidationResult(null);
+                    setManualCode('');
+                    startScanning();
+                  }}
+                  className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all mt-3"
+                >
+                  Scan Another Voucher
+                </button>
               </div>
             ) : (
               <div>
@@ -542,6 +579,18 @@ export default function ScannerPage() {
                     )}
                   </div>
                 )}
+                
+                <button
+                  onClick={() => {
+                    setValidationResult(null);
+                    setManualCode('');
+                    setError('');
+                    startScanning();
+                  }}
+                  className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all mt-6"
+                >
+                  Scan Another Voucher
+                </button>
               </div>
             )}
           </div>
