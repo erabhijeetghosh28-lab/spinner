@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Note: Next.js 16+ recommends using route handlers instead of middleware for complex logic
 // This middleware is kept for backward compatibility and simple routing
@@ -42,10 +42,11 @@ export function middleware(request: NextRequest) {
         // or pass it as a special param
         const tenantSlug = currentHost.split('.')[0]; // simplistic check
 
-        // Modify the URL to point to the root with the tenant param
-        url.searchParams.set('tenant', tenantSlug);
+        // Modify the URL to point to the dynamic route
+        url.pathname = `/${tenantSlug}${url.pathname}`;
 
-        // Rewrite: User sees "subdomain.com", Server renders "/" with query
+        // Rewrite: User sees "subdomain.com", Server renders "/[slug]" logic
+        // This maps to app/[slug]/page.tsx automatically via Next.js routing
         return NextResponse.rewrite(url);
     }
 
