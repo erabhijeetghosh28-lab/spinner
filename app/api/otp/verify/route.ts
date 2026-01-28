@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid phone number format' }, { status: 400 });
         }
 
-        if (!cleanOTP || cleanOTP.length !== 6 || !/^\d{6}$/.test(cleanOTP)) {
-            return NextResponse.json({ error: 'Invalid OTP format. Must be 6 digits.' }, { status: 400 });
+        if (!cleanOTP || cleanOTP.length !== 4 || !/^\d{4}$/.test(cleanOTP)) {
+            return NextResponse.json({ error: 'Invalid OTP format. Must be 4 digits.' }, { status: 400 });
         }
 
         // Sanitize name if provided

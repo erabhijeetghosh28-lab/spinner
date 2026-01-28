@@ -49,22 +49,52 @@ export default function TenantCampaignPage() {
         const searchParams = new URLSearchParams(window.location.search);
         const ref = searchParams.get('ref');
         if (ref) setReferralCode(ref);
+
+        // Restore user session from localStorage if available
+        const savedUser = localStorage.getItem('offer-wheel-user');
+        const savedExpiry = localStorage.getItem('offer-wheel-user-expiry');
+        
+        if (savedUser && savedExpiry) {
+            const expiryTime = parseInt(savedExpiry);
+            const now = Date.now();
+            
+            // Check if session is still valid (not expired)
+            if (now < expiryTime) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    setUser(userData);
+                    setIsVerified(true);
+                    setShowLoginModal(false);
+                    console.log('[Session Restore] User session restored from localStorage');
+                } catch (error) {
+                    console.error('[Session Restore] Failed to parse saved user:', error);
+                    // Clear invalid data
+                    localStorage.removeItem('offer-wheel-user');
+                    localStorage.removeItem('offer-wheel-user-expiry');
+                }
+            } else {
+                // Session expired, clear it
+                console.log('[Session Restore] Session expired, clearing localStorage');
+                localStorage.removeItem('offer-wheel-user');
+                localStorage.removeItem('offer-wheel-user-expiry');
+            }
+        }
     }, [tenantSlug]);
 
-    // Auto-logout after 1 minute of inactivity (no user action)
+    // Auto-logout after 24 hours of inactivity (no user action)
     useEffect(() => {
         if (!user || !isVerified) return;
 
         // Initialize expiry time if not set
         const savedExpiry = localStorage.getItem('offer-wheel-user-expiry');
         if (!savedExpiry) {
-            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
         }
 
         const resetIdleTimer = () => {
-            // Reset expiry time to 1 minute from now
-            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            // Reset expiry time to 24 hours from now
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
         };
 
@@ -127,8 +157,8 @@ export default function TenantCampaignPage() {
         // Check immediately
         checkSessionExpiry();
 
-        // Check every 5 seconds for expiry (more frequent for better UX)
-        const interval = setInterval(checkSessionExpiry, 5 * 1000);
+        // Check every 60 seconds for expiry
+        const interval = setInterval(checkSessionExpiry, 60 * 1000);
 
         return () => {
             // Cleanup event listeners
@@ -335,8 +365,8 @@ export default function TenantCampaignPage() {
             // Hide login modal immediately after successful login
             setShowLoginModal(false);
             
-            // Save user with 1-minute idle expiry (will be reset on user activity)
-            const expiryTime = Date.now() + (1 * 60 * 1000); // 1 minute
+            // Save user with 24-hour idle expiry (will be reset on user activity)
+            const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
             localStorage.setItem('offer-wheel-user', JSON.stringify(userData));
             localStorage.setItem('offer-wheel-user-expiry', expiryTime.toString());
 

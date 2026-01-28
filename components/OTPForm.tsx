@@ -10,7 +10,7 @@ interface OTPFormProps {
 const OTPForm: React.FC<OTPFormProps> = ({ onVerify, onSendOTP }) => {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [otp, setOtp] = useState(['', '', '', '']);
     const [step, setStep] = useState<'phone' | 'otp'>('phone');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -41,8 +41,8 @@ const OTPForm: React.FC<OTPFormProps> = ({ onVerify, onSendOTP }) => {
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault();
         const otpCode = otp.join('');
-        if (otpCode.length < 6) {
-            setError('Please enter all 6 digits');
+        if (otpCode.length < 4) {
+            setError('Please enter all 4 digits');
             return;
         }
 
@@ -67,7 +67,7 @@ const OTPForm: React.FC<OTPFormProps> = ({ onVerify, onSendOTP }) => {
         setOtp(newOtp);
 
         // Auto focus next input
-        if (value && index < 5) {
+        if (value && index < 3) {
             const nextInput = document.getElementById(`otp-${index + 1}`);
             nextInput?.focus();
         }
