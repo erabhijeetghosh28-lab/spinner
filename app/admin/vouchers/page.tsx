@@ -57,10 +57,14 @@ export default function VouchersPage() {
     }
 
     if (storedAdminData) {
-      const admin = JSON.parse(storedAdminData);
-      if (admin.isSuperAdmin) {
-        router.push('/admin/super/dashboard');
-        return;
+      try {
+        const admin = JSON.parse(storedAdminData);
+        if (admin && admin.isSuperAdmin) {
+          router.push('/admin/super/dashboard');
+          return;
+        }
+      } catch (err) {
+        console.error('Error parsing admin data:', err);
       }
     }
 

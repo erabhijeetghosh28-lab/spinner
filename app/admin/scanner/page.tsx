@@ -29,6 +29,7 @@ interface VoucherLookupResult {
 
 export default function ScannerPage() {
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [merchantId, setMerchantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [manualCode, setManualCode] = useState('');
@@ -61,10 +62,20 @@ export default function ScannerPage() {
     }
 
     if (storedAdminData) {
-      const admin = JSON.parse(storedAdminData);
-      if (admin.isSuperAdmin) {
-        router.push('/admin/super/dashboard');
-        return;
+      try {
+        const admin = JSON.parse(storedAdminData);
+        if (admin) {
+          if (admin.isSuperAdmin) {
+            router.push('/admin/super/dashboard');
+            return;
+          }
+          if (admin.id) {
+            setMerchantId(admin.id);
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing admin data:', err);
+        // Not a fatal error, but log it
       }
     }
 
@@ -153,7 +164,10 @@ export default function ScannerPage() {
     setValidationResult(null);
 
     try {
-      const response = await axios.post('/api/vouchers/validate', { code: code.trim() });
+      const response = await axios.post('/api/vouchers/validate', { 
+        code: code.trim(),
+        tenantId: tenantId
+      });
       setValidationResult(response.data);
       
       // Stop scanning after successful detection
@@ -177,7 +191,11 @@ export default function ScannerPage() {
     setError('');
 
     try {
-      const response = await axios.post('/api/vouchers/redeem', { code });
+      const response = await axios.post('/api/vouchers/redeem', { 
+        code,
+        merchantId: merchantId,
+        tenantId: tenantId
+      });
       
       if (response.data.success) {
         alert('Voucher redeemed successfully!');
@@ -204,7 +222,10 @@ export default function ScannerPage() {
     setLookupResults([]);
 
     try {
-      const response = await axios.post('/api/vouchers/lookup-phone', { phone: phoneNumber.trim() });
+      const response = await axios.post('/api/vouchers/lookup-phone', { 
+        phone: phoneNumber.trim(),
+        tenantId: tenantId
+      });
       setLookupResults(response.data.vouchers || []);
       
       if (response.data.vouchers.length === 0) {
