@@ -24,7 +24,19 @@ export function middleware(request: NextRequest) {
         hostname.endsWith('.vercel.app') ||
         hostname === 'spinner.vercel.app';
 
-    // 3. Handle Subdomains / Custom Domains
+    // 3. Handle Query Parameter Routing (?tenant=slug)
+    // This allows backward compatibility with ?tenant=default style URLs
+    const tenantParam = url.searchParams.get('tenant');
+    if (tenantParam && isMainDomain) {
+        // Rewrite to the dynamic route /[slug]
+        // Remove the query parameter to avoid conflicts
+        url.searchParams.delete('tenant');
+        url.pathname = `/${tenantParam}${url.pathname === '/' ? '' : url.pathname}`;
+        return NextResponse.rewrite(url);
+    }
+
+    // 4. Handle Subdomains / Custom Domains
+
     if (!isMainDomain) {
         // SCENARIO: User visits "burgers.spinner.vercel.app" or "offer.pizzashop.com"
         // We rewrite this internally to "/?tenant=..." logic
@@ -51,6 +63,7 @@ export function middleware(request: NextRequest) {
     }
 
     return NextResponse.next();
+
 }
 
 export const config = {
