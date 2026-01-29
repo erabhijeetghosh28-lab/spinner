@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdminAuth } from '@/lib/auth';
-import { getOrCreateMonthlyUsage } from '@/lib/monthly-reset';
+import prisma from '@/lib/prisma';
+import { UsageService } from '@/lib/usage-service';
+import { NextRequest, NextResponse } from 'next/server';
 
 // GET: Check campaign creation limits for a tenant
 export async function GET(req: NextRequest) {
@@ -39,7 +39,8 @@ export async function GET(req: NextRequest) {
         }
 
         // Get or create monthly usage record (event-based, auto-handles month transitions)
-        const usage = await getOrCreateMonthlyUsage(tenantId);
+        const usageService = new UsageService();
+        const usage = await usageService.getCurrentMonthUsage(tenantId);
         
         if (!usage) {
             return NextResponse.json({ error: 'Failed to initialize monthly usage' }, { status: 500 });
@@ -67,7 +68,15 @@ export async function GET(req: NextRequest) {
         }
 
         const activeCount = tenant._count.campaigns;
-        const monthlyCount = usage.campaignsCreated;
+        
+        // Calculate campaigns created this month
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthlyCount = await prisma.campaign.count({
+            where: {
+                tenantId,
+                createdAt: { gte: startOfMonth }
+            }
+        });
 
         // Check if can create (both active and monthly limits)
         const canCreate = activeCount < activeLimit && monthlyCount < monthlyLimit;

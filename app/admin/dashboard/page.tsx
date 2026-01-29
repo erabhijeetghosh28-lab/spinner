@@ -10,10 +10,12 @@ import { ReferralGrowthChart } from '@/components/admin/analytics/ReferralGrowth
 import { RetentionChart } from '@/components/admin/analytics/RetentionChart';
 import { ROISimulator } from '@/components/admin/analytics/ROISimulator';
 import { ViralGenome } from '@/components/admin/analytics/ViralGenome';
-import ImageUploader from '@/components/admin/ImageUploader';
+import { BrandedQRGenerator } from '@/components/admin/BrandedQRGenerator';
+import { CampaignSettingsForm } from '@/components/admin/dashboard/CampaignSettingsForm';
+import { CampaignWizardModal } from '@/components/admin/dashboard/CampaignWizardModal';
+import { PrizeTable } from '@/components/admin/dashboard/PrizeTable';
 import LandingPageBuilder from '@/components/admin/LandingPageBuilder';
 import { UsageStats } from '@/components/admin/UsageStats';
-import ImageUploadButton from '@/components/ImageUploadButton';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -46,6 +48,19 @@ export default function AdminDashboard() {
     const [socialTasksLoading, setSocialTasksLoading] = useState(false);
     const [subscriptionPlan, setSubscriptionPlan] = useState<any>(null);
     const [showLandingPageBuilder, setShowLandingPageBuilder] = useState(false);
+    const [showBrandedQRModal, setShowBrandedQRModal] = useState<boolean>(false);
+    const [brandedQRCampaign, setBrandedQRCampaign] = useState<{id: string, name: string} | null>(null);
+
+    // Debug log to verify state initialization
+    useEffect(() => {
+        console.log('AdminDashboard mounted, showBrandedQRModal:', showBrandedQRModal);
+    }, []);
+
+    
+    // Wizard Modal State
+    const [showWizardModal, setShowWizardModal] = useState(false);
+    const [editingWizardCampaign, setEditingWizardCampaign] = useState<any>(null);
+
     const router = useRouter();
 
     useEffect(() => {
@@ -95,8 +110,8 @@ export default function AdminDashboard() {
             const templatesRes = await axios.get('/api/admin/super/templates');
             setTemplates(templatesRes.data.templates.filter((t: any) => t.isActive));
 
-            // Fetch all campaigns for tenant (for Campaigns tab)
-            const campaignsRes = await axios.get(`/api/admin/campaigns?tenantId=${storedTenantId}`);
+            // Fetch all campaigns for tenant (including archived)
+            const campaignsRes = await axios.get(`/api/admin/campaigns?tenantId=${storedTenantId}&includeArchived=true`);
             const allCampaigns = campaignsRes.data.campaigns || [];
             setCampaigns(allCampaigns);
             
@@ -146,26 +161,11 @@ export default function AdminDashboard() {
                     });
                 }
             } catch (error: any) {
-                // If no active campaign found, try to use the first available campaign
-                if (error.response?.status === 404 && allCampaigns.length > 0) {
-                    // Use the first campaign (even if not currently active)
-                    const firstCampaign = allCampaigns[0];
-                    currentCampaignId = firstCampaign.id;
-                    setCampaignId(firstCampaign.id);
-                    setTenantSlug(firstCampaign.tenant?.slug || '');
-                    setCampaign({
-                        spinLimit: firstCampaign.spinLimit || 1,
-                        spinCooldown: firstCampaign.spinCooldown || 24,
-                        referralsRequiredForSpin: firstCampaign.referralsRequiredForSpin || 0,
-                        logoUrl: firstCampaign.logoUrl || '',
-                        templateId: firstCampaign.templateId || '',
-                        supportMobile: firstCampaign.supportMobile || '',
-                        websiteUrl: firstCampaign.websiteUrl || '',
-                        defaultSpinRewards: firstCampaign.defaultSpinRewards || {}
-                    });
-                } else if (error.response?.status !== 404) {
+                if (error.response?.status !== 404) {
                     console.error('Error fetching campaign:', error);
                 }
+                // Do NOT fallback to archived campaigns. 
+                // Let currentCampaignId remain null so we show Empty State.
             }
 
             // Fetch prizes for campaign
@@ -345,7 +345,7 @@ export default function AdminDashboard() {
             <div className="p-4 md:p-8 lg:p-12">
             <div className="max-w-[1600px] mx-auto">
 
-                {/* Tabs */}
+                {/* Tabs - Always Visible */}
                 <div className="bg-slate-900 border-b border-slate-800 mb-8">
                     <div className="flex space-x-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                         {(['overview', 'campaigns', ...(planInfo?.allowAnalytics ? ['analytics'] : [])] as ('overview' | 'campaigns' | 'analytics')[]).map((tab) => (
@@ -363,10 +363,32 @@ export default function AdminDashboard() {
                     </div>
                 </div>
                 
-
                 {/* Tab Content */}
                 {activeTab === 'overview' && (
-                    <>
+                    !campaignId ? (
+                            /* Empty State - No Active Campaign */
+                        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 bg-slate-900/50 rounded-3xl border border-slate-800 border-dashed">
+                            <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                <span className="text-6xl">🎡</span>
+                            </div>
+                            <h1 className="text-4xl font-bold text-white mb-4">Welcome to Your Campaign Manager</h1>
+                            <p className="text-slate-400 text-lg max-w-2xl mb-10">
+                                {campaigns.length > 0 
+                                    ? "You don't have any active campaigns running. Create a new one or restore an archived campaign to get started."
+                                    : "It looks like you haven't created any campaigns yet. Setup your first Spin & Win campaign in minutes to start engaging your customers."}
+                            </p>
+                            <button
+                                onClick={() => {
+                                    setEditingWizardCampaign(null);
+                                    setShowWizardModal(true);
+                                }}
+                                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black px-10 py-5 rounded-2xl text-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
+                            >
+                                + Create New Campaign
+                            </button>
+                        </div>
+                    ) : (
+                        <>
                         {/* Stats Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
                             {[
@@ -546,7 +568,7 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </>
-                )}
+                ))}
 
                 {activeTab === 'campaigns' && tenantId && (
                     <CampaignsTab
@@ -556,6 +578,20 @@ export default function AdminDashboard() {
                         tenantId={tenantId}
                         tenantSlug={tenantSlug}
                         onRefresh={fetchData}
+                        onCreate={() => {
+                            setEditingWizardCampaign(null);
+                            setShowWizardModal(true);
+                        }}
+                        onEdit={(camp) => {
+                            setEditingWizardCampaign(camp);
+                            setShowWizardModal(true);
+                        }}
+                        onShowBrandedQR={(campaign) => {
+                            console.log('onShowBrandedQR called with:', campaign);
+                            setBrandedQRCampaign(campaign);
+                            setShowBrandedQRModal(true);
+                            console.log('showBrandedQRModal set to true');
+                        }}
                     />
                 )}
 
@@ -575,390 +611,68 @@ export default function AdminDashboard() {
                     onClose={() => setShowPasswordModal(false)}
                 />
             )}
+
+            {/* Wizard Modal */}
+            <CampaignWizardModal
+                isOpen={showWizardModal}
+                onClose={() => {
+                    setShowWizardModal(false);
+                    setEditingWizardCampaign(null);
+                }}
+                onSuccess={() => {
+                    fetchData();
+                    // Optionally switch to campaigns tab
+                    // setActiveTab('campaigns');
+                }}
+                editingCampaign={editingWizardCampaign}
+                tenantId={tenantId || ''}
+                templates={templates}
+                planInfo={planInfo}
+            />
+
+            {/* Branded QR Generator Modal */}
+            {showBrandedQRModal && brandedQRCampaign && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-amber-500">Generate Branded QR Codes</h2>
+                            <button 
+                                onClick={() => setShowBrandedQRModal(false)} 
+                                className="text-slate-400 hover:text-white text-2xl"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <BrandedQRGenerator 
+                            campaignId={brandedQRCampaign.id}
+                            campaignName={brandedQRCampaign.name}
+                            tenantId={tenantId}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
 
-// Reusable Prize Table Component
-function PrizeTable({
-    prizes,
-    onUpdate,
-    onAdd,
-    onDelete,
-    allowInventoryTracking,
-    campaignId
-}: {
-    prizes: any[];
-    onUpdate: (idx: number, field: string, value: any) => void;
-    onAdd: () => void;
-    onDelete: (idx: number, id?: string) => void;
-    allowInventoryTracking?: boolean;
-    campaignId?: string | null;
-}) {
-    return (
-        <>
-            <div className="flex justify-between items-center mb-10">
-                <div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Wheel segments & Offers</h2>
-                    <p className="text-slate-400 text-sm">Configure up to 10 prizes for the wheel</p>
-                </div>
-                <button
-                    onClick={onAdd}
-                    disabled={prizes.length >= 10}
-                    className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 px-6 py-2 rounded-xl text-sm font-bold border border-amber-500/50 transition-all flex items-center space-x-2 disabled:opacity-50"
-                >
-                    <span>+ Add Offer</span>
-                </button>
-            </div>
 
-            <div className="overflow-x-auto -mx-2 px-2">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="text-slate-400 text-xs uppercase tracking-wider border-b-2 border-slate-700">
-                            <th className="pb-5 pt-2 px-4 font-bold text-left">Image</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[180px]">Offer Name</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[140px]">Coupon Code</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[100px]">Prob (%)</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[120px]">Daily Limit</th>
-                            {allowInventoryTracking && (
-                                <>
-                                    <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[100px]">Stock</th>
-                                    <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[100px]">Low Alert</th>
-                                </>
-                            )}
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[100px]">Status</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[120px]">Try Again</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[120px]">Voucher Days</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[120px]">Redeem Limit</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-left min-w-[100px]">QR Code</th>
-                            <th className="pb-5 pt-2 px-4 font-bold text-right min-w-[80px]">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                        {prizes && prizes.length > 0 ? (
-                            prizes.map((prize, idx) => (
-                                <tr key={prize.id || idx} className="group hover:bg-slate-800/40 transition-colors">
-                                    <td className="py-6 px-4">
-                                        <ImageUploadButton
-                                            currentImageUrl={prize.imageUrl}
-                                            onUploadComplete={(url) => onUpdate(idx, 'imageUrl', url)}
-                                            onUploadError={(error) => {
-                                                console.error('Image upload failed:', error);
-                                            }}
-                                        />
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <input
-                                            type="text"
-                                            value={prize.name}
-                                            onChange={(e) => onUpdate(idx, 'name', e.target.value)}
-                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-full py-2 text-slate-200 text-sm font-medium transition-colors"
-                                            placeholder="Enter offer name"
-                                        />
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <input
-                                            type="text"
-                                            value={prize.couponCode || ''}
-                                            placeholder="CODE123"
-                                            onChange={(e) => onUpdate(idx, 'couponCode', e.target.value)}
-                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-full py-2 text-slate-200 font-mono text-sm uppercase transition-colors"
-                                        />
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <div className="flex items-center space-x-2">
-                                            <input
-                                                type="number"
-                                                value={prize.probability}
-                                                onChange={(e) => onUpdate(idx, 'probability', e.target.value)}
-                                                className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-16 py-2 text-slate-200 text-sm font-medium transition-colors"
-                                                min="0"
-                                                max="100"
-                                            />
-                                            <span className="text-slate-500 text-sm">%</span>
-                                        </div>
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <input
-                                            type="number"
-                                            value={prize.dailyLimit}
-                                            onChange={(e) => onUpdate(idx, 'dailyLimit', e.target.value)}
-                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-20 py-2 text-slate-200 text-sm font-medium transition-colors"
-                                            min="0"
-                                        />
-                                    </td>
-                                    {allowInventoryTracking && (
-                                        <>
-                                            <td className="py-6 px-4">
-                                                <input
-                                                    type="number"
-                                                    value={prize.currentStock ?? ''}
-                                                    onChange={(e) => onUpdate(idx, 'currentStock', e.target.value === '' ? null : parseInt(e.target.value))}
-                                                    className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-20 py-2 text-slate-200 text-sm font-medium transition-colors"
-                                                    placeholder="∞"
-                                                    min="0"
-                                                />
-                                            </td>
-                                            <td className="py-6 px-4">
-                                                <input
-                                                    type="number"
-                                                    value={prize.lowStockAlert ?? ''}
-                                                    onChange={(e) => onUpdate(idx, 'lowStockAlert', e.target.value === '' ? null : parseInt(e.target.value))}
-                                                    className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-20 py-2 text-slate-200 text-sm font-medium transition-colors"
-                                                    placeholder="0"
-                                                    min="0"
-                                                />
-                                            </td>
-                                        </>
-                                    )}
-                                    <td className="py-6 px-4">
-                                        <button
-                                            onClick={() => onUpdate(idx, 'isActive', !prize.isActive)}
-                                            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${prize.isActive ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40 hover:bg-green-500/30' : 'bg-red-500/20 text-red-400 border-2 border-red-500/40 hover:bg-red-500/30'}`}
-                                        >
-                                            {prize.isActive ? 'Active' : 'Inactive'}
-                                        </button>
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <label className="flex items-center space-x-3 cursor-pointer group">
-                                            <input
-                                                type="checkbox"
-                                                checked={prize.showTryAgainMessage || false}
-                                                onChange={(e) => onUpdate(idx, 'showTryAgainMessage', e.target.checked)}
-                                                className="w-5 h-5 rounded border-2 border-slate-700 bg-slate-800 text-amber-500 focus:ring-amber-500 focus:ring-2 cursor-pointer transition-all"
-                                                title="Enable to show 'Sorry, try again in some time' when spinner lands on this prize"
-                                            />
-                                            <span className="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">
-                                                {prize.showTryAgainMessage ? 'Enabled' : 'Disabled'}
-                                            </span>
-                                        </label>
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <input
-                                            type="number"
-                                            value={prize.voucherValidityDays ?? 30}
-                                            onChange={(e) => onUpdate(idx, 'voucherValidityDays', parseInt(e.target.value) || 30)}
-                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-20 py-2 text-slate-200 text-sm font-medium transition-colors"
-                                            min="1"
-                                            max="365"
-                                            title="Number of days until voucher expires"
-                                        />
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <input
-                                            type="number"
-                                            value={prize.voucherRedemptionLimit ?? 1}
-                                            onChange={(e) => onUpdate(idx, 'voucherRedemptionLimit', parseInt(e.target.value) || 1)}
-                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-20 py-2 text-slate-200 text-sm font-medium transition-colors"
-                                            min="1"
-                                            max="10"
-                                            title="Maximum number of times voucher can be redeemed"
-                                        />
-                                    </td>
-                                    <td className="py-6 px-4">
-                                        <label className="flex items-center space-x-3 cursor-pointer group">
-                                            <input
-                                                type="checkbox"
-                                                checked={prize.sendQRCode ?? true}
-                                                onChange={(e) => onUpdate(idx, 'sendQRCode', e.target.checked)}
-                                                className="w-5 h-5 rounded border-2 border-slate-700 bg-slate-800 text-amber-500 focus:ring-amber-500 focus:ring-2 cursor-pointer transition-all"
-                                                title="Generate and send QR code with voucher"
-                                            />
-                                            <span className="text-sm text-slate-400 group-hover:text-slate-200 transition-colors">
-                                                {prize.sendQRCode ?? true ? 'Yes' : 'No'}
-                                            </span>
-                                        </label>
-                                    </td>
-                                    <td className="py-6 px-4 text-right">
-                                        <button
-                                            onClick={() => onDelete(idx, prize.id)}
-                                            className="p-2.5 text-red-500/60 hover:text-red-400 hover:bg-red-500/15 rounded-lg transition-all group"
-                                            title="Delete Offer"
-                                            type="button"
-                                        >
-                                            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={allowInventoryTracking ? 13 : 11} className="py-12 text-center text-slate-500">
-                                    <div className="flex flex-col items-center space-y-2">
-                                        <span className="text-4xl text-slate-700">🎁</span>
-                                        <span className="text-sm">No prizes configured yet.</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </>
-    );
-}
-
-// Reusable Campaign Settings Form Component
-function CampaignSettingsForm({
-    campaign,
-    setCampaign,
-    templates,
-    campaignId
-}: {
-    campaign: any;
-    setCampaign: (c: any) => void;
-    templates: any[];
-    campaignId?: string | null;
-}) {
-    return (
-        <div className="space-y-6 mb-8">
-            {/* Spin Limits */}
-            <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Max Spins Per User</label>
-                    <input
-                        type="number"
-                        value={campaign.spinLimit}
-                        onChange={(e) => setCampaign({ ...campaign, spinLimit: parseInt(e.target.value) || 1 })}
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-2 italic">Example: Set to 1 for "One spin per user"</p>
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Cooldown Period (Hours)</label>
-                    <input
-                        type="number"
-                        value={campaign.spinCooldown}
-                        onChange={(e) => setCampaign({ ...campaign, spinCooldown: parseInt(e.target.value) || 24 })}
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-2 italic">Example: Set to 24 for "Once a day"</p>
-                </div>
-            </div>
-
-            {/* Referral Threshold */}
-            <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Referral Threshold</label>
-                <input
-                    type="number"
-                    value={campaign.referralsRequiredForSpin || 0}
-                    onChange={(e) => setCampaign({ ...campaign, referralsRequiredForSpin: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
-                    placeholder="0"
-                />
-                <p className="text-[10px] text-slate-500 mt-2 italic">Set to 0 to disable. Example: 5 = "Invite 5 friends for 1 bonus spin"</p>
-            </div>
-
-            {/* Logo URL */}
-            <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Logo URL (Wheel Center)</label>
-                                <div className="mb-2">
-                    <ImageUploader
-                        onUploadComplete={(url) => setCampaign({ ...campaign, logoUrl: url })}
-                        currentImageUrl={campaign.logoUrl}
-                        label="Upload Logo"
-                    />
-                </div>
-                <input
-                    type="url"
-                    value={campaign.logoUrl || ''}
-                    onChange={(e) => setCampaign({ ...campaign, logoUrl: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm mt-2"
-                    placeholder="Or paste image URL here"
-                />
-                <p className="text-[10px] text-slate-500 mt-2 italic">Upload logo or paste URL. Image will be optimized automatically. Displayed in wheel center.</p>
-            </div>
-
-            {/* Support Contact */}
-            <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Support Mobile Number</label>
-                    <input
-                        type="tel"
-                        value={campaign.supportMobile || ''}
-                        onChange={(e) => setCampaign({ ...campaign, supportMobile: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
-                        placeholder="919899011616"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-2 italic">Shown to users for support (WhatsApp link)</p>
-                </div>
-                <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Website URL</label>
-                    <input
-                        type="url"
-                        value={campaign.websiteUrl || ''}
-                        onChange={(e) => setCampaign({ ...campaign, websiteUrl: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
-                        placeholder="https://mystore.com"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-2 italic">Optional: Link to your website</p>
-                </div>
-            </div>
-
-            {/* Default Spin Rewards for Social Tasks */}
-            <div className="border-t border-slate-700 pt-6 mt-6">
-                <label className="block text-xs font-semibold text-slate-500 uppercase mb-4">Default Spin Rewards (Social Tasks)</label>
-                <p className="text-[10px] text-slate-500 mb-4 italic">Set default spin rewards for each action type. These will be pre-filled when creating social tasks.</p>
-                <div className="grid md:grid-cols-2 gap-4">
-                    {['VISIT_PAGE', 'VISIT_PROFILE', 'VIEW_POST', 'VIEW_DISCUSSION', 'VISIT_TO_SHARE'].map((actionType) => {
-                        const defaultRewards = (campaign.defaultSpinRewards as any) || {};
-                        const value = defaultRewards[actionType] || 1;
-                        return (
-                            <div key={actionType}>
-                                <label className="block text-xs font-semibold text-slate-400 mb-2">
-                                    {actionType.replace('_', ' ')}
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={value}
-                                    onChange={(e) => {
-                                        const newRewards = { ...defaultRewards, [actionType]: parseInt(e.target.value) || 1 };
-                                        setCampaign({ ...campaign, defaultSpinRewards: newRewards });
-                                    }}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-        </div>
-    );
-}
 
 // Campaigns Tab Component
-function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, onRefresh }: {
+function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, onRefresh, onCreate, onEdit, onShowBrandedQR }: {
     campaigns: any[];
     templates: any[];
     planInfo: any;
     tenantId: string;
     tenantSlug: string;
     onRefresh: () => void;
+    onCreate: () => void;
+    onEdit: (camp: any) => void;
+    onShowBrandedQR: (campaign: {id: string, name: string}) => void;
 }) {
-    const [showModal, setShowModal] = useState(false);
-    const [editingCampaign, setEditingCampaign] = useState<any>(null);
-    const [modalPrizes, setModalPrizes] = useState<any[]>([]);
     const [limitInfo, setLimitInfo] = useState<any>(null);
     const [loadingLimit, setLoadingLimit] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        logoUrl: '',
-        templateId: '',
-        supportMobile: '',
-        websiteUrl: '',
-        spinLimit: 1,
-        spinCooldown: 24,
-        referralsRequiredForSpin: 0,
-        isActive: true
-    });
-    const [loading, setLoading] = useState(false);
-    const [fetchingPrizes, setFetchingPrizes] = useState(false);
     const [showSocialTasksModal, setShowSocialTasksModal] = useState(false);
     const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
     const [socialTasks, setSocialTasks] = useState<any[]>([]);
@@ -966,6 +680,7 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
     const [subscriptionPlan, setSubscriptionPlan] = useState<any>(null);
     const [landingPageStatus, setLandingPageStatus] = useState<Record<string, boolean>>({});
     const [showLandingPageBuilder, setShowLandingPageBuilder] = useState(false);
+    const [showArchived, setShowArchived] = useState(false);
 
     // Fetch limit info when component mounts or tenantId changes
     useEffect(() => {
@@ -980,6 +695,8 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
             fetchLandingPageStatus();
         }
     }, [campaigns, tenantId]);
+
+    const displayedCampaigns = campaigns.filter(c => showArchived ? c.isArchived : !c.isArchived);
 
     const fetchLandingPageStatus = async () => {
         const statusMap: Record<string, boolean> = {};
@@ -1003,122 +720,6 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
             console.error('Error fetching limit info:', err);
         } finally {
             setLoadingLimit(false);
-        }
-    };
-
-    const handleOpenModal = async (campaign?: any) => {
-        if (campaign) {
-            setEditingCampaign(campaign);
-            setFormData({
-                name: campaign.name,
-                description: campaign.description || '',
-                logoUrl: campaign.logoUrl || '',
-                templateId: campaign.templateId || '',
-                supportMobile: campaign.supportMobile || '',
-                websiteUrl: campaign.websiteUrl || '',
-                spinLimit: campaign.spinLimit,
-                spinCooldown: campaign.spinCooldown,
-                referralsRequiredForSpin: campaign.referralsRequiredForSpin || 0,
-                isActive: campaign.isActive
-            });
-
-            // Fetch prizes for this specific campaign
-            setFetchingPrizes(true);
-            try {
-                const res = await axios.get(`/api/admin/prizes?campaignId=${campaign.id}&tenantId=${tenantId}`);
-                setModalPrizes(res.data.prizes || []);
-            } catch (error) {
-                console.error('Error fetching modal prizes:', error);
-                setModalPrizes([]);
-            } finally {
-                setFetchingPrizes(false);
-            }
-        } else {
-            setEditingCampaign(null);
-            setFormData({
-                name: '',
-                description: '',
-                logoUrl: '',
-                templateId: templates[0]?.id || '',
-                supportMobile: '',
-                websiteUrl: '',
-                spinLimit: 1,
-                spinCooldown: 24,
-                referralsRequiredForSpin: 0,
-                isActive: true
-            });
-            // Initial default prizes for new campaign
-            setModalPrizes([
-                { name: '10% Off', probability: 40, dailyLimit: 100, isActive: true, position: 0, colorCode: '#1E3A8A' },
-                { name: 'Free Gift', probability: 10, dailyLimit: 10, isActive: true, position: 1, colorCode: '#f59e0b' },
-                { name: 'Try Again', probability: 50, dailyLimit: 9999, isActive: true, position: 2, colorCode: '#1E3A8A' }
-            ]);
-        }
-        setShowModal(true);
-    };
-
-    const updateModalPrize = (idx: number, field: string, value: any) => {
-        const newPrizes = [...modalPrizes];
-        newPrizes[idx][field] = value;
-        setModalPrizes(newPrizes);
-    };
-
-    const addModalPrize = () => {
-        if (modalPrizes.length >= 10) return;
-        setModalPrizes([...modalPrizes, {
-            name: 'New Offer',
-            probability: 10,
-            dailyLimit: 50,
-            isActive: true,
-            position: modalPrizes.length,
-            colorCode: modalPrizes.length % 2 === 0 ? '#1E3A8A' : '#f59e0b'
-        }]);
-    };
-
-    const handleModalDeletePrize = (idx: number) => {
-        const prizeToDelete = modalPrizes[idx];
-        if (prizeToDelete.id && editingCampaign) {
-            // Optional: Alert that this will be deleted permanently on save
-        }
-        const newPrizes = modalPrizes.filter((_, i) => i !== idx);
-        setModalPrizes(newPrizes);
-    };
-
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setEditingCampaign(null);
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            if (!tenantId) {
-                alert('Missing tenant information');
-                return;
-            }
-
-            const payload = {
-                ...formData,
-                tenantId,
-                campaignId: editingCampaign?.id,
-                prizes: modalPrizes // Include prizes for atomic update
-            };
-
-            if (editingCampaign) {
-                await axios.put('/api/admin/campaigns', payload);
-            } else {
-                await axios.post('/api/admin/campaigns', payload);
-            }
-            handleCloseModal();
-            onRefresh();
-            fetchLimitInfo(); // Refresh limit info after creating campaign
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.error || err.message || 'Failed to save campaign';
-            console.error('Campaign save error:', err);
-            alert(errorMessage);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -1201,16 +802,27 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                     <div>
                         <h2 className="text-xl font-bold">Campaigns</h2>
                     </div>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        disabled={limitInfo && !limitInfo.canCreate}
-                        className="bg-amber-500 hover:bg-amber-400 text-slate-900 px-4 py-2 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        + New Campaign
-                    </button>
+                    <div className="flex items-center space-x-4">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                checked={showArchived} 
+                                onChange={(e) => setShowArchived(e.target.checked)}
+                                className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
+                            />
+                            <span className="text-sm text-slate-400 font-medium">Show Archived</span>
+                        </label>
+                        <button
+                            onClick={onCreate}
+                            disabled={limitInfo && !limitInfo.canCreate}
+                            className="bg-amber-500 hover:bg-amber-400 text-slate-900 px-4 py-2 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            + New Campaign
+                        </button>
+                    </div>
                 </div>
 
-                {limitInfo && !limitInfo.canCreate && (
+                {limitInfo && !limitInfo.canCreate && !showArchived && (
                     <div className="bg-amber-500/10 border border-amber-500/30 text-amber-500 px-4 py-3 rounded-lg mb-6">
                         <div className="font-bold mb-1">Campaign Limit Reached</div>
                         <div className="text-sm">
@@ -1249,7 +861,7 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800">
-                            {campaigns.map((camp) => {
+                            {displayedCampaigns.map((camp) => {
                                 const startDate = new Date(camp.startDate);
                                 const endDate = new Date(camp.endDate);
                                 const isActive = camp.isActive && startDate <= now && endDate >= now;
@@ -1258,91 +870,121 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
 
                                 return (
                                     <tr key={camp.id} className="hover:bg-slate-800/30">
-                                        <td className="py-4 font-bold">{camp.name}</td>
+                                        <td className="py-4 font-bold">
+                                            {camp.name}
+                                            {camp.isArchived && <span className="ml-2 text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded font-normal uppercase">Archived</span>}
+                                        </td>
                                         <td className="py-4 text-slate-400">{camp.template?.name || 'None'}</td>
                                         <td className="py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${isActive
-                                                ? 'bg-green-500/10 text-green-500 border border-green-500/30'
-                                                : isScheduled
-                                                    ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30'
-                                                    : isExpired
-                                                        ? 'bg-red-500/10 text-red-500 border border-red-500/30'
-                                                        : 'bg-slate-500/10 text-slate-500 border border-slate-500/30'
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                camp.isArchived 
+                                                ? 'bg-slate-700/50 text-slate-400 border border-slate-600/30'
+                                                : isActive
+                                                    ? 'bg-green-500/10 text-green-500 border border-green-500/30'
+                                                    : isScheduled
+                                                        ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30'
+                                                        : isExpired
+                                                            ? 'bg-red-500/10 text-red-500 border border-red-500/30'
+                                                            : 'bg-slate-500/10 text-slate-500 border border-slate-500/30'
                                                 }`}>
-                                                {isActive ? 'Active' : isScheduled ? 'Scheduled' : isExpired ? 'Expired' : 'Inactive'}
+                                                {camp.isArchived ? 'Archived' : isActive ? 'Active' : isScheduled ? 'Scheduled' : isExpired ? 'Expired' : 'Inactive'}
                                             </span>
                                         </td>
-                                        <td className="py-4">{camp._count.prizes}</td>
-                                        <td className="py-4">{camp._count.spins}</td>
+                                        <td className="py-4">{camp._count?.prizes || 0}</td>
+                                        <td className="py-4">{camp._count?.spins || 0}</td>
                                         <td className="py-4">
                                             <div className="flex items-center space-x-2">
-                                                {planInfo?.allowQRCodeGenerator && (
-                                                    <button
-                                                        onClick={async () => {
-                                                            try {
-                                                                const qrUrl = `/api/admin/qr?tenantId=${tenantId}&campaignId=${camp.id}&format=png`;
-                                                                const response = await axios.get(qrUrl, {
-                                                                    responseType: 'blob'
-                                                                });
-                                                                
-                                                                // Create a blob URL and download it
-                                                                const blob = new Blob([response.data], { type: 'image/png' });
-                                                                const url = window.URL.createObjectURL(blob);
-                                                                const link = document.createElement('a');
-                                                                link.href = url;
-                                                                link.download = `qr-code-${camp.name.replace(/\s+/g, '-')}.png`;
-                                                                document.body.appendChild(link);
-                                                                link.click();
-                                                                link.remove();
-                                                                window.URL.revokeObjectURL(url);
-                                                            } catch (err: any) {
-                                                                console.error('QR Code generation error:', err);
-                                                                alert(err.response?.data?.error || 'Failed to generate QR code');
-                                                            }
-                                                        }}
-                                                        className="text-blue-500 hover:text-blue-400 text-sm font-bold"
-                                                        title="Generate QR Code"
+                                                {!camp.isArchived && (
+                                                    <>
+                                                        {planInfo?.allowQRCodeGenerator && (
+                                                            <>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            const qrUrl = `/api/admin/qr?tenantId=${tenantId}&campaignId=${camp.id}&format=png`;
+                                                                            const response = await axios.get(qrUrl, {
+                                                                                responseType: 'blob'
+                                                                            });
+                                                                            
+                                                                            // Create a blob URL and download it
+                                                                            const blob = new Blob([response.data], { type: 'image/png' });
+                                                                            const url = window.URL.createObjectURL(blob);
+                                                                            const link = document.createElement('a');
+                                                                            link.href = url;
+                                                                            link.download = `qr-code-${camp.name.replace(/\s+/g, '-')}.png`;
+                                                                            document.body.appendChild(link);
+                                                                            link.click();
+                                                                            link.remove();
+                                                                            window.URL.revokeObjectURL(url);
+                                                                        } catch (err: any) {
+                                                                            console.error('QR Code generation error:', err);
+                                                                            alert(err.response?.data?.error || 'Failed to generate QR code');
+                                                                        }
+                                                                    }}
+                                                                    className="text-blue-500 hover:text-blue-400 text-sm font-bold"
+                                                                    title="Generate Simple QR Code"
+                                                                >
+                                                                    QR
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        onShowBrandedQR({ id: camp.id, name: camp.name });
+                                                                    }}
+                                                                    className="text-green-500 hover:text-green-400 text-sm font-bold"
+                                                                    title="Generate Branded QR Poster/Card"
+                                                                >
+                                                                    Branded
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <button
+                                                            onClick={() => handleOpenSocialTasksModal(camp.id)}
+                                                            className="text-purple-500 hover:text-purple-400 text-sm font-bold"
+                                                            title="Manage Social Tasks"
+                                                        >
+                                                            Social
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedCampaignId(camp.id);
+                                                                setShowLandingPageBuilder(true);
+                                                            }}
+                                                            className="relative text-green-500 hover:text-green-400 text-sm font-bold flex items-center gap-1.5"
+                                                            title={landingPageStatus[camp.id] ? "Landing Page Published - Click to Edit" : "Edit Landing Page"}
+                                                        >
+                                                            Landing
+                                                            {landingPageStatus[camp.id] && (
+                                                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Published"></span>
+                                                            )}
+                                                            {landingPageStatus[camp.id] ? (
+                                                                <span className="text-[10px] text-green-400 font-normal">●</span>
+                                                            ) : (
+                                                                <span className="text-[10px] text-slate-500 font-normal">○</span>
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => onEdit(camp)}
+                                                            className="text-amber-500 hover:text-amber-400 text-sm font-bold"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(camp.id)}
+                                                            className="text-red-500 hover:text-red-400 text-sm font-bold"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {camp.isArchived && (
+                                                     <button
+                                                        onClick={() => onEdit(camp)}
+                                                        className="text-slate-400 hover:text-white text-sm font-bold"
+                                                        title="View Details"
                                                     >
-                                                        QR
+                                                        View
                                                     </button>
                                                 )}
-                                                <button
-                                                    onClick={() => handleOpenSocialTasksModal(camp.id)}
-                                                    className="text-purple-500 hover:text-purple-400 text-sm font-bold"
-                                                    title="Manage Social Tasks"
-                                                >
-                                                    Social
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedCampaignId(camp.id);
-                                                        setShowLandingPageBuilder(true);
-                                                    }}
-                                                    className="relative text-green-500 hover:text-green-400 text-sm font-bold flex items-center gap-1.5"
-                                                    title={landingPageStatus[camp.id] ? "Landing Page Published - Click to Edit" : "Edit Landing Page"}
-                                                >
-                                                    Landing
-                                                    {landingPageStatus[camp.id] && (
-                                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Published"></span>
-                                                    )}
-                                                    {landingPageStatus[camp.id] ? (
-                                                        <span className="text-[10px] text-green-400 font-normal">●</span>
-                                                    ) : (
-                                                        <span className="text-[10px] text-slate-500 font-normal">○</span>
-                                                    )}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleOpenModal(camp)}
-                                                    className="text-amber-500 hover:text-amber-400 text-sm font-bold"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(camp.id)}
-                                                    className="text-red-500 hover:text-red-400 text-sm font-bold"
-                                                >
-                                                    Delete
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1350,124 +992,13 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                             })}
                         </tbody>
                     </table>
-                    {campaigns.length === 0 && (
+                    {displayedCampaigns.length === 0 && (
                         <div className="text-center py-12 text-slate-500">
-                            No campaigns yet. Create your first campaign to get started!
+                             {showArchived ? 'No archived campaigns found.' : 'No active campaigns found. Create your first campaign to get started!'}
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Campaign Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h2 className="text-2xl font-bold text-amber-500">
-                                    {editingCampaign ? 'Manage Campaign' : 'Create New Campaign'}
-                                </h2>
-                                <p className="text-slate-500 text-sm mt-1">Configure all campaign details, prizes, and behavior</p>
-                            </div>
-                            <button onClick={handleCloseModal} className="text-slate-400 hover:text-white text-xl">✕</button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-12">
-                            {/* Section 1: Basic Info */}
-                            <div className="bg-slate-800/30 p-6 rounded-2xl border border-slate-700/50">
-                                <h3 className="text-lg font-bold mb-6 flex items-center">
-                                    <span className="w-8 h-8 bg-amber-500/10 text-amber-500 rounded-lg flex items-center justify-center mr-3 text-sm">1</span>
-                                    Basic Information
-                                </h3>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Campaign Name</label>
-                                        <input
-                                            type="text"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
-                                            placeholder="Season Sale 2024"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">Description</label>
-                                        <textarea
-                                            value={formData.description}
-                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
-                                            rows={2}
-                                            placeholder="Optional description for internal use"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Section 2: Prizes */}
-                            <div className="bg-slate-800/30 p-6 rounded-2xl border border-slate-700/50">
-                                <h3 className="text-lg font-bold mb-6 flex items-center">
-                                    <span className="w-8 h-8 bg-amber-500/10 text-amber-500 rounded-lg flex items-center justify-center mr-3 text-sm">2</span>
-                                    Wheel segments & Offers
-                                </h3>
-                                {fetchingPrizes ? (
-                                    <div className="py-12 text-center text-slate-500 italic">Loading prizes...</div>
-                                ) : (
-                                    <PrizeTable
-                                        prizes={modalPrizes}
-                                        onUpdate={updateModalPrize}
-                                        onAdd={addModalPrize}
-                                        onDelete={handleModalDeletePrize}
-                                        allowInventoryTracking={Boolean(planInfo?.allowInventoryTracking)}
-                                        campaignId={editingCampaign?.id}
-                                    />
-                                )}
-                            </div>
-
-                            {/* Section 3: Behavior & Branding */}
-                            <div className="bg-slate-800/30 p-6 rounded-2xl border border-slate-700/50">
-                                <h3 className="text-lg font-bold mb-6 flex items-center">
-                                    <span className="w-8 h-8 bg-amber-500/10 text-amber-500 rounded-lg flex items-center justify-center mr-3 text-sm">3</span>
-                                    Behavior & Branding
-                                </h3>
-                                <CampaignSettingsForm
-                                    campaign={formData}
-                                    setCampaign={(updates) => setFormData({ ...formData, ...updates })}
-                                    templates={templates}
-                                />
-                                <div className="mt-6">
-                                    <label className="flex items-center space-x-2 cursor-pointer group">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.isActive}
-                                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                            className="w-5 h-5 rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500 transition-all"
-                                        />
-                                        <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">Enabled (Allow users to access if within date range)</span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="flex space-x-4 pt-8 sticky bottom-0 bg-slate-900 py-4 border-t border-slate-800">
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-black py-4 rounded-xl disabled:opacity-50 shadow-lg shadow-amber-500/10 transition-all uppercase tracking-widest active:scale-[0.98]"
-                                >
-                                    {loading ? 'Processing...' : editingCampaign ? 'Save All Changes' : 'Create & Launch Campaign'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCloseModal}
-                                    className="px-8 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl transition-colors uppercase tracking-widest text-sm"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
 
             {/* Social Tasks Modal */}
             {showSocialTasksModal && selectedCampaignId && (
@@ -1626,7 +1157,7 @@ function SocialTasksModal({
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-2xl w-full">
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold text-amber-500 mb-4">Social Media Tasks Not Available</h2>
+                        <h2 className="text-2xl font-bold text-purple-500 mb-4">Social Media Tasks Not Available</h2>
                         <p className="text-slate-400 mb-6">
                             Social media tasks are only available on Starter, Pro, or Enterprise plans.
                             Please upgrade your plan to use this feature.
@@ -1844,10 +1375,48 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
         return date.toISOString().split('T')[0];
     });
     const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+    
+    // User Report State
+    const [userReport, setUserReport] = useState<any>(null);
+    const [userReportLoading, setUserReportLoading] = useState(false);
+    const [userReportPage, setUserReportPage] = useState(1);
 
     useEffect(() => {
         fetchAnalytics();
     }, [startDate, endDate]);
+
+    useEffect(() => {
+        fetchUserReport();
+    }, [userReportPage]);
+
+    const fetchUserReport = async () => {
+        try {
+            setUserReportLoading(true);
+            const res = await axios.get(`/api/admin/analytics/users?tenantId=${tenantId}&page=${userReportPage}&limit=10`);
+            setUserReport(res.data);
+        } catch (err) {
+            console.error('Error fetching user report:', err);
+        } finally {
+            setUserReportLoading(false);
+        }
+    };
+
+    const handleExportReport = async () => {
+        try {
+            const response = await axios.get(`/api/admin/export/campaign-users?tenantId=${tenantId}`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `campaign-users-report-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Failed to download report');
+        }
+    };
 
     const fetchAnalytics = async () => {
         try {
@@ -1952,6 +1521,81 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
              <div className="grid lg:grid-cols-2 gap-6">
                 <PrizeIntegrityChart data={analytics.charts?.prizeIntegrity || []} />
                 <MissingVIPsTable data={analytics.deepAnalysis?.churnCandidates || []} />
+             </div>
+
+             {/* ROW 6: Detailed User Report */}
+             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-white">Campaign Participants</h3>
+                        <p className="text-slate-500 text-sm">Detailed breakdown of user activity across all campaigns.</p>
+                    </div>
+                    <button 
+                        onClick={handleExportReport}
+                        className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-amber-500 font-bold px-4 py-2 rounded-lg transition-colors text-sm"
+                    >
+                        <span>📥</span>
+                        <span>Export CSV</span>
+                    </button>
+                </div>
+                
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-800/50 text-slate-400 uppercase text-xs">
+                            <tr>
+                                <th className="px-4 py-3 rounded-l-lg">User</th>
+                                <th className="px-4 py-3">Mobile</th>
+                                <th className="px-4 py-3">Campaign</th>
+                                <th className="px-4 py-3 text-center">Spins</th>
+                                <th className="px-4 py-3 text-center">Referrals</th>
+                                <th className="px-4 py-3 text-right rounded-r-lg">Last Active</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800">
+                            {userReportLoading ? (
+                                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading details...</td></tr>
+                            ) : !userReport?.data?.length ? (
+                                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No participants found.</td></tr>
+                            ) : (
+                                userReport.data.map((row: any, i: number) => (
+                                    <tr key={i} className="hover:bg-slate-800/30 transition-colors">
+                                        <td className="px-4 py-3 font-medium text-white">{row.userName}</td>
+                                        <td className="px-4 py-3 text-slate-400 font-mono text-xs">{row.userPhone}</td>
+                                        <td className="px-4 py-3 text-indigo-400">{row.campaignName}</td>
+                                        <td className="px-4 py-3 text-center font-bold text-amber-500">{row.spinCount}</td>
+                                        <td className="px-4 py-3 text-center text-slate-400">{row.referralCount}</td>
+                                        <td className="px-4 py-3 text-right text-slate-500 text-xs">
+                                            {new Date(row.lastActive).toLocaleDateString()}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {/* Pagination */}
+                {userReport?.pagination && userReport.pagination.pages > 1 && (
+                    <div className="flex justify-center items-center space-x-2 mt-6">
+                        <button 
+                            disabled={userReportPage === 1}
+                            onClick={() => setUserReportPage(p => p - 1)}
+                            className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 text-xs"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-xs text-slate-500">
+                            Page {userReportPage} of {userReport.pagination.pages}
+                        </span>
+                        <button 
+                            disabled={userReportPage === userReport.pagination.pages}
+                            onClick={() => setUserReportPage(p => p + 1)}
+                            className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 text-xs"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
              </div>
         </div>
     );
