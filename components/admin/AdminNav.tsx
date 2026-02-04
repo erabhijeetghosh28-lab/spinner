@@ -20,6 +20,7 @@ export default function AdminNav() {
   const navLinks = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/admin/vouchers', label: 'Vouchers', icon: '🎟️' },
+    { href: '/admin/managers', label: 'Managers', icon: '👥' },
     { href: '/admin/scanner', label: 'Scanner', icon: '📷' },
   ];
 

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Branded QR Runtime</title>
+</head>
+<body>
+    <h1>Branded QR Generator Test</h1>
+    <p>This page tests if the branded QR functionality is working properly.</p>
+    
+    <script>
+        // Test if we can access the localhost server
+        fetch('http://localhost:3001')
+            .then(response => {
+                console.log('✓ Server is accessible');
+                document.body.innerHTML += '<p style="color: green;">✓ Server is accessible on port 3001</p>';
+                
+                // Test if the branded QR API endpoint exists
+                return fetch('http://localhost:3001/api/admin/qr/branded', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        campaignId: 'test-campaign',
+                        campaignName: 'Test Campaign',
+                        format: 'poster',
+                        businessInfo: {
+                            name: 'Test Business',
+                            phone: '+1234567890',
+                            website: 'https://test.com',
+                            logoUrl: ''
+                        }
+                    })
+                });
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    console.log('✓ API endpoint exists (authentication required)');
+                    document.body.innerHTML += '<p style="color: orange;">✓ API endpoint exists (authentication required)</p>';
+                } else if (response.ok) {
+                    console.log('✓ API endpoint is working');
+                    document.body.innerHTML += '<p style="color: green;">✓ API endpoint is working</p>';
+                } else {
+                    console.log('⚠ API endpoint returned:', response.status);
+                    document.body.innerHTML += '<p style="color: orange;">⚠ API endpoint returned: ' + response.status + '</p>';
+                }
+            })
+            .catch(error => {
+                console.error('✗ Error:', error);
+                document.body.innerHTML += '<p style="color: red;">✗ Error: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Branded QR State</title>
+</head>
+<body>
+    <h1>Branded QR State Test</h1>
+    <p>Open the browser console and navigate to the admin dashboard to see debug logs.</p>
+    
+    <div id="instructions">
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Open browser developer tools (F12)</li>
+            <li>Go to the Console tab</li>
+            <li>Navigate to <a href="http://localhost:3001/admin/dashboard" target="_blank">http://localhost:3001/admin/dashboard</a></li>
+            <li>Look for debug logs:
+                <ul>
+                    <li>"AdminDashboard mounted, showBrandedQRModal: false"</li>
+                    <li>When clicking Branded QR: "onShowBrandedQR called with: {campaign data}"</li>
+                    <li>"showBrandedQRModal set to true"</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div id="troubleshooting">
+        <h2>If you still see the error:</h2>
+        <ol>
+            <li><strong>Clear browser cache:</strong> Ctrl+Shift+R (hard refresh)</li>
+            <li><strong>Clear all browser data:</strong> Go to browser settings and clear all data for localhost</li>
+            <li><strong>Try incognito/private mode</strong></li>
+            <li><strong>Check if multiple tabs are open</strong> - close all localhost tabs and try again</li>
+        </ol>
+    </div>
+
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+        ol, ul { line-height: 1.6; }
+        a { color: #0066cc; }
+        #instructions, #troubleshooting { 
+            background: #f5f5f5; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+        }
+    </style>
+</body>
+</html>

@@ -1,9 +1,9 @@
 'use client';
 
-import Template1Hero from './Hero';
-import Template1Offers from './Offers';
-import Template1Newsletter from './Newsletter';
-import Template1Footer from './Footer';
+import Footer from './Footer';
+import Hero from './Hero';
+import Newsletter from './Newsletter';
+import Offers from './Offers';
 
 interface Template1Props {
     landingPage: any;
@@ -12,39 +12,20 @@ interface Template1Props {
 }
 
 export default function Template1({ landingPage, campaign, userId }: Template1Props) {
-    const sections = landingPage?.sections || [];
-    const offers = landingPage?.offers || [];
-    const footer = landingPage?.footer;
-
-    // Find hero section
-    const heroSection = sections.find((s: any) => s.type === 'HERO');
-
+    // Extract sections
+    const heroSection = landingPage?.sections?.find((s: any) => s.type === 'HERO');
+    
     return (
-        <div className="layout-container flex h-full grow flex-col">
-            <main className="flex flex-1 flex-col items-center w-full">
-                {/* Hero Section */}
-                {heroSection && (
-                    <Template1Hero
-                        section={heroSection}
-                        campaign={campaign}
-                        userId={userId}
-                    />
-                )}
-
-                {/* Offers Section */}
-                <Template1Offers
-                    offers={offers}
-                />
-
-                {/* Newsletter Section */}
-                <Template1Newsletter />
-            </main>
-
-            {/* Footer */}
-            <Template1Footer
-                footer={footer}
-                campaign={campaign}
+        <div className="bg-[#f8f7f5] min-h-screen font-['Plus_Jakarta_Sans',sans-serif]">
+            <Hero 
+                section={heroSection} 
+                campaign={campaign} 
+                userId={userId}
+                landingPage={landingPage}
             />
+            <Offers offers={landingPage?.offers || []} />
+            <Newsletter />
+            <Footer footer={landingPage?.campaignFooter} />
         </div>
     );
 }

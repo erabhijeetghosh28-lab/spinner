@@ -24,11 +24,34 @@ export default function LandingPageRenderer({ campaignId, userId }: LandingPageR
     const [verifiedUserId, setVerifiedUserId] = useState<string | null>(userId || null);
     const [showLoginModal, setShowLoginModal] = useState(true);
 
+    // Check for saved session on mount
+    useEffect(() => {
+        const savedUser = localStorage.getItem('offer-wheel-user');
+        const savedExpiry = localStorage.getItem('offer-wheel-user-expiry');
+        
+        if (savedUser && savedExpiry) {
+            const expiryTime = parseInt(savedExpiry);
+            const now = Date.now();
+            
+            // If session hasn't expired, restore it
+            if (now < expiryTime) {
+                const userData = JSON.parse(savedUser);
+                setVerifiedUserId(userData.id);
+                setIsVerified(true);
+                setShowLoginModal(false);
+            } else {
+                // Expired session - clear it
+                localStorage.removeItem('offer-wheel-user');
+                localStorage.removeItem('offer-wheel-user-expiry');
+            }
+        }
+    }, []);
+
     useEffect(() => {
         fetchLandingPage();
         // REMOVED: localStorage check - always show login screen per requirements
         // User must login every time they visit, even if they have a saved session
-    }, [campaignId, userId]);
+    }, [campaignId]);
 
     const fetchLandingPage = async () => {
         try {
@@ -222,7 +245,7 @@ export default function LandingPageRenderer({ campaignId, userId }: LandingPageR
 
             {/* Landing Page Content - Always visible, dimmed when login modal is shown */}
             <div className={`relative z-10 ${showLoginModal && !isVerified ? 'opacity-70 pointer-events-none' : 'opacity-100'}`}>
-                {template === 'template_1' && (
+                {(template === 'template_1' || template === 'Classic') && (
                     <Template1
                         landingPage={landingPage}
                         campaign={campaign}
