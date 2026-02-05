@@ -43,6 +43,9 @@ export default function ImageUploadButton({
       {/* Upload Button */}
       <UploadButton<OurFileRouter, "prizeImage">
         endpoint="prizeImage"
+        headers={() => ({
+          Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('admin-token') ?? '' : ''}`,
+        })}
         onClientUploadComplete={(res) => {
           if (res && res[0]?.url) {
             setUploading(false);
