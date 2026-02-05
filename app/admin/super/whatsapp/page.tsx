@@ -11,10 +11,13 @@ export default function WhatsAppMonitoringPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<any>(null);
   const [globalSettings, setGlobalSettings] = useState<any>({
+    WHATSAPP_TEXT_API_URL: '',
     WHATSAPP_TEXT_API_KEY: '',
     WHATSAPP_TEXT_SENDER: '',
+    WHATSAPP_MEDIA_API_URL: '',
     WHATSAPP_MEDIA_API_KEY: '',
-    WHATSAPP_MEDIA_SENDER: ''
+    WHATSAPP_MEDIA_SENDER: '',
+    SIGNUP_NOTIFICATION_PHONE: ''
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -52,10 +55,13 @@ export default function WhatsAppMonitoringPage() {
       const res = await axios.get('/api/admin/super/settings');
       if (res.data.settings) {
         setGlobalSettings({
+          WHATSAPP_TEXT_API_URL: res.data.settings.WHATSAPP_TEXT_API_URL || '',
           WHATSAPP_TEXT_API_KEY: res.data.settings.WHATSAPP_TEXT_API_KEY || '',
           WHATSAPP_TEXT_SENDER: res.data.settings.WHATSAPP_TEXT_SENDER || '',
+          WHATSAPP_MEDIA_API_URL: res.data.settings.WHATSAPP_MEDIA_API_URL || '',
           WHATSAPP_MEDIA_API_KEY: res.data.settings.WHATSAPP_MEDIA_API_KEY || '',
-          WHATSAPP_MEDIA_SENDER: res.data.settings.WHATSAPP_MEDIA_SENDER || ''
+          WHATSAPP_MEDIA_SENDER: res.data.settings.WHATSAPP_MEDIA_SENDER || '',
+          SIGNUP_NOTIFICATION_PHONE: res.data.settings.SIGNUP_NOTIFICATION_PHONE || ''
         });
       }
     } catch (err) {
@@ -116,6 +122,16 @@ export default function WhatsAppMonitoringPage() {
                         <span>📱 CloudWA Text API (cloudwa_api)</span>
                     </div>
                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">API URL</label>
+                        <input 
+                            type="url"
+                            value={globalSettings.WHATSAPP_TEXT_API_URL}
+                            onChange={(e) => setGlobalSettings({...globalSettings, WHATSAPP_TEXT_API_URL: e.target.value})}
+                            placeholder="https://unofficial.cloudwapi.in/send-message"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition-all font-mono text-sm"
+                        />
+                    </div>
+                    <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">API Key</label>
                         <input 
                             type="password"
@@ -127,7 +143,7 @@ export default function WhatsAppMonitoringPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sender Phone</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sender Phone (Service Number)</label>
                         <input 
                             type="text"
                             value={globalSettings.WHATSAPP_TEXT_SENDER}
@@ -145,6 +161,16 @@ export default function WhatsAppMonitoringPage() {
                         <span>🖼️ CloudWA Media API (cloudwaimg_api)</span>
                     </div>
                     <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">API URL</label>
+                        <input 
+                            type="url"
+                            value={globalSettings.WHATSAPP_MEDIA_API_URL}
+                            onChange={(e) => setGlobalSettings({...globalSettings, WHATSAPP_MEDIA_API_URL: e.target.value})}
+                            placeholder="https://unofficial.cloudwapi.in/send-media"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all font-mono text-sm"
+                        />
+                    </div>
+                    <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">API Key</label>
                         <input 
                             type="password"
@@ -155,13 +181,30 @@ export default function WhatsAppMonitoringPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sender Phone</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sender Phone (Service Number)</label>
                         <input 
                             type="text"
                             value={globalSettings.WHATSAPP_MEDIA_SENDER}
                             onChange={(e) => setGlobalSettings({...globalSettings, WHATSAPP_MEDIA_SENDER: e.target.value})}
                             placeholder="e.g. 9170XXXXXXXX"
                             className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                        />
+                    </div>
+                </div>
+
+                {/* Owner / Signup notifications */}
+                <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-700">
+                    <div className="flex items-center space-x-2 text-green-400 font-bold mb-2">
+                        <span>📲 Owner notification (signup alerts)</span>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Owner / Notification Phone Number</label>
+                        <input 
+                            type="text"
+                            value={globalSettings.SIGNUP_NOTIFICATION_PHONE}
+                            onChange={(e) => setGlobalSettings({...globalSettings, SIGNUP_NOTIFICATION_PHONE: e.target.value})}
+                            placeholder="e.g. 919876543210 – receives new signup details (Business name, Contact person, Email, Phone)"
+                            className="w-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 py-3 text-white focus:border-amber-500 outline-none transition-all"
                         />
                     </div>
                 </div>

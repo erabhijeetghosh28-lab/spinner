@@ -6,10 +6,11 @@ interface FooterProps {
     tenantSlug?: string;
 }
 
+const PLATFORM_BRAND = 'TheLeadSpin';
+
 export default function Template2Footer({ footer, campaign, tenantSlug }: FooterProps) {
     // Template 2 primary color from reference HTML (not used in footer, but kept for consistency)
     const primaryColor = '#00f2ff';
-    const companyName = footer?.companyName || campaign?.name || 'BrandWheel';
     const currentYear = new Date().getFullYear();
 
     const rulesUrl = tenantSlug ? `/${tenantSlug}/rules` : footer?.rulesUrl;
@@ -19,7 +20,7 @@ export default function Template2Footer({ footer, campaign, tenantSlug }: Footer
             <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-template2-primary to-template2-accent rounded-lg flex items-center justify-center text-template2-navy-dark font-bold">W</div>
-                    <span className="font-black text-xl tracking-tight uppercase text-white">Brand<span className="text-template2-primary">Wheel</span></span>
+                    <span className="font-black text-xl tracking-tight uppercase text-white">{PLATFORM_BRAND}</span>
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
                     <div className="flex gap-8 text-gray-400 text-sm font-medium">
@@ -54,7 +55,7 @@ export default function Template2Footer({ footer, campaign, tenantSlug }: Footer
                         </div>
                     )}
                 </div>
-                <p className="text-sm text-gray-500">© {currentYear} BrandWheel Inc. Powered by Electric Innovation.</p>
+                <p className="text-sm text-gray-500">© {currentYear} {PLATFORM_BRAND}. All rights reserved.</p>
             </div>
         </footer>
     );

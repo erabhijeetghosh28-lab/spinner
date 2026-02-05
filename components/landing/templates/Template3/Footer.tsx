@@ -1,5 +1,7 @@
 'use client';
 
+const PLATFORM_BRAND = 'TheLeadSpin';
+
 interface FooterProps {
     footer: any;
     campaign?: any;
@@ -9,7 +11,6 @@ interface FooterProps {
 export default function Template3Footer({ footer, campaign, tenantSlug }: FooterProps) {
     // Template 3 primary color from reference HTML (not used in footer, but kept for consistency)
     const primaryColor = '#D4AF37';
-    const companyName = footer?.companyName || campaign?.name || 'BrandWheel';
     const currentYear = new Date().getFullYear();
     const rulesUrl = tenantSlug ? `/${tenantSlug}/rules` : footer?.rulesUrl || '#';
 
@@ -18,7 +19,7 @@ export default function Template3Footer({ footer, campaign, tenantSlug }: Footer
             <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 border-2 border-template3-primary flex items-center justify-center text-template3-primary font-serif font-bold text-xl">W</div>
-                    <span className="font-serif font-bold text-2xl tracking-[0.1em] uppercase">BrandWheel</span>
+                    <span className="font-serif font-bold text-2xl tracking-[0.1em] uppercase">{PLATFORM_BRAND}</span>
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
                     <div className="flex gap-10 text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
@@ -53,7 +54,7 @@ export default function Template3Footer({ footer, campaign, tenantSlug }: Footer
                         </div>
                     )}
                 </div>
-                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">© {currentYear} BrandWheel Inc. Reserved.</p>
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">© {currentYear} {PLATFORM_BRAND}. All rights reserved.</p>
             </div>
         </footer>
     );

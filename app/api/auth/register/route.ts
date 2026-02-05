@@ -1,15 +1,21 @@
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, email, password, slug, phone } = await req.json();
+        const { name, contactPersonName, email, password, slug, phone } = await req.json();
 
         // 1. Basic validation
         if (!name || !email || !password || !slug) {
             return NextResponse.json({ 
-                error: 'Company name, email, password, and slug are required' 
+                error: 'Business name, contact person name, email, password, and slug are required' 
+            }, { status: 400 });
+        }
+        if (!contactPersonName || typeof contactPersonName !== 'string' || !contactPersonName.trim()) {
+            return NextResponse.json({ 
+                error: 'Contact person name is required' 
             }, { status: 400 });
         }
 
@@ -88,12 +94,33 @@ export async function POST(req: NextRequest) {
                     tenantId: tenant.id,
                     email,
                     password: hashedPassword,
-                    name: name // Use company name as admin name initially
+                    name: (contactPersonName && String(contactPersonName).trim()) || name
                 }
             });
 
             return { tenant, admin };
         });
+
+        // 7. Notify owner via global CloudWA (no tenantId = use global config)
+        const ownerPhoneSetting = await prisma.setting.findUnique({
+            where: { key: 'SIGNUP_NOTIFICATION_PHONE' }
+        });
+        const ownerPhone = ownerPhoneSetting?.value?.trim();
+        if (ownerPhone) {
+            const message = [
+                '🆕 New signup – TheLeadSpin',
+                '',
+                `Business Name: ${name}`,
+                `Contact Person: ${contactPersonName.trim()}`,
+                `Email: ${email}`,
+                `Phone: ${phone || '—'}`
+            ].join('\n');
+            try {
+                await sendWhatsAppMessage(ownerPhone, message, undefined);
+            } catch (notifyErr) {
+                console.error('Owner signup notification failed:', notifyErr);
+            }
+        }
 
         return NextResponse.json({
             success: true,
@@ -102,7 +129,7 @@ export async function POST(req: NextRequest) {
             admin: {
                 id: result.admin.id,
                 email: result.admin.email,
-                name: result.admin.name
+                name: contactPersonName.trim() || result.admin.name
             },
             tenant: {
                 id: result.tenant.id,

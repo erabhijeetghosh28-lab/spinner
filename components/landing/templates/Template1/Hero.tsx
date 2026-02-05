@@ -25,23 +25,20 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
     const [prizes, setPrizes] = useState<any[]>([]);
     const [referralThreshold, setReferralThreshold] = useState(5); // Default to 5
 
+    // Use prizes from campaign (public landing – no admin API)
+    useEffect(() => {
+        if (campaign?.prizes?.length) {
+            setPrizes(campaign.prizes);
+        }
+    }, [campaign?.prizes]);
+
     // Fetch spins remaining and user stats
     useEffect(() => {
         if (userId && campaign?.id) {
             fetchUserSpins();
             fetchCampaignStats();
-            fetchPrizes();
         }
     }, [userId, campaign?.id]);
-
-    const fetchPrizes = async () => {
-        try {
-            const response = await axios.get(`/api/admin/prizes?campaignId=${campaign.id}`);
-            setPrizes(response.data || []);
-        } catch (error) {
-            console.error('Error fetching prizes:', error);
-        }
-    };
 
     // Fetch campaign settings including referral threshold
     useEffect(() => {

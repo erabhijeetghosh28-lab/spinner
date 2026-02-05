@@ -5,8 +5,8 @@ import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "./api/uploadthing/core";
 
 export const metadata: Metadata = {
-    title: "Spin & Win | Exclusive Offers",
-    description: "Spin the wheel to win exciting prizes and exclusive discounts!",
+    title: "TheLeadSpin | Spin & Win | Exclusive Offers",
+    description: "TheLeadSpin – Spin the wheel to win exciting prizes and exclusive discounts!",
 };
 
 export default function RootLayout({

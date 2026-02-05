@@ -17,7 +17,8 @@ export default function MinimalFooter({
     footer,
     variant = 'light' 
 }: MinimalFooterProps) {
-    const companyName = footer?.companyName || 'BrandWheel';
+    // Always show platform brand in footer
+    const companyName = 'TheLeadSpin';
     const logoUrl = footer?.logoUrl;
     const privacyUrl = footer?.privacyPolicyUrl || '#';
     const termsUrl = footer?.termsUrl || '#';

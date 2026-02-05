@@ -1,5 +1,7 @@
 'use client';
 
+const PLATFORM_BRAND = 'TheLeadSpin';
+
 interface FooterProps {
     footer: any;
     campaign?: any;
@@ -9,7 +11,6 @@ interface FooterProps {
 export default function Template4Footer({ footer, campaign, tenantSlug }: FooterProps) {
     // Template 4 primary color from reference HTML (not used in footer, but kept for consistency)
     const primaryColor = '#2D5A47';
-    const companyName = footer?.companyName || campaign?.name || 'BrandWheel';
     const currentYear = new Date().getFullYear();
     const rulesUrl = tenantSlug ? `/${tenantSlug}/rules` : footer?.rulesUrl || '#';
 
@@ -18,7 +19,7 @@ export default function Template4Footer({ footer, campaign, tenantSlug }: Footer
             <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-template4-primary rounded-lg flex items-center justify-center text-white font-bold">NW</div>
-                    <span className="font-black text-xl tracking-tight uppercase text-template4-primary dark:text-white">NatureWell</span>
+                    <span className="font-black text-xl tracking-tight uppercase text-template4-primary dark:text-white">{PLATFORM_BRAND}</span>
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
                     <div className="flex gap-8 text-[#6B7C75] dark:text-gray-400 text-sm font-medium">
@@ -53,7 +54,7 @@ export default function Template4Footer({ footer, campaign, tenantSlug }: Footer
                         </div>
                     )}
                 </div>
-                <p className="text-sm text-[#6B7C75] dark:text-gray-500">© {currentYear} NatureWell Collective. Inspired by Earth.</p>
+                <p className="text-sm text-[#6B7C75] dark:text-gray-500">© {currentYear} {PLATFORM_BRAND}. All rights reserved.</p>
             </div>
         </footer>
     );
