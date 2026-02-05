@@ -158,7 +158,7 @@ export default function Template3Hero({ section, campaign, userId }: HeroProps) 
                             <div className="inline-flex items-center rounded-none bg-template3-primary/5 border border-template3-primary/20 px-4 py-1.5 text-template3-primary text-[10px] font-bold uppercase tracking-[0.2em] w-fit">
                                 Privé Collection Event
                             </div>
-                            <h1 className="text-[#181411] dark:text-white text-5xl md:text-7xl font-serif font-bold leading-[1.1] tracking-tight">
+                            <h1 className="text-[#181411] dark:text-white text-3xl md:text-7xl font-serif font-bold leading-[1.1] tracking-tight">
                                 {headline.split(' ').map((word: string, idx: number) => {
                                     const wordLower = word.toLowerCase().replace(/[^\w]/g, ''); // Remove punctuation for comparison
                                     // Template 3 reference highlights "Excellence" in gold

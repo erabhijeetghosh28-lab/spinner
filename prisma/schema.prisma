@@ -93,7 +93,10 @@ model Tenant {
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
   campaigns          Campaign[]
+  directSpinGrants   DirectSpinGrant[]
   endUsers           EndUser[]
+  managers           Manager[]
+  managerAuditLogs   ManagerAuditLog[]
   monthlyUsage       MonthlyUsage[]
   prizes             Prize[]
   securityEvents     SecurityEvent[]
@@ -113,14 +116,53 @@ model Tenant {
 model TenantAdmin {
   id               String    @id @default(cuid())
   tenantId         String
-  email            String    @unique
+  email            String?   @unique
   password         String
   name             String
   createdAt        DateTime  @default(now())
+  adminId          String?   @unique
   tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   redeemedVouchers Voucher[]
 
   @@index([tenantId, email])
+  @@index([adminId])
+}
+
+model Manager {
+  id                       String            @id @default(cuid())
+  name                     String
+  tenantId                 String
+  pin                      String?
+  maxBonusSpinsPerApproval Int               @default(10)
+  maxSpinsPerUser          Int               @default(5)
+  isActive                 Boolean           @default(true)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  directSpinGrants         DirectSpinGrant[]
+  tenant                   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  auditLogs                ManagerAuditLog[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model ManagerAuditLog {
+  id                String                @id @default(cuid())
+  managerId         String
+  tenantId          String
+  action            String
+  taskCompletionId  String?
+  comment           String
+  bonusSpinsGranted Int?
+  createdAt         DateTime              @default(now())
+  manager           Manager               @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  taskCompletion    SocialTaskCompletion? @relation(fields: [taskCompletionId], references: [id], onDelete: Cascade)
+  tenant            Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([managerId])
+  @@index([tenantId])
+  @@index([taskCompletionId])
+  @@index([createdAt])
 }
 
 model TenantUsage {
@@ -164,6 +206,8 @@ model Campaign {
   sendImmediately          Boolean           @default(false)
   socialMediaEnabled       Boolean           @default(false)
   defaultSpinRewards       Json?
+  autoGenerateRules        Boolean           @default(true)
+  rulesText                String?
   template                 WheelTemplate?    @relation(fields: [templateId], references: [id])
   tenant                   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   landingPage              LandingPage?
@@ -188,6 +232,7 @@ model EndUser {
   sharedWins            Int                    @default(0)
   bonusSpinsEarned      Int                    @default(0)
   createdAt             DateTime               @default(now())
+  directSpinGrants      DirectSpinGrant[]
   referredBy            EndUser?               @relation("UserReferrals", fields: [referredById], references: [id])
   referrals             EndUser[]              @relation("UserReferrals")
   tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -345,23 +390,26 @@ model SocialMediaTask {
 }
 
 model SocialTaskCompletion {
-  id                     String          @id @default(cuid())
+  id                     String            @id @default(cuid())
   taskId                 String
   userId                 String
-  status                 String          @default("PENDING")
+  status                 String            @default("PENDING")
   spinsAwarded           Int
-  notificationSent       Boolean         @default(false)
+  notificationSent       Boolean           @default(false)
   notificationSentAt     DateTime?
-  notificationDelivered  Boolean         @default(false)
+  notificationDelivered  Boolean           @default(false)
   cohortId               String?
   verificationStrategy   String?
-  sampledForVerification Boolean         @default(false)
-  projectedFromSample    Boolean         @default(false)
-  claimedAt              DateTime        @default(now())
+  sampledForVerification Boolean           @default(false)
+  projectedFromSample    Boolean           @default(false)
+  claimedAt              DateTime          @default(now())
   clickedAt              DateTime?
   verifiedAt             DateTime?
-  task                   SocialMediaTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user                   EndUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationComment    String?
+  verifiedBy             String?
+  managerAuditLogs       ManagerAuditLog[]
+  task                   SocialMediaTask   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user                   EndUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
   @@index([userId, claimedAt])
@@ -372,15 +420,22 @@ model SocialTaskCompletion {
   @@index([clickedAt])
 }
 
-model SocialMediaCounter {
-  id         String   @id @default(cuid())
-  campaignId String?
-  platform   String
-  count      Int
-  checkedAt  DateTime @default(now())
+model DirectSpinGrant {
+  id           String   @id @default(cuid())
+  managerId    String
+  userId       String
+  tenantId     String
+  spinsGranted Int      @default(1)
+  comment      String?
+  createdAt    DateTime @default(now())
+  manager      Manager  @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user         EndUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([campaignId, platform])
-  @@index([platform, checkedAt])
+  @@index([managerId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@index([createdAt])
 }
 
 model LandingPage {

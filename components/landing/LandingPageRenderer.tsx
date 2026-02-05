@@ -219,27 +219,34 @@ export default function LandingPageRenderer({ campaignId, userId }: LandingPageR
                 <div className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"></div>
             )}
 
-            {/* Visual indicator banner (admin only - can be hidden in production) */}
+
+            {/* Visual indicator banner (Moved to avoid overlap) */}
             {process.env.NODE_ENV === 'development' && (
-                <div className="fixed top-4 right-4 z-50 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-lg backdrop-blur-sm">
-                    <div className="flex items-center gap-2 text-green-400 text-xs font-bold">
-                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                        Landing Page Active ({template})
+                <div className="fixed bottom-4 left-4 z-[60] px-3 py-1.5 bg-green-500/20 border border-green-500/30 rounded-full backdrop-blur-md">
+                    <div className="flex items-center gap-2 text-green-400 text-[10px] font-bold">
+                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                        {template}
                     </div>
                 </div>
             )}
 
-            {/* Logout Button - Prominent for Testing */}
+            {/* Mobile-Optimized Header - High Contrast for Visibility */}
             {verifiedUserId && isVerified && (
-                <div className="fixed top-4 right-4 z-50" style={{ top: process.env.NODE_ENV === 'development' ? '60px' : '16px' }}>
-                    <button
-                        onClick={handleLogout}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
-                        title="Logout (Test)"
-                    >
-                        <span>🚪</span>
-                        <span>Logout</span>
-                    </button>
+                <div className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300">
+                    {/* Dark gradient for text visibility on light backgrounds */}
+                    <div className="absolute inset-0 h-24 bg-gradient-to-b from-black/50 via-black/20 to-transparent pointer-events-none"></div>
+                    
+                    <div className="w-full max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-end relative z-10">
+                        {/* Right: Logout Button (Hidden on mobile) */}
+                        <button
+                            onClick={handleLogout}
+                            className="hidden md:flex h-11 px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-all shadow-2xl hover:scale-105 active:scale-95 items-center gap-2 border-2 border-white/20"
+                            title="Logout"
+                        >
+                            <span className="hidden sm:inline">Logout</span>
+                            <span className="text-lg">🚪</span>
+                        </button>
+                    </div>
                 </div>
             )}
 

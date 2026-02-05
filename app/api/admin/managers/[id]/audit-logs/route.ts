@@ -14,14 +14,13 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: managerId } = await params;
     // Verify authentication
     const authError = await requireAdminAuth(request);
     if (authError) return authError;
-
-    const managerId = params.id;
 
     // Get tenant ID from query params
     const tenantId = request.nextUrl.searchParams.get('tenantId');
@@ -92,7 +91,9 @@ export async function GET(
         id: log.id,
         action: log.action,
         taskCompletionId: log.taskCompletionId,
-        taskType: `${log.taskCompletion.task.platform} - ${log.taskCompletion.task.actionType}`,
+        taskType: log.taskCompletion?.task
+          ? `${log.taskCompletion.task.platform} - ${log.taskCompletion.task.actionType}`
+          : null,
         comment: log.comment,
         bonusSpinsGranted: log.bonusSpinsGranted,
         createdAt: log.createdAt

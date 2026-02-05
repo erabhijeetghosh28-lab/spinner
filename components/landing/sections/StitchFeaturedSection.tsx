@@ -28,7 +28,7 @@ export default function StitchFeaturedSection({ offers, brandColor = '#f48c25' }
         <section className="w-full bg-[#1e293b] dark:bg-[#1a120b] py-20 overflow-hidden">
             <div className="max-w-[1200px] mx-auto px-6">
                 <div className="flex flex-col gap-4 mb-12">
-                    <h2 className="text-white text-4xl font-black tracking-tight">Featured Highlights</h2>
+                    <h2 className="text-white text-2xl md:text-4xl font-black tracking-tight">Featured Highlights</h2>
                     <div className="h-1 w-24 rounded-full" style={{ backgroundColor: brandColor }}></div>
                 </div>
 
@@ -75,28 +75,31 @@ export default function StitchFeaturedSection({ offers, brandColor = '#f48c25' }
                                     </div>
                                     
                                     {/* Content Side */}
-                                    <div className="p-8 lg:p-12 flex flex-col justify-center gap-6">
-                                        <h3 className="text-white text-3xl lg:text-4xl font-black leading-tight">{offer.name || offer.title}</h3>
-                                        <p className="text-gray-300 text-lg leading-relaxed line-clamp-3">
-                                            {offer.description || "Experience premium quality with this exclusive offer. A perfect addition to your collection."}
-                                        </p>
+                                    <div className="p-6 lg:p-12 flex flex-col justify-center gap-6">
+                                        <h3 className="text-white text-2xl lg:text-4xl font-black leading-tight">{offer.name || offer.title}</h3>
+                                        {offer.description && (
+                                            <p className="text-gray-300 text-lg leading-relaxed line-clamp-3">
+                                                {offer.description}
+                                            </p>
+                                        )}
                                         
-                                        <div className="flex flex-col gap-4 mt-4">
+                                        {offer.features && offer.features.length > 0 && (
+                                            <div className="flex flex-col gap-4 mt-4">
+                                                {offer.features.map((feature: string, idx: number) => (
+                                                    <div key={idx} className="flex items-center gap-3 text-gray-400">
+                                                        <span className="material-symbols-outlined" style={{ color: brandColor }}>check_circle</span>
+                                                        <span>{feature}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        
+                                        {offer.value && (
                                             <div className="flex items-center gap-3 text-gray-400">
                                                 <span className="material-symbols-outlined" style={{ color: brandColor }}>check_circle</span>
-                                                <span>Limited Availability</span>
+                                                <span>Value: {offer.value}</span>
                                             </div>
-                                            <div className="flex items-center gap-3 text-gray-400">
-                                                <span className="material-symbols-outlined" style={{ color: brandColor }}>check_circle</span>
-                                                <span>Instant Win</span>
-                                            </div>
-                                            {offer.value && (
-                                                <div className="flex items-center gap-3 text-gray-400">
-                                                    <span className="material-symbols-outlined" style={{ color: brandColor }}>check_circle</span>
-                                                    <span>Value: {offer.value}</span>
-                                                </div>
-                                            )}
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

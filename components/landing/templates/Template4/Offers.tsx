@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 
 interface Offer {
     id: string;
@@ -29,7 +29,7 @@ export default function Template4Offers({ offers }: OffersProps) {
             'Audio': ['Active Noise Cancellation (ANC)', '48-Hour Hybrid Battery Life', 'Sustainable Recycled Materials'],
             'Wearables': ['Next-Gen Heart Rate Sensor', 'Sapphire Crystal Durability', 'Always-On Retina Display'],
         };
-        return categoryFeatures[offer.category || ''] || ['Premium Quality', 'Eco-Friendly', 'Lifetime Warranty'];
+        return categoryFeatures[offer.category || ''] || [];
     };
 
     const getBadgeForOffer = (offer: Offer): string => {
@@ -38,7 +38,7 @@ export default function Template4Offers({ offers }: OffersProps) {
             'Audio': 'New Innovation',
             'Wearables': 'Wellness Tech',
         };
-        return categoryBadges[offer.category || ''] || 'Featured';
+        return categoryBadges[offer.category || ''] || '';
     };
 
     const displayOffers = offers.length > 0 ? offers.map(offer => ({
@@ -81,16 +81,18 @@ export default function Template4Offers({ offers }: OffersProps) {
                     }}>
                         {displayOffers.map((offer) => (
                             <div key={offer.id} className="flex-none w-full snap-center">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 bg-white/5 rounded-3xl overflow-hidden border border-white/10 backdrop-blur-sm min-h-[500px]">
-                                    <div className="relative overflow-hidden group/img">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 bg-white/5 rounded-3xl overflow-hidden border border-white/10 backdrop-blur-sm">
+                                    <div className="relative overflow-hidden group/img min-h-[300px] lg:min-h-[500px]">
                                         <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/img:scale-110" style={{ backgroundImage: `url('${offer.image || offer.imageUrl}')` }}></div>
                                         <div className="absolute inset-0 bg-gradient-to-t from-template4-primary/80 to-transparent"></div>
-                                        <div className="absolute bottom-8 left-8">
-                                            <span className="bg-template4-accent px-3 py-1 rounded text-[10px] font-bold text-white uppercase tracking-widest">{offer.badge}</span>
-                                        </div>
+                                        {offer.badge && (
+                                            <div className="absolute bottom-8 left-8">
+                                                <span className="bg-template4-accent px-3 py-1 rounded text-[10px] font-bold text-white uppercase tracking-widest">{offer.badge}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="p-12 flex flex-col justify-center gap-6">
-                                        <h3 className="text-white text-4xl font-black leading-tight">{offer.title}</h3>
+                                    <div className="p-6 md:p-12 flex flex-col justify-center gap-6">
+                                        <h3 className="text-white text-2xl md:text-4xl font-black leading-tight">{offer.title}</h3>
                                         <p className="text-template4-mint/80 text-lg leading-relaxed">{offer.description}</p>
                                         {offer.features && offer.features.length > 0 && (
                                             <div className="flex flex-col gap-4 mt-4">

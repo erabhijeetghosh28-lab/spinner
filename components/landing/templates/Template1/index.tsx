@@ -25,7 +25,10 @@ export default function Template1({ landingPage, campaign, userId }: Template1Pr
             />
             <Offers offers={landingPage?.offers || []} />
             <Newsletter />
-            <Footer footer={landingPage?.campaignFooter} />
+            <Footer 
+                footer={landingPage?.campaignFooter} 
+                tenantSlug={campaign?.tenant?.slug}
+            />
         </div>
     );
 }

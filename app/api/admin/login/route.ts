@@ -5,15 +5,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, password } = await req.json();
+        const { email, password, identifier } = await req.json();
+        const loginId = identifier || email;
 
-        if (!email || !password) {
-            return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+        if (!loginId || !password) {
+            return NextResponse.json({ error: 'Email/ID and password are required' }, { status: 400 });
         }
 
-        // First, check if it's a Super Admin
+        // First, check if it's a Super Admin (Super admins always use email)
         const superAdmin = await prisma.admin.findUnique({
-            where: { email },
+            where: { email: loginId },
         });
 
         if (superAdmin) {
@@ -39,9 +40,14 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // If not Super Admin, check if it's a Tenant Admin
-        const tenantAdmin = await prisma.tenantAdmin.findUnique({
-            where: { email },
+        // If not Super Admin, check if it's a Tenant Admin (can be email or adminId)
+        const tenantAdmin = await prisma.tenantAdmin.findFirst({
+            where: {
+                OR: [
+                    { email: loginId },
+                    { adminId: loginId }
+                ]
+            },
             include: {
                 tenant: {
                     select: {

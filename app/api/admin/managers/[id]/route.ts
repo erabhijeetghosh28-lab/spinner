@@ -10,14 +10,13 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: managerId } = await params;
     // Verify authentication
     const authError = await requireAdminAuth(request);
     if (authError) return authError;
-
-    const managerId = params.id;
 
     // Get tenant ID from query params
     const tenantId = request.nextUrl.searchParams.get('tenantId');

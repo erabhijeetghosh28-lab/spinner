@@ -152,7 +152,7 @@ export default function Template5Hero({ section, campaign, userId }: HeroProps) 
                             <div className="inline-flex items-center rounded-sm bg-black px-3 py-1 text-white text-[10px] font-black uppercase tracking-[0.2em] w-fit">
                                 Live Campaign
                             </div>
-                            <h1 className="text-black text-6xl md:text-7xl font-black leading-none tracking-tighter uppercase">
+                            <h1 className="text-black text-4xl md:text-7xl font-black leading-none tracking-tighter uppercase">
                                 {headline.split(' ').map((word: string, idx: number) => {
                                     const isHighlight = word.toLowerCase().includes('rewards') || word.toLowerCase().includes('exclusive');
                                     return (

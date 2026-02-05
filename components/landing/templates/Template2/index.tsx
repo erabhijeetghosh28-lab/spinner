@@ -1,9 +1,9 @@
 'use client';
 
-import Template2Hero from './Hero';
-import Template2Offers from './Offers';
-import Template2Newsletter from './Newsletter';
 import Template2Footer from './Footer';
+import Template2Hero from './Hero';
+import Template2Newsletter from './Newsletter';
+import Template2Offers from './Offers';
 
 interface Template2Props {
     landingPage: any;
@@ -39,6 +39,7 @@ export default function Template2({ landingPage, campaign, userId }: Template2Pr
             <Template2Footer
                 footer={footer}
                 campaign={campaign}
+                tenantSlug={campaign?.tenant?.slug}
             />
         </div>
     );

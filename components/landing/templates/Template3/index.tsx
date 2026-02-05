@@ -1,9 +1,9 @@
 'use client';
 
-import Template3Hero from './Hero';
-import Template3Offers from './Offers';
-import Template3Newsletter from './Newsletter';
 import Template3Footer from './Footer';
+import Template3Hero from './Hero';
+import Template3Newsletter from './Newsletter';
+import Template3Offers from './Offers';
 
 interface Template3Props {
     landingPage: any;
@@ -39,6 +39,7 @@ export default function Template3({ landingPage, campaign, userId }: Template3Pr
             <Template3Footer
                 footer={footer}
                 campaign={campaign}
+                tenantSlug={campaign?.tenant?.slug}
             />
         </div>
     );

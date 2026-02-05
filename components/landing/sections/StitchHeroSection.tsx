@@ -103,7 +103,7 @@ export default function StitchHeroSection({ campaign, primaryColor = '#f48c25', 
                              style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}>
                             Limited Time Campaign
                         </div>
-                        <h1 className="text-[#181411] dark:text-white text-5xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
+                        <h1 className="text-[#181411] dark:text-white text-3xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
                             {campaign?.name ? (
                                 <>
                                     {campaign.name.split(' ').slice(0, -2).join(' ')} <span style={{ color: primaryColor }}>{campaign.name.split(' ').slice(-2).join(' ')}</span>

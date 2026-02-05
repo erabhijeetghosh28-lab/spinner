@@ -3,13 +3,15 @@
 interface FooterProps {
     footer: any;
     campaign?: any;
+    tenantSlug?: string;
 }
 
-export default function Template4Footer({ footer, campaign }: FooterProps) {
+export default function Template4Footer({ footer, campaign, tenantSlug }: FooterProps) {
     // Template 4 primary color from reference HTML (not used in footer, but kept for consistency)
     const primaryColor = '#2D5A47';
     const companyName = footer?.companyName || campaign?.name || 'BrandWheel';
     const currentYear = new Date().getFullYear();
+    const rulesUrl = tenantSlug ? `/${tenantSlug}/rules` : footer?.rulesUrl || '#';
 
     return (
         <footer className="w-full py-12 px-6 border-t border-template4-primary/10 dark:border-gray-800">
@@ -22,7 +24,7 @@ export default function Template4Footer({ footer, campaign }: FooterProps) {
                     <div className="flex gap-8 text-[#6B7C75] dark:text-gray-400 text-sm font-medium">
                         {footer?.privacyPolicyUrl && <a href={footer.privacyPolicyUrl} className="hover:text-template4-accent transition-colors">Ethics</a>}
                         {footer?.termsUrl && <a href={footer.termsUrl} className="hover:text-template4-accent transition-colors">Sustainability Report</a>}
-                        {footer?.rulesUrl && <a href={footer.rulesUrl} className="hover:text-template4-accent transition-colors">Campaign Terms</a>}
+                        <a href={rulesUrl} className="hover:text-template4-accent transition-colors">Campaign Terms</a>
                     </div>
                     {(campaign?.supportMobile || campaign?.websiteUrl) && (
                         <div className="flex gap-6 text-sm text-[#6B7C75] dark:text-gray-400">

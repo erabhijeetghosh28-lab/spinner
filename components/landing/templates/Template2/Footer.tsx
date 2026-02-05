@@ -3,13 +3,16 @@
 interface FooterProps {
     footer: any;
     campaign?: any;
+    tenantSlug?: string;
 }
 
-export default function Template2Footer({ footer, campaign }: FooterProps) {
+export default function Template2Footer({ footer, campaign, tenantSlug }: FooterProps) {
     // Template 2 primary color from reference HTML (not used in footer, but kept for consistency)
     const primaryColor = '#00f2ff';
     const companyName = footer?.companyName || campaign?.name || 'BrandWheel';
     const currentYear = new Date().getFullYear();
+
+    const rulesUrl = tenantSlug ? `/${tenantSlug}/rules` : footer?.rulesUrl;
 
     return (
         <footer className="w-full py-12 px-6 border-t border-white/5 bg-template2-navy-dark">

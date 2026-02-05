@@ -129,8 +129,7 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
                                     selectedPrizeIndex={selectedPrizeIndex}
                                     onTick={soundEffects.playTickSound}
                                     templateName="template_4"
-                                    onSpinClick={startSpin}
-                                    disabled={isSpinning || !userStatus?.canSpin}
+                                    logoUrl={campaign?.logoUrl}
                                 />
                             ) : (
                                 <div className="relative w-full h-full rounded-full border-8 border-template4-primary/20 dark:border-template4-primary/40 shadow-2xl flex items-center justify-center overflow-hidden spin-wheel-gradient-template-4">
@@ -153,7 +152,7 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
                             <div className="inline-flex items-center rounded-full bg-template4-primary/10 px-3 py-1 text-template4-primary text-xs font-bold uppercase tracking-wider w-fit">
                                 Sustainable Campaign
                             </div>
-                            <h1 className="text-template4-primary text-5xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
+                            <h1 className="text-template4-primary text-3xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
                                 {headline.split(' ').map((word: string, idx: number) => {
                                     const isHighlight = word.toLowerCase().includes('wellness') || word.toLowerCase().includes('choice');
                                     return (
@@ -164,43 +163,49 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
                                 })}
                             </h1>
                             <p className="text-[#6B7C75] dark:text-gray-400 text-lg leading-relaxed max-w-[500px]">{subheadline}</p>
-                            <div className="mt-4 flex items-center gap-4">
+                            <div className="mt-4 flex flex-col lg:flex-row lg:items-center gap-4">
+                                {/* Spin Button - Full width on mobile, Auto width on desktop */}
                                 <button
                                     onClick={startSpin}
                                     disabled={isSpinning || (userStatus !== null && !userStatus?.canSpin)}
-                                    className="flex min-w-[200px] max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-6 bg-template4-primary text-white text-lg font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full lg:w-fit min-w-[200px] max-w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-8 bg-template4-primary text-white text-lg font-bold shadow-lg hover:bg-opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed lg:order-1"
                                 >
                                     <span className="truncate">{isSpinning ? 'Spinning...' : buttonText || 'Start Your Journey'}</span>
                                 </button>
-                                {/* Spins Remaining Badge */}
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    className="bg-white dark:bg-[#1A2421] px-6 py-3.5 rounded-full shadow-xl border-2 border-template4-primary flex items-center gap-3 overflow-visible"
-                                >
-                                    <span className="material-symbols-outlined flex-shrink-0 text-template4-primary fill-1" style={{ fontSize: '24px' }}>nature_people</span>
-                                    <div className="flex flex-col justify-center min-w-0">
-                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-[#6B7C75] dark:text-gray-400">Spin Remaining</span>
-                                        <span className="text-xl font-black leading-none mt-0.5 whitespace-nowrap text-template4-primary dark:text-[#E8F1EE]">
-                                            {userStatus?.totalAvailable?.toString().padStart(2, '0') || '02'}
-                                        </span>
-                                    </div>
-                                </motion.div>
-                                {/* Joined Users Badge */}
-                                <motion.div
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="bg-white dark:bg-[#1A2421] px-6 py-3.5 rounded-full shadow-xl border-2 border-template4-primary flex items-center gap-3 overflow-visible"
-                                >
-                                    <span className="material-symbols-outlined flex-shrink-0 text-template4-primary fill-1" style={{ fontSize: '24px' }}>group</span>
-                                    <div className="flex flex-col justify-center min-w-0">
-                                        <span className="text-[10px] uppercase font-bold leading-tight whitespace-nowrap text-[#6B7C75] dark:text-gray-400">Joined Users</span>
-                                        <span className="text-xl font-black leading-none mt-0.5 whitespace-nowrap text-template4-primary dark:text-[#E8F1EE]">
-                                            {userStatus?.totalReferrals?.toString().padStart(2, '0') || '00'}
-                                        </span>
-                                    </div>
-                                </motion.div>
+
+                                {/* Stats Row - Side by side on mobile, row on desktop */}
+                                <div className="flex flex-row items-center gap-3 lg:order-2">
+                                    {/* Spins Remaining Badge */}
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="flex-1 lg:flex-none bg-white dark:bg-[#1A2421] px-4 py-2.5 rounded-xl shadow-xl border-2 border-template4-primary flex items-center gap-2 overflow-hidden whitespace-nowrap"
+                                    >
+                                        <span className="material-symbols-outlined flex-shrink-0 text-template4-primary fill-1" style={{ fontSize: '18px' }}>nature_people</span>
+                                        <div className="flex flex-col justify-center min-w-0">
+                                            <span className="text-[8px] uppercase font-bold leading-tight whitespace-nowrap text-[#6B7C75] dark:text-gray-400">Spins</span>
+                                            <span className="text-sm font-black leading-none mt-0.5 whitespace-nowrap text-template4-primary dark:text-[#E8F1EE]">
+                                                {userStatus?.totalAvailable?.toString().padStart(2, '0') || '02'}
+                                            </span>
+                                        </div>
+                                    </motion.div>
+
+                                    {/* Joined Users Badge */}
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.1 }}
+                                        className="flex-1 lg:flex-none bg-white dark:bg-[#1A2421] px-4 py-2.5 rounded-xl shadow-xl border-2 border-template4-primary flex items-center gap-2 overflow-hidden whitespace-nowrap"
+                                    >
+                                        <span className="material-symbols-outlined flex-shrink-0 text-template4-primary fill-1" style={{ fontSize: '18px' }}>group</span>
+                                        <div className="flex flex-col justify-center min-w-0">
+                                            <span className="text-[8px] uppercase font-bold leading-tight whitespace-nowrap text-[#6B7C75] dark:text-gray-400">Joined</span>
+                                            <span className="text-sm font-black leading-none mt-0.5 whitespace-nowrap text-template4-primary dark:text-[#E8F1EE]">
+                                                {userStatus?.totalReferrals?.toString().padStart(2, '0') || '00'}
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                </div>
                             </div>
                         </motion.div>
 

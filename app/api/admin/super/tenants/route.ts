@@ -8,6 +8,15 @@ export async function GET(req: NextRequest) {
             include: {
                 plan: true,
                 subscriptionPlan: true,
+                tenantAdmins: {
+                    take: 1,
+                    select: {
+                        id: true,
+                        email: true,
+                        adminId: true,
+                        name: true
+                    }
+                },
                 _count: {
                     select: {
                         campaigns: true,
@@ -30,7 +39,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const { name, slug, contactPhone, planId, isActive, waConfig } = await req.json();
+        const { name, slug, contactPhone, planId, isActive, waConfig, adminId, email, password } = await req.json();
 
         if (!name || !slug || !planId) {
             return NextResponse.json({ error: 'Name, slug, and planId are required' }, { status: 400 });
@@ -47,12 +56,30 @@ export async function POST(req: NextRequest) {
                 name,
                 slug,
                 contactPhone: contactPhone || null,
-                planId,
+                planId: 'plan-basic', // Required legacy planId
+                subscriptionPlanId: planId, // The ID from frontend is actually a SubscriptionPlan ID
                 isActive: isActive ?? true,
                 waConfig: waConfig ? JSON.parse(JSON.stringify(waConfig)) : null,
             },
-            include: { plan: true }
+            include: { 
+                plan: true,
+                subscriptionPlan: true
+            }
         });
+
+        // Create the Tenant Admin if details are provided
+        if (adminId || email) {
+            const hashedPassword = await bcrypt.hash(password || 'Admin@123', 10);
+            await prisma.tenantAdmin.create({
+                data: {
+                    tenantId: tenant.id,
+                    adminId: adminId || null,
+                    email: email || null,
+                    password: hashedPassword,
+                    name: name // Default name to tenant name
+                }
+            });
+        }
 
         // Automatically create a default campaign for the new tenant
         try {
@@ -176,7 +203,8 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
     try {
         const body = await req.json();
-        const { id, name, slug, contactPhone, planId, isActive, waConfig, tenantAdminPassword } = body;
+        const { id, name, slug, contactPhone, planId, isActive, waConfig, adminId, email } = body;
+        const tenantAdminPassword = body.tenantAdminPassword || body.password;
 
         console.log('PUT /api/admin/super/tenants - Request body:', JSON.stringify(body, null, 2));
 
@@ -235,28 +263,43 @@ export async function PUT(req: NextRequest) {
 
         console.log('PUT /api/admin/super/tenants - Tenant updated successfully:', tenant.id);
 
-        // Update Tenant Admin password if provided
-        if (tenantAdminPassword && tenantAdminPassword.trim()) {
-            if (tenantAdminPassword.length < 6) {
-                console.error('PUT /api/admin/super/tenants - Password too short');
-                return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
-            }
-
-            const hashedPassword = await bcrypt.hash(tenantAdminPassword, 10);
-            
-            // Find and update the tenant admin
+        // Update Tenant Admin details if provided
+        if ((tenantAdminPassword && tenantAdminPassword.trim()) || adminId !== undefined || email !== undefined) {
+            // Find the tenant admin
             const tenantAdmin = await prisma.tenantAdmin.findFirst({
                 where: { tenantId: id }
             });
 
             if (tenantAdmin) {
+                const adminUpdateData: any = {};
+                if (tenantAdminPassword && tenantAdminPassword.trim()) {
+                    if (tenantAdminPassword.length < 6) {
+                        return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+                    }
+                    adminUpdateData.password = await bcrypt.hash(tenantAdminPassword, 10);
+                }
+                
+                if (adminId !== undefined) adminUpdateData.adminId = adminId || null;
+                if (email !== undefined) adminUpdateData.email = email || null;
+
                 await prisma.tenantAdmin.update({
                     where: { id: tenantAdmin.id },
-                    data: { password: hashedPassword }
+                    data: adminUpdateData
                 });
-                console.log('PUT /api/admin/super/tenants - Tenant admin password updated');
-            } else {
-                console.warn('PUT /api/admin/super/tenants - No tenant admin found for tenant:', id);
+                console.log('PUT /api/admin/super/tenants - Tenant admin details updated');
+            } else if (adminId || email) {
+                // Create if missing
+                const hashedPassword = await bcrypt.hash(tenantAdminPassword || 'Admin@123', 10);
+                await prisma.tenantAdmin.create({
+                    data: {
+                        tenantId: id,
+                        adminId: adminId || null,
+                        email: email || null,
+                        password: hashedPassword,
+                        name: tenant.name
+                    }
+                });
+                console.log('PUT /api/admin/super/tenants - Tenant admin created (was missing)');
             }
         }
 

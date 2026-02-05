@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { unstable_cache } from 'next/cache';
 import prisma from '@/lib/prisma';
+import { unstable_cache } from 'next/cache';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Cache campaign data for 5 minutes - campaigns don't change frequently
 async function getCampaignData(tenantSlug: string, tenantId: string | null, campaignId: string) {
@@ -36,8 +36,14 @@ async function getCampaignData(tenantSlug: string, tenantId: string | null, camp
                     colorCode: true,
                     position: true,
                     showTryAgainMessage: true,
-                    probability: true
+                    probability: true,
+                    voucherValidityDays: true,
+                    voucherRedemptionLimit: true
                 }
+            },
+            socialTasks: {
+                where: { isActive: true },
+                orderBy: { displayOrder: 'asc' }
             },
             template: {
                 select: {
@@ -69,8 +75,14 @@ async function getCampaignData(tenantSlug: string, tenantId: string | null, camp
                         colorCode: true,
                         position: true,
                         showTryAgainMessage: true,
-                        probability: true
+                        probability: true,
+                        voucherValidityDays: true,
+                        voucherRedemptionLimit: true
                     }
+                },
+                socialTasks: {
+                    where: { isActive: true },
+                    orderBy: { displayOrder: 'asc' }
                 },
                 template: {
                     select: {
@@ -102,9 +114,12 @@ async function getCampaignData(tenantSlug: string, tenantId: string | null, camp
             spinLimit: campaign.spinLimit,
             referralsRequiredForSpin: campaign.referralsRequiredForSpin,
             spinCooldown: campaign.spinCooldown,
-            tenantId: campaign.tenantId
+            tenantId: campaign.tenantId,
+            rulesText: campaign.rulesText,
+            autoGenerateRules: campaign.autoGenerateRules
         },
-        prizes: campaign.prizes
+        prizes: campaign.prizes,
+        socialTasks: campaign.socialTasks
     };
 }
 

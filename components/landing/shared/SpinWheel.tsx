@@ -18,6 +18,7 @@ interface SpinWheelProps {
         centerBg: string;
         centerText: string;
     };
+    logoUrl?: string | null;
 }
 
 export default function SpinWheel({ 
@@ -25,7 +26,8 @@ export default function SpinWheel({
     onSpin,
     className = '',
     prizes = [],
-    customColors 
+    customColors,
+    logoUrl
 }: SpinWheelProps) {
     // Color configurations for each variant
     const getVariantColors = () => {
@@ -142,20 +144,41 @@ export default function SpinWheel({
                     );
                 })}
                 
-                {/* Center SPIN button */}
-                <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={onSpin}
-                    className="z-10 w-20 h-20 md:w-28 md:h-28 rounded-full shadow-xl flex items-center justify-center border-4 cursor-pointer transition-all"
-                    style={{
-                        backgroundColor: colors.centerBg,
-                        borderColor: colors.primary,
-                        color: colors.centerText
-                    }}
-                >
-                    <span className="font-black text-lg md:text-xl tracking-tighter">SPIN</span>
-                </motion.div>
+                {/* Static Center Area (Does not rotate) */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onSpin) onSpin();
+                        }}
+                        className="w-20 h-20 md:w-28 md:h-28 rounded-full shadow-2xl flex items-center justify-center border-4 overflow-hidden bg-white cursor-pointer transition-all"
+                        style={{
+                            borderColor: colors.primary,
+                        }}
+                    >
+                        {logoUrl ? (
+                            <div className="w-full h-full p-2 flex items-center justify-center bg-white">
+                                <img
+                                    src={logoUrl}
+                                    alt="Center Logo"
+                                    className="w-full h-full object-contain"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="font-black text-lg md:text-xl tracking-tighter" style="color: ${colors.primary}">SPIN</span>`;
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <span 
+                                className="font-black text-lg md:text-xl tracking-tighter"
+                                style={{ color: colors.primary }}
+                            >
+                                SPIN
+                            </span>
+                        )}
+                    </motion.div>
+                </div>
                 
                 {/* Top arrow pointer */}
                 <div 

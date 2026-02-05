@@ -1,9 +1,9 @@
 'use client';
 
-import Template5Hero from './Hero';
-import Template5Offers from './Offers';
-import Template5Newsletter from './Newsletter';
 import Template5Footer from './Footer';
+import Template5Hero from './Hero';
+import Template5Newsletter from './Newsletter';
+import Template5Offers from './Offers';
 
 interface Template5Props {
     landingPage: any;
@@ -39,6 +39,7 @@ export default function Template5({ landingPage, campaign, userId }: Template5Pr
             <Template5Footer
                 footer={footer}
                 campaign={campaign}
+                tenantSlug={campaign?.tenant?.slug}
             />
         </div>
     );

@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
+import React from 'react';
 
 interface Prize {
     id: string;
@@ -78,9 +78,6 @@ const Template4Wheel: React.FC<Template4WheelProps> = ({ prizes, controls, segme
                     );
                 })}
             </svg>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-white dark:bg-[#1A2421] w-16 h-16 md:w-20 md:h-20 rounded-full shadow-xl flex items-center justify-center border-4 border-[#2D5A47] pointer-events-none">
-                <span className="text-[#2D5A47] font-black text-sm md:text-base tracking-tighter">SPIN</span>
-            </div>
         </motion.div>
     );
 };

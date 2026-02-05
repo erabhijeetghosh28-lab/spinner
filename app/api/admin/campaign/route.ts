@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdminAuth } from '@/lib/auth';
+import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
@@ -57,7 +57,9 @@ export async function GET(req: NextRequest) {
                 templateId: campaign.templateId,
                 template: campaign.template,
                 tenantSlug: campaign.tenant.slug,
-                defaultSpinRewards: campaign.defaultSpinRewards
+                defaultSpinRewards: campaign.defaultSpinRewards,
+                rulesText: campaign.rulesText,
+                autoGenerateRules: campaign.autoGenerateRules
             }
         });
     } catch (error: any) {
@@ -75,7 +77,20 @@ export async function PUT(req: NextRequest) {
         const authError = await requireAdminAuth(req);
         if (authError) return authError;
 
-        const { campaignId, tenantId, spinLimit, spinCooldown, referralsRequiredForSpin, logoUrl, templateId, supportMobile, websiteUrl, defaultSpinRewards } = await req.json();
+        const { 
+            campaignId, 
+            tenantId, 
+            spinLimit, 
+            spinCooldown, 
+            referralsRequiredForSpin, 
+            logoUrl, 
+            templateId, 
+            supportMobile, 
+            websiteUrl, 
+            defaultSpinRewards,
+            rulesText,
+            autoGenerateRules
+        } = await req.json();
 
         if (!campaignId || !tenantId) {
             return NextResponse.json({ error: 'Campaign ID and Tenant ID required' }, { status: 400 });
@@ -102,6 +117,8 @@ export async function PUT(req: NextRequest) {
         if (supportMobile !== undefined) updateData.supportMobile = supportMobile ? (typeof supportMobile === 'string' ? supportMobile.trim() : supportMobile) : null;
         if (websiteUrl !== undefined) updateData.websiteUrl = websiteUrl ? (typeof websiteUrl === 'string' ? websiteUrl.trim() : websiteUrl) : null;
         if (defaultSpinRewards !== undefined) updateData.defaultSpinRewards = defaultSpinRewards ? JSON.parse(JSON.stringify(defaultSpinRewards)) : null;
+        if (rulesText !== undefined) updateData.rulesText = rulesText;
+        if (autoGenerateRules !== undefined) updateData.autoGenerateRules = Boolean(autoGenerateRules);
 
         await prisma.campaign.update({
             where: { id: campaignId },

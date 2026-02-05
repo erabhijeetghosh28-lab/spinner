@@ -130,6 +130,7 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
                         variant="light"
                         onSpin={isSpinning ? undefined : handleSpin}
                         prizes={prizes}
+                        logoUrl={campaign?.logoUrl}
                     />
                 </div>
 
@@ -142,7 +143,7 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
                         </div>
 
                         {/* Headline */}
-                        <h1 className="text-[#181411] text-5xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
+                        <h1 className="text-[#181411] text-3xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
                             {section?.content?.headline || (
                                 <>
                                     Spin to Win: Your Exclusive <span className="text-[#f48c25]">Brand Giveaway!</span>
@@ -157,32 +158,35 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
                             }
                         </p>
 
-                        {/* CTA Button with Badges */}
-                        <div className="flex flex-wrap items-center gap-4 mt-4">
-                            {/* Spins Remaining Badge */}
-                            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md border-2 border-[#f48c25]">
-                                <span className="material-symbols-outlined text-[#f48c25] fill-1">toll</span>
-                                <div className="flex flex-col">
-                                    <span className="text-[9px] uppercase font-bold text-[#8a7560] leading-none">Spins Remaining</span>
-                                    <span className="text-lg font-black text-[#181411] leading-none">{spinsRemaining}</span>
-                                </div>
-                            </div>
-
-                            {/* Spin Button */}
+                        {/* CTA Section - Responsive: Stacked on Mobile, Row on Desktop */}
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-4 mt-4">
+                            {/* Spin Button - Full width on mobile, Auto width on desktop */}
                             <button 
                                 onClick={handleSpin}
                                 disabled={isSpinning || spinsRemaining <= 0}
-                                className="flex min-w-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-6 bg-[#f48c25] text-white text-lg font-bold shadow-lg hover:shadow-[#f48c25]/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full lg:w-fit min-w-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-8 bg-[#f48c25] text-white text-lg font-bold shadow-lg hover:shadow-[#f48c25]/40 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed lg:order-1"
                             >
                                 <span className="truncate">{isSpinning ? 'Spinning...' : 'Spin the Wheel Now'}</span>
                             </button>
 
-                            {/* Joined Users Badge */}
-                            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md border-2 border-gray-200">
-                                <span className="material-symbols-outlined text-[#f48c25]">group</span>
-                                <div className="flex flex-col">
-                                    <span className="text-[9px] uppercase font-bold text-[#8a7560] leading-none">Joined Users</span>
-                                    <span className="text-lg font-black text-[#181411] leading-none">{joinedUsers.toLocaleString()}</span>
+                            {/* Stats Row - Side by side on mobile, continuing row on desktop */}
+                            <div className="flex flex-row items-center gap-3 lg:order-2">
+                                {/* Spins Remaining Badge */}
+                                <div className="flex-1 lg:flex-none flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-md border-2 border-[#f48c25] whitespace-nowrap">
+                                    <span className="material-symbols-outlined text-[#f48c25] fill-1 text-sm">toll</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-[8px] uppercase font-bold text-[#8a7560] leading-none">Spins</span>
+                                        <span className="text-sm font-black text-[#181411] leading-none">{spinsRemaining}</span>
+                                    </div>
+                                </div>
+
+                                {/* Joined Users Badge */}
+                                <div className="flex-1 lg:flex-none flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-md border-2 border-gray-100 whitespace-nowrap">
+                                    <span className="material-symbols-outlined text-[#f48c25] text-sm">group</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-[8px] uppercase font-bold text-[#8a7560] leading-none">Joined</span>
+                                        <span className="text-sm font-black text-[#181411] leading-none">{joinedUsers.toLocaleString()}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

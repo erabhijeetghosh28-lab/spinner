@@ -1,7 +1,6 @@
-import { requireAdminAuth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * POST /api/admin/managers/:id/reset-pin
@@ -10,14 +9,10 @@ import bcrypt from 'bcryptjs';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Verify authentication
-    const authError = await requireAdminAuth(request);
-    if (authError) return authError;
-
-    const managerId = params.id;
+    const { id: managerId } = await params;
 
     // Get tenant ID from query params
     const tenantId = request.nextUrl.searchParams.get('tenantId');

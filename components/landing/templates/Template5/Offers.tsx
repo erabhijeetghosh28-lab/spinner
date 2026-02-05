@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 
 interface Offer {
     id: string;
@@ -29,7 +29,7 @@ export default function Template5Offers({ offers }: OffersProps) {
             'Audio': ['Active Noise Cancellation (ANC)', '48-Hour Hybrid Battery Life', 'Sustainable Recycled Materials'],
             'Wearables': ['Next-Gen Heart Rate Sensor', 'Sapphire Crystal Durability', 'Always-On Retina Display'],
         };
-        return categoryFeatures[offer.category || ''] || ['Premium Quality', 'Eco-Friendly', 'Lifetime Warranty'];
+        return categoryFeatures[offer.category || ''] || [];
     };
 
     const getBadgeForOffer = (offer: Offer): string => {
@@ -38,7 +38,7 @@ export default function Template5Offers({ offers }: OffersProps) {
             'Audio': 'New Innovation',
             'Wearables': 'Wellness Tech',
         };
-        return categoryBadges[offer.category || ''] || 'Featured';
+        return categoryBadges[offer.category || ''] || '';
     };
 
     const displayOffers = offers.length > 0 ? offers.map(offer => ({
@@ -86,9 +86,9 @@ export default function Template5Offers({ offers }: OffersProps) {
                                         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${offer.image || offer.imageUrl}')` }}></div>
                                         <div className="absolute inset-0 bg-black/20"></div>
                                     </div>
-                                    <div className="p-12 lg:p-20 flex flex-col justify-center gap-8">
+                                    <div className="p-6 md:p-12 lg:p-20 flex flex-col justify-center gap-8">
                                         <div className="text-template5-primary font-black uppercase tracking-[0.3em] text-xs">Innovation Insight</div>
-                                        <h3 className="text-black dark:text-white text-5xl font-black leading-[1.1] uppercase tracking-tighter">{offer.title}</h3>
+                                        <h3 className="text-black dark:text-white text-3xl md:text-5xl font-black leading-[1.1] uppercase tracking-tighter">{offer.title}</h3>
                                         <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">{offer.description}</p>
                                         {offer.features && offer.features.length > 0 && (
                                             <div className="grid grid-cols-1 gap-4">

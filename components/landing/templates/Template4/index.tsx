@@ -1,9 +1,9 @@
 'use client';
 
-import Template4Hero from './Hero';
-import Template4Offers from './Offers';
-import Template4Newsletter from './Newsletter';
 import Template4Footer from './Footer';
+import Template4Hero from './Hero';
+import Template4Newsletter from './Newsletter';
+import Template4Offers from './Offers';
 
 interface Template4Props {
     landingPage: any;
@@ -39,6 +39,7 @@ export default function Template4({ landingPage, campaign, userId }: Template4Pr
             <Template4Footer
                 footer={footer}
                 campaign={campaign}
+                tenantSlug={campaign?.tenant?.slug}
             />
         </div>
     );

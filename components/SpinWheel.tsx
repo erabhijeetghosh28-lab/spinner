@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 import Template1Wheel from './wheel-templates/Template1Wheel';
 import Template2Wheel from './wheel-templates/Template2Wheel';
 import Template3Wheel from './wheel-templates/Template3Wheel';
@@ -179,20 +179,45 @@ const SpinWheel: React.FC<SpinWheelProps> = ({
             {/* Arrow indicator at top (matching reference) */}
             <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-white z-30 pointer-events-none"></div>
 
-            {/* Center Logo (if provided) */}
-            {logoUrl && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-900/90 border-4 border-amber-500/50 flex items-center justify-center overflow-hidden shadow-2xl">
-                    <img
-                        src={logoUrl}
-                        alt="Campaign Logo"
-                        className="w-full h-full object-contain p-2"
-                        onError={(e) => {
-                            // Hide logo if image fails to load
-                            (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                    />
-                </div>
-            )}
+            {/* Static Center Area (Does not rotate) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40">
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (onSpinClick && !disabled && !isSpinning && !externalIsSpinning) {
+                            onSpinClick();
+                        }
+                    }}
+                    className={`w-20 h-20 md:w-28 md:h-28 rounded-full shadow-2xl flex items-center justify-center border-4 overflow-hidden bg-white cursor-pointer transition-all ${
+                        disabled || isSpinning || externalIsSpinning ? 'opacity-50 cursor-not-allowed' : 'hover:border-amber-400'
+                    }`}
+                    style={{
+                        borderColor: templateName === 'template_4' ? '#2D5A47' : '#f48c25',
+                    }}
+                >
+                    {logoUrl ? (
+                        <div className="w-full h-full p-2 flex items-center justify-center bg-white">
+                            <img
+                                src={logoUrl}
+                                alt="Center Logo"
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="font-black text-lg md:text-xl tracking-tighter text-slate-800">SPIN</span>';
+                                }}
+                            />
+                        </div>
+                    ) : (
+                        <span 
+                            className="font-black text-lg md:text-xl tracking-tighter"
+                            style={{ color: templateName === 'template_4' ? '#2D5A47' : '#f48c25' }}
+                        >
+                            SPIN
+                        </span>
+                    )}
+                </motion.div>
+            </div>
         </div>
     );
 };

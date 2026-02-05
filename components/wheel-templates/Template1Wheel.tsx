@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
+import React from 'react';
 
 interface Prize {
     id: string;
@@ -84,11 +84,6 @@ const Template1Wheel: React.FC<Template1WheelProps> = ({ prizes, controls, segme
                     );
                 })}
             </svg>
-
-            {/* Center Circle with SPIN button - non-clickable (click handled by parent) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-white w-16 h-16 md:w-20 md:h-20 rounded-full shadow-xl flex items-center justify-center border-4 border-[#1e293b] pointer-events-none">
-                <span className="font-black text-sm md:text-base tracking-tighter" style={{ color: TEMPLATE_PRIMARY }}>SPIN</span>
-            </div>
 
         </motion.div>
     );

@@ -153,7 +153,7 @@ export default function Template2Hero({ section, campaign, userId }: HeroProps) 
                             <div className="inline-flex items-center rounded-full bg-template2-primary/10 px-3 py-1 text-template2-primary text-xs font-bold uppercase tracking-wider w-fit border border-template2-primary/20">
                                 Limited Time Campaign
                             </div>
-                            <h1 className="text-white text-5xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
+                            <h1 className="text-white text-3xl md:text-6xl font-black leading-tight tracking-[-0.033em]">
                                 {headline.split(' ').map((word: string, idx: number) => {
                                     const isHighlight = word.toLowerCase().includes('brand') || word.toLowerCase().includes('exclusive') || word.toLowerCase().includes('giveaway');
                                     return (

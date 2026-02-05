@@ -332,7 +332,12 @@ export default function TenantCampaignPage() {
                 }
             }
         } catch (error: any) {
-            console.error('Error fetching campaign:', error);
+            // Suppress console.error for 404s to prevent white-on-black dev overlay
+            if (error.response?.status !== 404) {
+                console.error('Error fetching campaign:', error);
+            } else {
+                console.log(`Campaign not found for slug: ${tenantSlug}`);
+            }
             setCampaign(null);
             setPrizes([]);
         } finally {
@@ -574,10 +579,28 @@ export default function TenantCampaignPage() {
 
     if (!campaign) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-white">
-                <div className="text-center">
-                    <h1 className="text-3xl font-bold mb-4">No Active Campaign</h1>
-                    <p className="text-slate-400">Please check back later.</p>
+            <div className="min-h-screen bg-[#020617] text-white relative flex items-center justify-center p-6">
+                {/* Premium Mesh Background */}
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-500/10 rounded-full blur-[120px]"></div>
+                    <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[50%] bg-blue-600/10 rounded-full blur-[150px]"></div>
+                </div>
+                
+                <div className="relative z-10 text-center max-w-sm">
+                    <div className="inline-block p-6 bg-slate-900/60 backdrop-blur-2xl rounded-[3rem] border border-white/10 mb-8 shadow-2xl">
+                        <div className="text-6xl mb-4">🔍</div>
+                        <h1 className="text-2xl font-black mb-2 tracking-tighter uppercase italic">Campaign Not Found</h1>
+                        <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8">
+                            We couldn't find an active campaign for <span className="text-white font-bold italic">"{tenantSlug}"</span>. It might have ended or the link could be incorrect.
+                        </p>
+                        <a 
+                            href="/admin"
+                            className="inline-block px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-2xl transition-all uppercase text-[10px] tracking-[0.2em] shadow-[0_0_30px_rgba(245,158,11,0.3)] active:scale-95"
+                        >
+                            Visit Dashboard
+                        </a>
+                    </div>
+                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.3em]">Nexylo Offer Wheel</p>
                 </div>
             </div>
         );
@@ -603,71 +626,77 @@ export default function TenantCampaignPage() {
                 <div className="fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"></div>
             )}
 
+
             <div className={`relative z-10 w-full flex flex-col items-center ${showLoginModal && !isVerified ? 'opacity-70 pointer-events-none' : 'opacity-100'}`}>
-                {/* Logout Button - Prominent for Testing */}
+                {/* Mobile-Optimized Header - High Contrast */}
                 {user && isVerified && (
-                    <div className="fixed top-4 right-4 z-50">
-                        <button
-                            onClick={handleLogout}
-                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
-                            title="Logout (Test)"
-                        >
-                            <span>🚪</span>
-                            <span>Logout</span>
-                        </button>
+                    <div className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300">
+                        <div className="absolute inset-0 h-24 bg-gradient-to-b from-black/50 via-black/20 to-transparent pointer-events-none"></div>
+                        
+                        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-end relative z-10">
+                            {/* Right: Logout Button (Hidden on mobile) */}
+                            <button
+                                onClick={handleLogout}
+                                className="hidden md:flex h-11 px-5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-all shadow-2xl hover:scale-105 active:scale-95 items-center gap-2 border-2 border-white/20"
+                                title="Logout"
+                            >
+                                <span className="hidden sm:inline">Logout</span>
+                                <span className="text-lg">🚪</span>
+                            </button>
+                        </div>
                     </div>
                 )}
 
-                {/* Header & Metadata Section */}
-                <div className="w-full max-w-4xl px-4 pt-12 md:pt-20 pb-8 flex flex-col items-center">
-                    <header className="text-center mb-8 relative">
+                {/* Header & Metadata Section - Adjusted for fixed header */}
+                <div className={`w-full max-w-4xl px-4 ${user && isVerified ? 'pt-16 md:pt-24' : 'pt-8 md:pt-16'} pb-6 md:pb-8 flex flex-col items-center`}>
+                    <header className="text-center mb-4 md:mb-8 relative">
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
                         >
-                            <h1 className="text-4xl md:text-6xl font-black mb-4 bg-gradient-to-r from-amber-400 via-amber-200 to-amber-400 bg-clip-text text-transparent uppercase tracking-tighter drop-shadow-2xl">
+                            <h1 className="text-2xl md:text-5xl lg:text-6xl font-black mb-2 md:mb-4 bg-gradient-to-r from-amber-400 via-amber-200 to-amber-400 bg-clip-text text-transparent uppercase tracking-tighter drop-shadow-2xl">
                                 {campaign.name}
                             </h1>
-                            <p className="text-slate-400 text-lg md:text-xl max-w-lg mx-auto font-medium">
+                            <p className="text-slate-400 text-sm md:text-lg lg:text-xl max-w-lg mx-auto font-medium px-4">
                                 {campaign.description}
                             </p>
                         </motion.div>
                     </header>
 
-                    {/* Campaign Metadata Cards - Only show after login with user-specific data */}
+                    {/* Campaign Metadata Cards - Optimized for mobile */}
                     {user && userStatus && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="w-full max-w-2xl mb-8 grid grid-cols-2 md:grid-cols-4 gap-3"
+                            className="w-full max-w-2xl mb-6 md:mb-8 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3"
                         >
-                            <div className="bg-slate-900/40 backdrop-blur-sm p-3 rounded-xl border border-slate-800/50 text-center">
-                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Ends</p>
-                                <p className="text-xs font-bold text-amber-500">
+                            <div className="bg-slate-900/40 backdrop-blur-sm p-2 md:p-3 rounded-lg md:rounded-xl border border-slate-800/50 text-center">
+                                <p className="text-[9px] md:text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Ends</p>
+                                <p className="text-[10px] md:text-xs font-bold text-amber-500">
                                     {campaign.endDate
                                         ? new Date(campaign.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                                         : 'Ongoing'}
                                 </p>
                             </div>
-                            <div className="bg-slate-900/40 backdrop-blur-sm p-3 rounded-xl border border-slate-800/50 text-center">
-                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Available</p>
-                                <p className="text-xs font-bold text-blue-400">
-                                    {userStatus?.totalAvailable || 0} <span className="text-[9px] text-slate-600">spins</span>
+                            <div className="bg-slate-900/40 backdrop-blur-sm p-2 md:p-3 rounded-lg md:rounded-xl border border-slate-800/50 text-center">
+                                <p className="text-[9px] md:text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Available</p>
+                                <p className="text-[10px] md:text-xs font-bold text-blue-400">
+                                    {userStatus?.totalAvailable || 0} <span className="text-[8px] md:text-[9px] text-slate-600">spins</span>
                                 </p>
                             </div>
-                            <div className="bg-slate-900/40 backdrop-blur-sm p-3 rounded-xl border border-slate-800/50 text-center">
-                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Progress</p>
-                                <p className="text-xs font-bold text-green-400">
+                            <div className="bg-slate-900/40 backdrop-blur-sm p-2 md:p-3 rounded-lg md:rounded-xl border border-slate-800/50 text-center">
+                                <p className="text-[9px] md:text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Progress</p>
+                                <p className="text-[10px] md:text-xs font-bold text-green-400">
                                     {userStatus?.referralsRequired > 0
                                         ? `${userStatus.referralsProgress || 0}/${userStatus.referralsRequired}`
                                         : 'N/A'
                                     }
                                 </p>
                             </div>
-                            <div className="bg-slate-900/40 backdrop-blur-sm p-3 rounded-xl border border-slate-800/50 text-center">
-                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Next In</p>
-                                <p className="text-xs font-bold text-purple-400">
+                            <div className="bg-slate-900/40 backdrop-blur-sm p-2 md:p-3 rounded-lg md:rounded-xl border border-slate-800/50 text-center">
+                                <p className="text-[9px] md:text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Next In</p>
+                                <p className="text-[10px] md:text-xs font-bold text-purple-400">
                                     {userStatus?.canSpin ? 'Now!' : `${userStatus?.nextSpinInHours || 0}h`}
                                 </p>
                             </div>
@@ -675,9 +704,9 @@ export default function TenantCampaignPage() {
                     )}
                 </div>
 
-                {/* Main Content Grid */}
-                <div className="w-full max-w-7xl px-4 md:px-6 lg:px-8 pb-20">
-                    <div className="grid lg:grid-cols-12 gap-8 xl:gap-12 items-start">
+                {/* Main Content Grid - Optimized for mobile */}
+                <div className="w-full max-w-7xl px-3 md:px-6 lg:px-8 pb-16 md:pb-20">
+                   <div className="grid lg:grid-cols-12 gap-6 md:gap-8 xl:gap-12 items-start">
 
                         {/* Left/Main Column: Interaction Area */}
                         <div className="lg:col-span-7 xl:col-span-8 flex flex-col items-center order-1">
@@ -685,7 +714,7 @@ export default function TenantCampaignPage() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="w-full flex flex-col items-center space-y-12"
+                                className="w-full flex flex-col items-center space-y-8 md:space-y-12"
                             >
                                         {/* Status Header */}
                                         {isRefreshingStatus ? (
@@ -891,11 +920,12 @@ export default function TenantCampaignPage() {
                                                     )}
 
                                                     {!isSpinning && !wonPrize && (
-                                                        <div className="mt-12 flex justify-center relative z-10 w-full">
+                                                        <div className="mt-8 md:mt-12 flex flex-col md:flex-row items-center justify-center gap-4 w-full max-w-4xl mx-auto relative z-10 px-4">
+                                                            {/* Primary Spin Button - Optimized for responsive layout */}
                                                             <button
                                                                 onClick={startSpin}
                                                                 disabled={!user || !user.id || (userStatus && !userStatus.canSpin) || isRefreshingStatus}
-                                                                className={`px-16 py-6 font-black text-2xl rounded-3xl transition-all uppercase tracking-tighter ${
+                                                                className={`w-full md:w-fit md:min-w-[300px] py-6 px-12 font-black text-2xl rounded-3xl transition-all uppercase tracking-tighter ${
                                                                     !user || !user.id || (userStatus && !userStatus.canSpin) || isRefreshingStatus
                                                                         ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
                                                                         : 'bg-gradient-to-r from-amber-600 to-amber-400 text-slate-950 shadow-[0_25px_60px_rgba(245,158,11,0.4)] hover:scale-105 active:scale-95'
@@ -909,6 +939,31 @@ export default function TenantCampaignPage() {
                                                                             ? 'No Spins Available' 
                                                                             : 'Spin Wheel Now'}
                                                             </button>
+
+                                                            {/* Responsive Stats Row - Side by side on mobile, row on desktop */}
+                                                            <div className="flex flex-row items-center gap-3 w-full md:w-auto">
+                                                                {/* Spins Remaining Badge */}
+                                                                <div className="flex-1 md:w-40 bg-slate-900/60 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/10 shadow-lg flex items-center gap-3 whitespace-nowrap">
+                                                                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
+                                                                        <span className="material-symbols-outlined !text-[18px]">toll</span>
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">Remaining</span>
+                                                                        <span className="text-sm font-black text-white leading-none">{userStatus?.totalAvailable || 0} Spins</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Joined Users Badge */}
+                                                                <div className="flex-1 md:w-40 bg-slate-900/60 backdrop-blur-xl px-4 py-3 rounded-2xl border border-white/10 shadow-lg flex items-center gap-3 whitespace-nowrap">
+                                                                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
+                                                                        <span className="material-symbols-outlined !text-[18px]">group</span>
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">Joined</span>
+                                                                        <span className="text-sm font-black text-white leading-none">{leaders?.length || 0} Users</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </motion.div>

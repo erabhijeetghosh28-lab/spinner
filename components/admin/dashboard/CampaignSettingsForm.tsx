@@ -7,6 +7,8 @@ interface Campaign {
     logoUrl?: string;
     supportMobile?: string;
     websiteUrl?: string;
+    rulesText?: string;
+    autoGenerateRules?: boolean;
     templateId?: string;
     defaultSpinRewards?: Record<string, number>;
 }
@@ -107,6 +109,42 @@ export function CampaignSettingsForm({
                     />
                     <p className="text-[10px] text-slate-500 mt-2 italic">Optional: Link to your website</p>
                 </div>
+            </div>
+
+            {/* Rules Management */}
+            <div className="border-t border-slate-700 pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase">Campaign Rules Management</label>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Auto-generate</span>
+                        <button
+                            onClick={() => setCampaign({ ...campaign, autoGenerateRules: !campaign.autoGenerateRules })}
+                            className={`w-10 h-5 rounded-full relative transition-colors ${campaign.autoGenerateRules ? 'bg-amber-500' : 'bg-slate-700'}`}
+                        >
+                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${campaign.autoGenerateRules ? 'right-1' : 'left-1'}`}></div>
+                        </button>
+                    </div>
+                </div>
+                
+                {campaign.autoGenerateRules ? (
+                    <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                        <p className="text-[10px] text-amber-500 font-medium leading-relaxed italic">
+                            ✨ Rules are being automatically generated based on your prize validity, social tasks, and referral settings.
+                            Switch off "Auto-generate" to write custom terms and conditions.
+                        </p>
+                    </div>
+                ) : (
+                    <div>
+                        <textarea
+                            value={campaign.rulesText || ''}
+                            onChange={(e) => setCampaign({ ...campaign, rulesText: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
+                            rows={8}
+                            placeholder="Enter detailed campaign rules, terms and conditions..."
+                        />
+                        <p className="text-[10px] text-slate-500 mt-2 italic">Markdown supported. These rules will be displayed on the /rules page.</p>
+                    </div>
+                )}
             </div>
 
             {/* Default Spin Rewards for Social Tasks */}

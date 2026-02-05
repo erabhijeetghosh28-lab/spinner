@@ -301,6 +301,7 @@ function CreateManagerModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdPin, setCreatedPin] = useState<string | null>(null);
+  const [createdManager, setCreatedManager] = useState<Manager | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -135,9 +135,9 @@ export default function OfferShowcaseCarousel({
                                 transition={{ duration: 0.3 }}
                                 className="w-full"
                             >
-                                <div className={`grid grid-cols-1 lg:grid-cols-2 ${theme.cardBg} rounded-3xl overflow-hidden border border-white/5 min-h-[500px]`}>
+                                <div className={`grid grid-cols-1 lg:grid-cols-2 ${theme.cardBg} rounded-3xl overflow-hidden border border-white/5`}>
                                     {/* Image */}
-                                    <div className="relative overflow-hidden group/img">
+                                    <div className="relative overflow-hidden group/img min-h-[300px] lg:min-h-[500px]">
                                         <div 
                                             className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/img:scale-105"
                                             style={{ backgroundImage: `url('${displayOffers[currentSlide].image}')` }}

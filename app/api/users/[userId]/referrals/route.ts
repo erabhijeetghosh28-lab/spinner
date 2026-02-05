@@ -18,11 +18,11 @@ export async function GET(
             return NextResponse.json({ error: 'Missing campaign ID' }, { status: 400 });
         }
 
-        // Count how many users this user has referred for this campaign
+        // Count how many users this user has referred for this campaign (referred users who have spun in this campaign)
         const referralCount = await prisma.endUser.count({
             where: {
-                referredBy: userId,
-                campaignId: campaignId
+                referredById: userId,
+                spins: { some: { campaignId } }
             }
         });
 

@@ -298,6 +298,8 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
         waMediaApiUrl: '',
         waMediaApiKey: '',
         waMediaSender: '',
+        tenantAdminEmail: '',
+        tenantAdminId: '',
         tenantAdminPassword: ''
     });
     const [plans, setPlans] = useState<any[]>([]);
@@ -320,6 +322,7 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
         if (tenant) {
             setEditingTenant(tenant);
             const waConfig = tenant.waConfig as any || {};
+            const admin = tenant.tenantAdmins?.[0] || {};
             setFormData({
                 name: tenant.name,
                 slug: tenant.slug,
@@ -332,6 +335,8 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                 waMediaApiUrl: waConfig.mediaApiUrl || '',
                 waMediaApiKey: waConfig.mediaApiKey || '',
                 waMediaSender: waConfig.mediaSender || '',
+                tenantAdminEmail: admin.email || '',
+                tenantAdminId: admin.adminId || '',
                 tenantAdminPassword: ''
             });
         } else {
@@ -348,6 +353,8 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                 waMediaApiUrl: '',
                 waMediaApiKey: '',
                 waMediaSender: '',
+                tenantAdminEmail: '',
+                tenantAdminId: '',
                 tenantAdminPassword: ''
             });
         }
@@ -379,12 +386,14 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                 contactPhone: formData.contactPhone || null,
                 planId: formData.planId,
                 isActive: formData.isActive,
-                waConfig: waConfig
+                waConfig: waConfig,
+                email: formData.tenantAdminEmail || null,
+                adminId: formData.tenantAdminId || null
             };
 
-            // Only include password if editing and password is provided
-            if (editingTenant && formData.tenantAdminPassword) {
-                submitData.tenantAdminPassword = formData.tenantAdminPassword;
+            // Only include password if provided
+            if (formData.tenantAdminPassword) {
+                submitData.password = formData.tenantAdminPassword;
             }
 
             if (editingTenant) {
@@ -725,27 +734,60 @@ function TenantsTab({ tenants, onRefresh }: { tenants: any[]; onRefresh: () => v
                                 </div>
                             </div>
 
-                            {/* Tenant Admin Password Reset (Only when editing) */}
-                            {editingTenant && (
-                                <div className="pt-6 border-t border-slate-800">
-                                    <h3 className="text-lg font-bold text-amber-500 mb-4">Reset Tenant Admin Password</h3>
-                                    <p className="text-xs text-slate-500 mb-4">Leave empty to keep current password. Enter new password to reset.</p>
+                            {/* Tenant Admin Credentials Section */}
+                            <div className="pt-6 border-t border-slate-800">
+                                <h3 className="text-lg font-bold text-amber-500 mb-4">Tenant Admin Credentials</h3>
+                                <p className="text-xs text-slate-500 mb-4">These credentials will be used by the tenant admin to log in.</p>
+                                
+                                <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
-                                            New Password (Optional)
+                                            Admin ID (Optional)
                                         </label>
                                         <input
-                                            type="password"
-                                            value={formData.tenantAdminPassword}
-                                            onChange={(e) => setFormData({ ...formData, tenantAdminPassword: e.target.value })}
+                                            type="text"
+                                            value={formData.tenantAdminId}
+                                            onChange={(e) => setFormData({ ...formData, tenantAdminId: e.target.value })}
                                             className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono text-sm outline-none focus:ring-2 focus:ring-amber-500"
-                                            placeholder="Leave empty to keep current password"
-                                            minLength={6}
+                                            placeholder="ADMIN001"
                                         />
-                                        <p className="text-xs text-slate-500 mt-1">Minimum 6 characters. Leave empty to keep current password.</p>
+                                        <p className="text-[10px] text-slate-500 mt-1">Unique login ID (alphanumeric)</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                            Admin Email (Optional)
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={formData.tenantAdminEmail}
+                                            onChange={(e) => setFormData({ ...formData, tenantAdminEmail: e.target.value })}
+                                            className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                                            placeholder="admin@example.com"
+                                        />
+                                        <p className="text-[10px] text-slate-500 mt-1">Recovery or login email</p>
                                     </div>
                                 </div>
-                            )}
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                        {editingTenant ? 'New Password (Optional)' : 'Admin Password'}
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={formData.tenantAdminPassword}
+                                        onChange={(e) => setFormData({ ...formData, tenantAdminPassword: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono text-sm outline-none focus:ring-2 focus:ring-amber-500"
+                                        placeholder={editingTenant ? "Leave empty to keep current" : "Minimum 6 characters"}
+                                        minLength={editingTenant ? 0 : 6}
+                                        required={!editingTenant}
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        {editingTenant 
+                                            ? "Leave empty to keep current password." 
+                                            : "Required for new tenants."}
+                                    </p>
+                                </div>
+                            </div>
 
                             <div className="flex space-x-4 pt-4">
                                 <button
@@ -909,15 +951,19 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Spins/Month:</span>
-                                    <span className="font-bold">{plan.spinsPerMonth === null ? '∞ Unlimited' : plan.spinsPerMonth.toLocaleString()}</span>
+                                    <span className="font-bold">{(plan.spinsPerMonth === null || plan.spinsPerMonth >= 999999) ? '∞ Unlimited' : plan.spinsPerMonth.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Vouchers/Month:</span>
-                                    <span className="font-bold">{plan.vouchersPerMonth === null ? '∞ Unlimited' : plan.vouchersPerMonth.toLocaleString()}</span>
+                                    <span className="font-bold">{(plan.vouchersPerMonth === null || plan.vouchersPerMonth >= 999999) ? '∞ Unlimited' : plan.vouchersPerMonth.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-400">Spins/Campaign:</span>
+                                    <span className="font-bold">{(plan.spinsPerCampaign >= 999999) ? '∞ Unlimited' : plan.spinsPerCampaign.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Campaigns/Month:</span>
-                                    <span className="font-bold">{plan.campaignsPerMonth}</span>
+                                    <span className="font-bold">{(plan.campaignsPerMonth >= 999999) ? '∞ Unlimited' : plan.campaignsPerMonth.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Campaign Duration:</span>
@@ -962,7 +1008,7 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                 />
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-4">
+                             <div className="grid md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
                                         Max Spins/Month
@@ -987,6 +1033,34 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                         onChange={(e) => setPlanFormData({ ...planFormData, vouchersPerMonth: e.target.value === '' ? null : parseInt(e.target.value) })}
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
                                         placeholder="Unlimited"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                        Campaigns/Month
+                                        <span className="text-slate-600 normal-case ml-1">(999999 = unlimited)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={planFormData.campaignsPerMonth}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, campaignsPerMonth: parseInt(e.target.value) || 1 })}
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
+                                        placeholder="1"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                                        Spins/Campaign
+                                        <span className="text-slate-600 normal-case ml-1">(999999 = unlimited)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={planFormData.spinsPerCampaign}
+                                        onChange={(e) => setPlanFormData({ ...planFormData, spinsPerCampaign: parseInt(e.target.value) || 1000 })}
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500"
+                                        placeholder="1000"
+                                        required
                                     />
                                 </div>
                                 <div>
