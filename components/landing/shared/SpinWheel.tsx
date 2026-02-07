@@ -30,23 +30,7 @@ export default function SpinWheel({
     logoUrl
 }: SpinWheelProps) {
     // Color configurations for each variant
-    const getVariantColors = () => {
-        if (variant === 'custom' && customColors) {
-            return {
-                ...customColors,
-                gradient: `conic-gradient(
-                    ${customColors.primary} 0deg 45deg,
-                    ${customColors.secondary} 45deg 90deg,
-                    ${customColors.primary} 90deg 135deg,
-                    ${customColors.secondary} 135deg 180deg,
-                    ${customColors.primary} 180deg 225deg,
-                    ${customColors.secondary} 225deg 270deg,
-                    ${customColors.primary} 270deg 315deg,
-                    ${customColors.secondary} 315deg 360deg
-                )`
-            };
-        }
-
+    const getColors = () => {
         const variants = {
             light: {
                 primary: '#f48c25',
@@ -54,16 +38,7 @@ export default function SpinWheel({
                 border: '#1e293b',
                 centerBg: 'white',
                 centerText: '#f48c25',
-                gradient: `conic-gradient(
-                    #f48c25 0deg 45deg,
-                    #1e293b 45deg 90deg,
-                    #f48c25 90deg 135deg,
-                    #334155 135deg 180deg,
-                    #f48c25 180deg 225deg,
-                    #1e293b 225deg 270deg,
-                    #f48c25 270deg 315deg,
-                    #475569 315deg 360deg
-                )`
+                alt: ['#334155', '#475569']
             },
             dark: {
                 primary: '#f48c25',
@@ -71,16 +46,7 @@ export default function SpinWheel({
                 border: '#334155',
                 centerBg: '#1e293b',
                 centerText: '#f48c25',
-                gradient: `conic-gradient(
-                    #f48c25 0deg 45deg,
-                    #0a0f1d 45deg 90deg,
-                    #f48c25 90deg 135deg,
-                    #161e2e 135deg 180deg,
-                    #f48c25 180deg 225deg,
-                    #0a0f1d 225deg 270deg,
-                    #f48c25 270deg 315deg,
-                    #161e2e 315deg 360deg
-                )`
+                alt: ['#161e2e', '#1c2636']
             },
             cyan: {
                 primary: '#00f2ff',
@@ -88,23 +54,40 @@ export default function SpinWheel({
                 border: '#161e2e',
                 centerBg: '#161e2e',
                 centerText: '#00f2ff',
-                gradient: `conic-gradient(
-                    #00f2ff 0deg 45deg,
-                    #0a0f1d 45deg 90deg,
-                    #00f2ff 90deg 135deg,
-                    #161e2e 135deg 180deg,
-                    #00f2ff 180deg 225deg,
-                    #0a0f1d 225deg 270deg,
-                    #00f2ff 270deg 315deg,
-                    #161e2e 315deg 360deg
-                )`
+                alt: ['#161e2e', '#1c2636']
+            },
+            custom: {
+                primary: customColors?.primary || '#f48c25',
+                secondary: customColors?.secondary || '#1e293b',
+                border: customColors?.border || '#1e293b',
+                centerBg: customColors?.centerBg || '#ffffff',
+                centerText: customColors?.centerText || '#f48c25',
+                alt: [customColors?.secondary || '#1e293b']
             }
         };
 
-        return variants[variant as keyof typeof variants] || variants.light;
+        const v = variants[variant as keyof typeof variants] || variants.light;
+        
+        // Generate dynamic conic gradient
+        const total = prizes.length || 8;
+        const step = 360 / total;
+        const parts: string[] = [];
+        
+        for (let i = 0; i < total; i++) {
+            let color = i % 2 === 0 ? v.primary : v.secondary;
+            if (i % 2 !== 0 && v.alt.length > 0) {
+                color = v.alt[(i >> 1) % v.alt.length];
+            }
+            parts.push(`${color} ${i * step}deg ${(i + 1) * step}deg`);
+        }
+
+        return {
+            ...v,
+            gradient: `conic-gradient(${parts.join(', ')})`
+        };
     };
 
-    const colors = getVariantColors();
+    const colors = getColors();
 
     return (
         <div className={`flex flex-col items-center justify-center relative ${className}`}>
@@ -119,23 +102,31 @@ export default function SpinWheel({
                 {/* Prize labels on segments */}
                 {prizes.length > 0 && prizes.map((prize, index) => {
                     const totalPrizes = prizes.length;
-                    const angle = (360 / totalPrizes) * index;
-                    const radius = 140; // Distance from center for md screens
+                    const stepAngle = 360 / totalPrizes;
+                    const midAngle = (stepAngle * index) + (stepAngle / 2);
+                    
+                    // Radius adjusted to stay well within the 200px wheel radius (400px container)
+                    const radius = 120; 
+                    const fontSize = Math.max(10, Math.min(14, 110 / totalPrizes + 3));
                     
                     return (
                         <div
                             key={prize.id}
-                            className="absolute top-1/2 left-1/2 origin-left pointer-events-none"
+                            className="absolute top-1/2 left-1/2 origin-left pointer-events-none flex items-center justify-center"
                             style={{
-                                transform: `rotate(${angle + (180 / totalPrizes)}deg) translateX(${radius}px)`,
+                                transform: `rotate(${midAngle}deg) translateX(${radius}px)`,
                                 width: '100px',
+                                marginLeft: '-50px' 
                             }}
                         >
                             <span 
-                                className="block text-white font-bold text-xs md:text-sm text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                                className="block text-white font-bold text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
                                 style={{
-                                    transform: `rotate(90deg)`,
-                                    whiteSpace: 'nowrap'
+                                    fontSize: `${fontSize}px`,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    maxWidth: '100px'
                                 }}
                             >
                                 {prize.name}
@@ -165,7 +156,20 @@ export default function SpinWheel({
                                     alt="Center Logo"
                                     className="w-full h-full object-contain"
                                     onError={(e) => {
-                                        (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="font-black text-lg md:text-xl tracking-tighter" style="color: ${colors.primary}">SPIN</span>`;
+                                        try {
+                                            // Try a graceful fallback: replace broken image src with an inline SVG badge
+                                            const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'>
+                                                <rect width='100%' height='100%' fill='${colors.centerBg}' />
+                                                <circle cx='100' cy='100' r='70' fill='${colors.primary}' />
+                                                <text x='100' y='115' font-size='48' text-anchor='middle' fill='${colors.centerText}' font-family='Arial, Helvetica, sans-serif' font-weight='700'>LOGO</text>
+                                            </svg>`;
+                                            const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+                                            (e.target as HTMLImageElement).onerror = null;
+                                            (e.target as HTMLImageElement).src = dataUrl;
+                                        } catch (err) {
+                                            // fallback: do nothing, keep original element (no innerHTML replacement)
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                        }
                                     }}
                                 />
                             </div>

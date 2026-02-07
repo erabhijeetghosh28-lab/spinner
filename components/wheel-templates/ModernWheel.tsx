@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
+import React from 'react';
 
 interface Prize {
     id: string;
@@ -31,7 +31,7 @@ const ModernWheel: React.FC<ModernWheelProps> = ({ prizes, controls, segmentAngl
             className="w-full h-full rounded-full border-8 border-indigo-500 overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.4)] relative"
             style={{ transformOrigin: 'center center' }}
         >
-            <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+            <svg viewBox="0 0 100 100" className="w-full h-full">
                 <defs>
                     {useGradient && (
                         <>
@@ -47,20 +47,38 @@ const ModernWheel: React.FC<ModernWheelProps> = ({ prizes, controls, segmentAngl
                     )}
                 </defs>
                 {prizes.map((prize, index) => {
-                    const startAngle = index * segmentAngle;
-                    const endAngle = startAngle + segmentAngle;
+                    const anglePerSlice = 360 / prizes.length;
+                    const midAngle = (index * anglePerSlice) + (anglePerSlice / 2) - 90;
+                    
+                    const textRadius = 32;
+                    const x = 50 + textRadius * Math.cos(midAngle * Math.PI / 180);
+                    const y = 50 + textRadius * Math.sin(midAngle * Math.PI / 180);
+                    
+                    // Smart flipping: normalize angle and flip if on left side
+                    let normalizedAngle = ((midAngle % 360) + 360) % 360;
+                    let textRotation = midAngle;
+                    if (normalizedAngle > 90 && normalizedAngle < 270) {
+                        textRotation += 180;
+                    }
+                    const fontSize = Math.max(2.8, Math.min(5.5, 20 / prizes.length + 1.5));
 
-                    const x1 = 50 + 50 * Math.cos((Math.PI * startAngle) / 180);
-                    const y1 = 50 + 50 * Math.sin((Math.PI * startAngle) / 180);
-                    const x2 = 50 + 50 * Math.cos((Math.PI * endAngle) / 180);
-                    const y2 = 50 + 50 * Math.sin((Math.PI * endAngle) / 180);
+                    const startAngle = index * anglePerSlice - 90;
+                    const endAngle = startAngle + anglePerSlice;
 
-                    const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+                    const x1 = 50 + 50 * Math.cos(startAngle * Math.PI / 180);
+                    const y1 = 50 + 50 * Math.sin(startAngle * Math.PI / 180);
+                    const x2 = 50 + 50 * Math.cos(endAngle * Math.PI / 180);
+                    const y2 = 50 + 50 * Math.sin(endAngle * Math.PI / 180);
+
+                    const largeArcFlag = anglePerSlice > 180 ? 1 : 0;
                     const pathData = `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
 
                     const fillColor = useGradient
                         ? (index % 2 === 0 ? 'url(#modernGrad1)' : 'url(#modernGrad2)')
                         : (index % 2 === 0 ? primaryColor : secondaryColor);
+
+                    const maxLen = prizes.length <= 4 ? 18 : (prizes.length <= 8 ? 12 : 8);
+                    const displayName = prize.name.length > maxLen ? prize.name.substring(0, maxLen - 2) + '..' : prize.name;
 
                     return (
                         <g key={prize.id}>
@@ -71,34 +89,28 @@ const ModernWheel: React.FC<ModernWheelProps> = ({ prizes, controls, segmentAngl
                                 strokeWidth="0.8"
                             />
                             <text
-                                x="78"
-                                y="50"
+                                x={x}
+                                y={y}
                                 fill="white"
-                                fontSize="5"
+                                fontSize={fontSize}
                                 fontWeight="900"
                                 textAnchor="middle"
-                                transform={`rotate(${startAngle + segmentAngle / 2}, 50, 50)`}
-                                className="pointer-events-none"
-                                style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}
+                                dominantBaseline="middle"
+                                transform={`rotate(${textRotation}, ${x}, ${y})`}
+                                className="pointer-events-none select-none"
+                                style={{ 
+                                    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                                    letterSpacing: prizes.length > 8 ? '-0.05em' : 'normal'
+                                }}
                             >
-                                {prize.name}
+                                {displayName}
                             </text>
                         </g>
                     );
                 })}
             </svg>
-
-            {/* Modern Center Circle */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-slate-900 z-10 flex items-center justify-center shadow-2xl">
-                <div className="text-white font-extrabold text-[10px] text-center leading-none">
-                    SPIN
-                </div>
-            </div>
-
-            {/* Modern Glow Effects */}
-            <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                <div className="absolute top-1/4 left-0 w-32 h-64 bg-indigo-500/20 blur-3xl rotate-45 rounded-full"></div>
-                <div className="absolute bottom-1/4 right-0 w-32 h-64 bg-purple-500/20 blur-3xl -rotate-45 rounded-full"></div>
+                <span className="text-white font-extrabold text-xs">SPIN</span>
             </div>
         </motion.div>
     );

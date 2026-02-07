@@ -4,7 +4,7 @@ import OTPForm from '@/components/OTPForm';
 import PrizeModal from '@/components/PrizeModal';
 import SocialStatsBar from '@/components/SocialStatsBar';
 import SocialTasksPanel from '@/components/SocialTasksPanel';
-import SpinWheel from '@/components/SpinWheel';
+import SpinWheel from '@/components/SpinWheel_V2';
 import LandingPageRenderer from '@/components/landing/LandingPageRenderer';
 import { soundEffects } from '@/lib/soundEffects';
 import axios from 'axios';
@@ -908,6 +908,8 @@ export default function TenantCampaignPage() {
                                                             logoUrl={campaign.logoUrl}
                                                             selectedPrizeIndex={selectedPrizeIndex}
                                                             onTick={() => soundEffects.playTickSound()}
+                                                            onSpinClick={startSpin}
+                                                            disabled={!user || userStatus?.baseSpinsAvailable === 0 && userStatus?.bonusSpinsAvailable === 0}
                                                         />
                                                     ) : (
                                                         /* Show placeholder spinner when prizes are loading */

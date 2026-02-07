@@ -30,12 +30,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
         }
 
-        // Check subscription plan first, fallback to legacy plan
-        const hasQRAccess = tenant.subscriptionPlan?.allowQRCodeGenerator || tenant.plan.allowQRCodeGenerator;
-        
-        if (!hasQRAccess) {
-            return NextResponse.json({ error: 'QR Code Generator feature not available for your plan' }, { status: 403 });
-        }
+        // QR generation is available to all tenants (no plan gating)
 
         // Build the URL with proper fallback chain
         let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;

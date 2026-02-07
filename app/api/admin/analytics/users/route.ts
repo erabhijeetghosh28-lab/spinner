@@ -8,6 +8,8 @@ export async function GET(req: NextRequest) {
         if (authError) return authError;
 
         const tenantId = req.nextUrl.searchParams.get('tenantId');
+        const campaignIdParam = req.nextUrl.searchParams.get('campaignId');
+        const campaignId = campaignIdParam && campaignIdParam.trim() !== '' ? campaignIdParam : null;
         const page = parseInt(req.nextUrl.searchParams.get('page') || '1');
         const limit = parseInt(req.nextUrl.searchParams.get('limit') || '10');
         const skip = (page - 1) * limit;
@@ -24,11 +26,11 @@ export async function GET(req: NextRequest) {
         
         // Actually, we can just fetch Spins with distinct [userId, campaignId] but Prisma Distinct is limited.
         // Let's use groupBy.
+        const groupWhere: any = campaignId ? { campaignId } : { campaign: { tenantId } };
+
         const groupedSpins = await prisma.spin.groupBy({
             by: ['userId', 'campaignId'],
-            where: { 
-                campaign: { tenantId } 
-            },
+            where: groupWhere,
             _count: {
                 id: true
             },
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest) {
         // optimize: separate count query or just use a large arbitrary number
         const totalGroups = await prisma.spin.groupBy({
              by: ['userId', 'campaignId'],
-             where: { campaign: { tenantId } },
+             where: groupWhere,
              _count: { _all: true }
         }).then(res => res.length);
 

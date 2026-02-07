@@ -47,26 +47,34 @@ export async function GET(req: NextRequest) {
         start.setHours(0, 0, 0, 0);
 
         console.log('Analytics date range:', { start, end, tenantId });
+        
+        // Optional campaign filter (empty string means 'all campaigns' from UI)
+        const campaignIdParam = req.nextUrl.searchParams.get('campaignId');
+        const campaignId = campaignIdParam && campaignIdParam.trim() !== '' ? campaignIdParam : null;
+        // Helper base where for spin-related queries: either restrict to campaignId or to tenant's campaigns
+        const spinWhereBase: any = campaignId ? { campaignId } : { campaign: { tenantId } };
 
         // --- CORE KPI QUERIES ---
-
         const totalSpins = await prisma.spin.count({
             where: {
-                campaign: { tenantId },
+                ...spinWhereBase,
                 spinDate: { gte: start, lte: end }
             }
         });
 
-        const totalUsers = await prisma.endUser.count({
+        // Total unique users who interacted (spun) in the scope (campaign or tenant) during the date range
+        const uniqueUserSpins = await prisma.spin.groupBy({
+            by: ['userId'],
             where: {
-                tenantId,
-                createdAt: { gte: start, lte: end }
+                ...spinWhereBase,
+                spinDate: { gte: start, lte: end }
             }
         });
+        const totalUsers = uniqueUserSpins.length;
 
         const prizesWon = await prisma.spin.count({
             where: {
-                campaign: { tenantId },
+                ...spinWhereBase,
                 wonPrize: true,
                 prize: {
                     NOT: [
@@ -82,7 +90,7 @@ export async function GET(req: NextRequest) {
 
         const referralSpins = await prisma.spin.count({
             where: {
-                campaign: { tenantId },
+                ...spinWhereBase,
                 isReferralBonus: true,
                 spinDate: { gte: start, lte: end }
             }
@@ -92,7 +100,7 @@ export async function GET(req: NextRequest) {
         // We fetch raw spin data (lightweight) for processing
         const allSpins = await prisma.spin.findMany({
             where: {
-                campaign: { tenantId },
+                ...spinWhereBase,
                 spinDate: { gte: start, lte: end }
             },
             select: {
@@ -136,10 +144,17 @@ export async function GET(req: NextRequest) {
         });
 
         // --- 2. REFERRAL GROWTH (Organic vs Referred) ---
+        // New users within the date range who also have activity (spins) in the selected scope
         const newUsers = await prisma.endUser.findMany({
             where: {
                 tenantId,
-                createdAt: { gte: start, lte: end }
+                createdAt: { gte: start, lte: end },
+                spins: {
+                    some: {
+                        ...spinWhereBase,
+                        spinDate: { gte: start, lte: end }
+                    }
+                }
             },
             select: {
                 createdAt: true,
@@ -162,28 +177,42 @@ export async function GET(req: NextRequest) {
         });
 
         // Calculate Viral Coefficient (Referrals / Active Users) roughly
+        // Unique referrers who have referred users that performed spins in the selected scope
         const uniqueReferrers = await prisma.endUser.count({
             where: {
                 tenantId,
-                successfulReferrals: { gt: 0 }
+                referrals: {
+                    some: {
+                        spins: {
+                            some: {
+                                ...spinWhereBase,
+                                spinDate: { gte: start, lte: end }
+                            }
+                        }
+                    }
+                }
             }
         });
-        // Viral Coefficient = Total Referrals / Total Users (Simple metric)
-        const totalReferrals = await prisma.endUser.count({ 
-            where: { tenantId, referredById: { not: null } } 
-        });
+
+        // Total referral-driven spins within the scope (use referralSpins computed earlier)
+        const totalReferrals = referralSpins;
         const viralCoefficient = totalUsers > 0 ? (totalReferrals / totalUsers).toFixed(2) : '0';
 
         // --- 3. REDEMPTION FUNNEL & TIME ---
         const totalVouchers = await prisma.voucher.count({
-            where: { tenantId, createdAt: { gte: start, lte: end } }
+            where: {
+                tenantId,
+                createdAt: { gte: start, lte: end },
+                ...(campaignId ? { spin: { campaignId } } : {})
+            }
         });
         
         const redeemedVouchers = await prisma.voucher.findMany({
             where: { 
                 tenantId, 
                 isRedeemed: true,
-                createdAt: { gte: start, lte: end }
+                createdAt: { gte: start, lte: end },
+                ...(campaignId ? { spin: { campaignId } } : {})
             },
             select: {
                 createdAt: true,
@@ -212,7 +241,7 @@ export async function GET(req: NextRequest) {
         // Fetch users with high spin counts
         const allUserSpins = await prisma.spin.groupBy({
             by: ['userId'],
-            where: { campaign: { tenantId } },
+            where: { ...spinWhereBase },
             _count: { id: true },
             _max: { spinDate: true }
         });
@@ -260,10 +289,10 @@ export async function GET(req: NextRequest) {
 
         // --- 5. PRIZE INTEGRITY ---
         const prizeStats = await prisma.prize.findMany({
-            where: { campaign: { tenantId } },
+            where: campaignId ? { campaignId } : { campaign: { tenantId } },
             include: {
                 _count: {
-                    select: { spins: { where: { wonPrize: true } } }
+                    select: { spins: { where: { wonPrize: true, ...(campaignId ? { campaignId } : {}) } } }
                 }
             }
         });
@@ -316,7 +345,7 @@ export async function GET(req: NextRequest) {
         const dailySpins = await prisma.spin.groupBy({
             by: ['spinDate'],
             where: {
-                campaign: { tenantId },
+                ...spinWhereBase,
                 spinDate: { gte: start, lte: end }
             },
             _count: { id: true },
@@ -363,7 +392,19 @@ export async function GET(req: NextRequest) {
                 }
             },
             topReferrers: await prisma.endUser.findMany({
-                where: { tenantId, successfulReferrals: { gt: 0 } },
+                where: {
+                    tenantId,
+                    referrals: {
+                        some: {
+                            spins: {
+                                some: {
+                                    ...spinWhereBase,
+                                    spinDate: { gte: start, lte: end }
+                                }
+                            }
+                        }
+                    }
+                },
                 select: { name: true, phone: true, successfulReferrals: true, referralCode: true },
                 orderBy: { successfulReferrals: 'desc' },
                 take: 10

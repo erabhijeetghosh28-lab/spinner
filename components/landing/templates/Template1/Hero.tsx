@@ -1,13 +1,13 @@
 'use client';
 
 import PrizeModal from '@/components/PrizeModal';
+import SpinWheel from '@/components/SpinWheel_V2';
 import { soundEffects } from '@/lib/soundEffects';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import EarnMoreSpinsCard from '../../shared/EarnMoreSpinsCard';
-import SpinWheel from '../../shared/SpinWheel';
 
 interface HeroProps {
     section: any;
@@ -22,6 +22,7 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
     const [isSpinning, setIsSpinning] = useState(false);
     const [showPrizeModal, setShowPrizeModal] = useState(false);
     const [wonPrize, setWonPrize] = useState<any>(null);
+    const [selectedPrizeIndex, setSelectedPrizeIndex] = useState<number | undefined>(undefined);
     const [prizes, setPrizes] = useState<any[]>([]);
     const [referralThreshold, setReferralThreshold] = useState(5); // Default to 5
 
@@ -65,6 +66,9 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
         }
     };
 
+    const pendingPrizeRef = useRef<any>(null);
+    const [pendingPrize, setPendingPrize] = useState<any>(null);
+
     const handleSpin = async () => {
         if (!userId) {
             toast.error('Please login to spin');
@@ -76,6 +80,11 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
             return;
         }
 
+        // Reset and start visual spin immediately (match Template2 behavior)
+        setWonPrize(null);
+        setPendingPrize(null);
+        pendingPrizeRef.current = null;
+        setSelectedPrizeIndex(undefined);
         setIsSpinning(true);
         soundEffects.playSpinSound();
 
@@ -85,31 +94,43 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
                 campaignId: campaign.id
             });
 
-            const { prize, wonPrize: hasWon } = response.data;
+            const prize = response.data.prize;
+            const tryAgain = response.data.tryAgain === true;
+            setPendingPrize({ ...prize, tryAgain });
+            pendingPrizeRef.current = { ...prize, tryAgain };
+            const prizeIndex = prizes.findIndex(p => p.id === prize.id);
+            setSelectedPrizeIndex(prizeIndex >= 0 ? prizeIndex : undefined);
+            // landing and modal will be handled by handleSpinFinished when wheel finishes
+            setSpinsRemaining(prev => prev - 1);
 
-            // Simulate spin animation
-            await new Promise(resolve => setTimeout(resolve, 3000));
+        } catch (error: any) {
+            console.error('Spin error:', error);
+            setIsSpinning(false);
+            soundEffects.stopSpinSound();
+            toast.error(error.response?.data?.error || 'Failed to spin');
+        }
+    };
 
-            if (hasWon && prize) {
+    const handleSpinFinished = (prize: any) => {
+        setIsSpinning(false);
+        soundEffects.stopSpinSound();
+
+        const finalPrize = prize || pendingPrizeRef.current || pendingPrize;
+        console.log('Spin Finished. Prize:', finalPrize);
+
+        if (finalPrize) {
+            setWonPrize(finalPrize);
+            if (!finalPrize.tryAgain) {
                 soundEffects.playWinSound();
                 confetti({
                     particleCount: 100,
                     spread: 70,
                     origin: { y: 0.6 }
                 });
-                setWonPrize(prize);
-                setShowPrizeModal(true);
-            } else {
-                toast.info('Better luck next time!');
             }
-
-            // Update spins
-            setSpinsRemaining(prev => prev - 1);
-        } catch (error: any) {
-            console.error('Spin error:', error);
-            toast.error(error.response?.data?.error || 'Failed to spin');
-        } finally {
-            setIsSpinning(false);
+            setShowPrizeModal(true);
+        } else {
+            toast.info('Better luck next time!');
         }
     };
 
@@ -124,9 +145,11 @@ export default function Hero({ section, campaign, userId, landingPage }: HeroPro
                 {/* Left Column - Spin Wheel */}
                 <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
                     <SpinWheel 
-                        variant="light"
-                        onSpin={isSpinning ? undefined : handleSpin}
+                        isSpinning={isSpinning}
+                        onSpinClick={isSpinning ? undefined : handleSpin}
+                        onFinished={handleSpinFinished}
                         prizes={prizes}
+                        selectedPrizeIndex={selectedPrizeIndex}
                         logoUrl={campaign?.logoUrl}
                     />
                 </div>

@@ -25,6 +25,7 @@ interface PrizeTableProps {
     onDelete: (idx: number, id?: string) => void;
     allowInventoryTracking?: boolean;
     campaignId?: string | null;
+    errors?: Record<number, { name?: string; couponCode?: string }>;
 }
 
 export function PrizeTable({
@@ -33,7 +34,8 @@ export function PrizeTable({
     onAdd,
     onDelete,
     allowInventoryTracking,
-    campaignId
+    campaignId,
+    errors
 }: PrizeTableProps) {
     return (
         <>
@@ -93,9 +95,12 @@ export function PrizeTable({
                                             type="text"
                                             value={prize.name}
                                             onChange={(e) => onUpdate(idx, 'name', e.target.value)}
-                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-full py-2 text-slate-200 text-sm font-medium transition-colors"
+                                            className={`bg-transparent border-b-2 ${errors?.[idx]?.name ? 'border-red-500 focus:border-red-400' : 'border-slate-800 focus:border-amber-500'} outline-none w-full py-2 text-slate-200 text-sm font-medium transition-colors`}
                                             placeholder="Enter offer name"
                                         />
+                                        {errors?.[idx]?.name && (
+                                            <div className="text-xs text-red-400 mt-1">{errors[idx].name}</div>
+                                        )}
                                     </td>
                                     <td className="py-6 px-4">
                                         <input
@@ -103,8 +108,11 @@ export function PrizeTable({
                                             value={prize.couponCode || ''}
                                             placeholder="CODE123"
                                             onChange={(e) => onUpdate(idx, 'couponCode', e.target.value)}
-                                            className="bg-transparent border-b-2 border-slate-800 focus:border-amber-500 outline-none w-full py-2 text-slate-200 font-mono text-sm uppercase transition-colors"
+                                            className={`bg-transparent border-b-2 ${errors?.[idx]?.couponCode ? 'border-red-500 focus:border-red-400' : 'border-slate-800 focus:border-amber-500'} outline-none w-full py-2 text-slate-200 font-mono text-sm uppercase transition-colors`}
                                         />
+                                        {errors?.[idx]?.couponCode && (
+                                            <div className="text-xs text-red-400 mt-1">{errors[idx].couponCode}</div>
+                                        )}
                                     </td>
                                     <td className="py-6 px-4">
                                         <div className="flex items-center space-x-2">

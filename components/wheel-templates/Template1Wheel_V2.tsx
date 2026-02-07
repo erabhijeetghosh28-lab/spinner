@@ -14,9 +14,10 @@ interface Template1WheelProps {
     controls: any;
     segmentAngle: number;
     primaryColor?: string;
+    onTransitionEnd?: () => void;
 }
 
-const Template1Wheel: React.FC<Template1WheelProps> = ({ prizes, controls, segmentAngle }) => {
+const Template1Wheel_V2: React.FC<Template1WheelProps> = ({ prizes, controls, segmentAngle }) => {
     // Template 1: Orange (#f48c25) and dark blue shades (#1e293b, #334155, #475569)
     const TEMPLATE_PRIMARY = '#f48c25';
     const getSegmentColor = (index: number): string => {
@@ -94,12 +95,9 @@ const Template1Wheel: React.FC<Template1WheelProps> = ({ prizes, controls, segme
                     const largeArcFlag = anglePerSlice > 180 ? 1 : 0;
                     const pathData = `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
                     
-                    // Text Logic from User Snippet:
-                    // transform="rotate(midAngle, 50, 50)"
-                    // x="78" (or dynamic radius)
-                    // y="50"
+                    // Text Logic
                     const midAngle = startAngle + (anglePerSlice / 2);
-                    const textX = 50 + textRadius; // e.g., 78
+                    const textX = 50 + textRadius;
                     const textY = 50;
 
                     const fillColor = getSegmentColor(index);
@@ -152,4 +150,4 @@ const Template1Wheel: React.FC<Template1WheelProps> = ({ prizes, controls, segme
     );
 };
 
-export default Template1Wheel;
+export default Template1Wheel_V2;

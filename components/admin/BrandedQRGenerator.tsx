@@ -22,12 +22,17 @@ export function BrandedQRGenerator({ campaignId, campaignName, tenantId }: Brand
     
     try {
       // Use axios for consistent authentication (headers set in AdminDashboard)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('admin-token') : null;
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (tenantId) headers['x-tenant-id'] = tenantId;
       const response = await axios.post(`/api/admin/qr/branded?tenantId=${tenantId}`, {
         campaignId,
         type,
         download: true
       }, {
-        responseType: 'blob'
+        responseType: 'blob',
+        headers
       });
 
       // Create download from blob

@@ -1,8 +1,8 @@
 'use client';
 
 import PrizeModal from '@/components/PrizeModal';
-import { TaskInstructionModal } from '@/components/social/TaskInstructionModal';
-import SpinWheel from '@/components/SpinWheel';
+import EarnMoreSpinsCard from '../../shared/EarnMoreSpinsCard';
+import SpinWheel from '@/components/SpinWheel_V2';
 import { soundEffects } from '@/lib/soundEffects';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
@@ -19,8 +19,7 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
     // Template 4 primary color from reference HTML
     const primaryColor = '#2D5A47';
     const [userStatus, setUserStatus] = useState<any>(null);
-    const [socialTasks, setSocialTasks] = useState<any[]>([]);
-    const [selectedTask, setSelectedTask] = useState<any | null>(null);
+    // social tasks handled by shared EarnMoreSpinsCard
     const [prizes, setPrizes] = useState<any[]>([]);
     const [isSpinning, setIsSpinning] = useState(false);
     const [showPrizeModal, setShowPrizeModal] = useState(false);
@@ -77,17 +76,26 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
             return;
         }
 
+        // Start visual spin immediately
+        setPendingPrize(null);
+        setSelectedPrizeIndex(undefined);
+        setIsSpinning(true);
+        soundEffects.playSpinSound();
+
         try {
             const response = await axios.post('/api/spin', {
                 userId, campaignId: campaign.id,
                 isReferralBonus: userStatus?.baseSpinsAvailable === 0 && userStatus?.bonusSpinsAvailable > 0
             });
             const prize = response.data.prize;
-            setPendingPrize({ ...prize, tryAgain: response.data.tryAgain });
-            setSelectedPrizeIndex(prizes.findIndex(p => p.id === prize.id));
-            setIsSpinning(true);
-            soundEffects.playSpinSound();
+            const tryAgain = response.data.tryAgain === true;
+            setPendingPrize({ ...prize, tryAgain });
+            const idx = prizes.findIndex(p => p.id === prize.id);
+            setSelectedPrizeIndex(idx >= 0 ? idx : undefined);
         } catch (error: any) {
+            console.error('Spin error:', error);
+            setIsSpinning(false);
+            soundEffects.stopSpinSound();
             alert(error.response?.data?.error || 'Failed to spin');
         }
     };
@@ -209,140 +217,24 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
                             </div>
                         </motion.div>
 
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }} 
-                            animate={{ opacity: 1, y: 0 }} 
-                            transition={{ delay: 0.2 }} 
-                            className="flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100"
-                        >
-                            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4">
-                                <div className="flex flex-col">
-                                    <h3 className="text-xl font-black flex items-center gap-2 text-[#181411]">
-                                        <span className="material-symbols-outlined" style={{ color: primaryColor }}>redeem</span>
-                                        Earn More Spins
-                                    </h3>
-                                    <p className="text-[#8a7560] text-sm">Boost your chances by completing simple tasks below.</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                                {socialTasks.length > 0 ? (
-                                    socialTasks.length === 1 ? (
-                                        socialTasks.map((task) => (
-                                            <div key={task.id} className="flex items-center justify-between p-4 rounded-xl bg-background-light border border-gray-100">
-                                                <div className="flex flex-col">
-                                                    <span 
-                                                        className="text-xs font-bold uppercase tracking-tighter"
-                                                        style={{ color: primaryColor }}
-                                                    >
-                                                        Social Bonus
-                                                    </span>
-                                                    <span className="font-bold text-sm text-[#181411]">{task.title}</span>
-                                                </div>
-                                                <button 
-                                                    onClick={() => handleTaskClick(task)}
-                                                    className="h-9 px-4 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-2"
-                                                    style={{ backgroundColor: primaryColor }}
-                                                >
-                                                    +{task.spinsReward || 1} Spin
-                                                </button>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="md:col-span-2">
-                                            <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory gap-4 pb-2">
-                                                {socialTasks.map((task) => (
-                                                    <div key={task.id} className="flex-none w-[280px] snap-center">
-                                                        <div className="flex items-center justify-between p-4 rounded-xl bg-background-light border border-gray-100">
-                                                            <div className="flex flex-col">
-                                                                <span 
-                                                                    className="text-xs font-bold uppercase tracking-tighter"
-                                                                    style={{ color: primaryColor }}
-                                                                >
-                                                                    Social Bonus
-                                                                </span>
-                                                                <span className="font-bold text-sm text-[#181411]">{task.title}</span>
-                                                            </div>
-                                                            <button 
-                                                                onClick={() => handleTaskClick(task)}
-                                                                className="h-9 px-4 rounded-lg text-white text-xs font-bold hover:opacity-90 transition-colors flex items-center gap-2 whitespace-nowrap"
-                                                                style={{ backgroundColor: primaryColor }}
-                                                            >
-                                                                +{task.spinsReward || 1} Spin
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                ) : (
-                                    <div className="flex items-center justify-between p-4 rounded-xl bg-background-light border border-gray-100 opacity-50">
-                                        <div className="flex flex-col">
-                                            <span 
-                                                className="text-xs font-bold uppercase tracking-tighter"
-                                                style={{ color: primaryColor }}
-                                            >
-                                                Social Bonus
-                                            </span>
-                                            <span className="font-bold text-sm text-[#181411]">No tasks available</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {referralsRequired > 0 && (
-                                    <div className="flex flex-col gap-3 p-4 rounded-xl bg-background-light border border-gray-100">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">Referral Power</span>
-                                                <span className="font-bold text-sm text-[#181411]">Invite {referralsRequired} friends</span>
-                                            </div>
-                                            <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
-                                                +1 Spin
-                                            </div>
-                                        </div>
-                                        <button 
-                                            onClick={handleWhatsAppShare}
-                                            className="w-full h-10 rounded-lg bg-[#25D366] text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all"
-                                        >
-                                            <span className="material-symbols-outlined !text-[18px]">share</span>
-                                            Share on WhatsApp
-                                        </button>
-                                        <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-1">
-                                            <div 
-                                                className="bg-[#25D366] h-full transition-all"
-                                                style={{ width: `${Math.min(referralPercentage, 100)}%` }}
-                                            ></div>
-                                        </div>
-                                        <p className="text-[10px] text-center text-[#8a7560]">
-                                            {referralsProgress}/{referralsRequired} friends invited
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
+                        <EarnMoreSpinsCard
+                            campaignId={campaign?.id}
+                            userId={userId}
+                            variant="dark"
+                            referralThreshold={referralsRequired}
+                            onTaskComplete={() => {
+                                if (userId && campaign?.id) {
+                                    axios.get(`/api/user/status?userId=${userId}&campaignId=${campaign.id}`)
+                                        .then(res => setUserStatus(res.data))
+                                        .catch(() => {});
+                                }
+                            }}
+                        />
                     </div>
                 </div>
             </section>
 
-            {selectedTask && userId && campaign?.id && (
-                <TaskInstructionModal
-                    task={selectedTask}
-                    userId={userId}
-                    campaignId={campaign.id}
-                    onClose={() => setSelectedTask(null)}
-                    onComplete={() => {
-                        setSelectedTask(null);
-                        if (userId && campaign?.id) {
-                            axios.get(`/api/user/status?userId=${userId}&campaignId=${campaign.id}`)
-                                .then(res => setUserStatus(res.data))
-                                .catch(() => {});
-                            
-                            // Re-fetch social tasks to hide completed one
-                            fetchSocialTasks();
-                        }
-                    }}
-                />
-            )}
+            {/* Social task modal removed - handled by shared EarnMoreSpinsCard */}
 
             {showPrizeModal && wonPrize && (
                 <PrizeModal

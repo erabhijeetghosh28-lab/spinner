@@ -44,6 +44,11 @@ export async function GET(req: NextRequest) {
                         componentKey: true
                     }
                 },
+                tenant: {
+                    select: {
+                        slug: true
+                    }
+                },
                 _count: {
                     select: {
                         prizes: true,
@@ -85,7 +90,7 @@ export async function POST(req: NextRequest) {
         const authError = await requireAdminAuth(req);
         if (authError) return authError;
 
-        const { tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, prizes, supportMobile, websiteUrl } = await req.json();
+        const { tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, prizes, supportMobile, websiteUrl, socialMediaEnabled, maxSocialTasks, defaultSpinRewards, isActive } = await req.json();
 
         if (!tenantId || !name) {
             return NextResponse.json({ error: 'Tenant ID and name are required' }, { status: 400 });
@@ -170,7 +175,7 @@ export async function POST(req: NextRequest) {
         // Create campaign and prizes in a transaction, and increment usage
         const result = await prisma.$transaction(async (tx) => {
             const campaign = await tx.campaign.create({
-                data: {
+                    data: {
                     tenantId,
                     name: name.trim(),
                     description: description ? description.trim() : null,
@@ -181,9 +186,16 @@ export async function POST(req: NextRequest) {
                     spinLimit: parseInt(String(spinLimit)) || 1,
                     spinCooldown: parseInt(String(spinCooldown)) || 24,
                     referralsRequiredForSpin: parseInt(String(referralsRequiredForSpin)) || 0,
+                        socialMediaEnabled: Boolean(socialMediaEnabled),
+                        // Persist maxSocialTasks inside defaultSpinRewards JSON to avoid schema migration
+                        defaultSpinRewards: {
+                            ...(defaultSpinRewards || {}),
+                            __maxSocialTasks: maxSocialTasks ? parseInt(String(maxSocialTasks)) : undefined
+                        },
                     startDate: start,
                     endDate: end,
-                    isActive: true,
+                    // Respect isActive flag from request; default to true for backward compatibility
+                    isActive: typeof isActive === 'boolean' ? Boolean(isActive) : true,
                     isArchived: false,
                 }
             });
@@ -249,7 +261,7 @@ export async function PUT(req: NextRequest) {
         const authError = await requireAdminAuth(req);
         if (authError) return authError;
 
-        const { campaignId, tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, isActive, prizes, supportMobile, websiteUrl } = await req.json();
+        const { campaignId, tenantId, name, description, logoUrl, templateId, spinLimit, spinCooldown, referralsRequiredForSpin, isActive, prizes, supportMobile, websiteUrl, socialMediaEnabled, maxSocialTasks, defaultSpinRewards } = await req.json();
 
         if (!campaignId || !tenantId) {
             return NextResponse.json({ error: 'Campaign ID and Tenant ID required' }, { status: 400 });
@@ -278,6 +290,14 @@ export async function PUT(req: NextRequest) {
         if (spinCooldown !== undefined) updateData.spinCooldown = parseInt(String(spinCooldown)) || 24;
         if (referralsRequiredForSpin !== undefined) updateData.referralsRequiredForSpin = parseInt(String(referralsRequiredForSpin)) || 0;
         if (typeof isActive === 'boolean') updateData.isActive = isActive;
+        if (socialMediaEnabled !== undefined) updateData.socialMediaEnabled = Boolean(socialMediaEnabled);
+        // Persist maxSocialTasks inside defaultSpinRewards JSON to avoid DB schema change
+        if (defaultSpinRewards !== undefined || maxSocialTasks !== undefined) {
+            updateData.defaultSpinRewards = {
+                ...(defaultSpinRewards || {}),
+                __maxSocialTasks: maxSocialTasks ? parseInt(String(maxSocialTasks)) : (defaultSpinRewards ? (defaultSpinRewards.__maxSocialTasks || undefined) : undefined)
+            };
+        }
 
         // Note: Dates are auto-managed based on plan's campaignDurationDays
         // When updating, we don't change dates unless explicitly needed
@@ -350,7 +370,7 @@ export async function PUT(req: NextRequest) {
     }
 }
 
-// DELETE: Archive campaign (soft delete)
+// DELETE: Permanently delete campaign
 export async function DELETE(req: NextRequest) {
     try {
         // Verify authentication
@@ -375,21 +395,29 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Campaign not found or access denied' }, { status: 404 });
         }
 
-        // Soft delete: Archive the campaign instead of deleting
-        await prisma.campaign.update({
-            where: { id: campaignId },
+        // Enqueue deletion job and return 202 Accepted. A background worker will process the job.
+        // This avoids long-running requests and transaction timeouts.
+        // Create job only if one isn't already pending for this campaign.
+        const existing = await prisma.deletionJob.findFirst({
+            where: { campaignId, status: { in: ['PENDING', 'IN_PROGRESS'] } }
+        });
+        if (existing) {
+            return NextResponse.json({ success: true, message: 'Deletion already queued or in progress' }, { status: 202 });
+        }
+
+        await prisma.deletionJob.create({
             data: {
-                isActive: false,
-                isArchived: true,
-                archivedAt: new Date(),
+                campaignId,
+                tenantId,
+                status: 'PENDING'
             }
         });
 
-        return NextResponse.json({ success: true, message: 'Campaign archived successfully' });
+        return NextResponse.json({ success: true, message: 'Campaign deletion scheduled' }, { status: 202 });
     } catch (error: any) {
-        console.error('Error archiving campaign:', error);
+        console.error('Error deleting campaign:', error);
         return NextResponse.json({
-            error: error.message || 'Failed to archive campaign',
+            error: error.message || 'Failed to delete campaign',
             details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });
     }

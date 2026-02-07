@@ -30,6 +30,7 @@ export default function EarnMoreSpinsCard({
 }: EarnMoreSpinsCardProps) {
     const [referralProgress, setReferralProgress] = useState({ current: 0, total: referralThreshold });
     const [isSharing, setIsSharing] = useState(false);
+    const [tasks, setTasks] = useState<SocialTask[] | null>(null);
 
     // Fetch referral progress when component mounts
     useEffect(() => {
@@ -37,6 +38,20 @@ export default function EarnMoreSpinsCard({
             fetchReferralProgress();
         }
     }, [userId, campaignId]);
+
+    // Fetch configured social tasks for this campaign (public endpoint)
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                const res = await axios.get(`/api/social-tasks?campaignId=${campaignId}${userId ? `&userId=${userId}` : ''}`);
+                setTasks(res.data.tasks || []);
+            } catch (err) {
+                console.error('Error fetching social tasks for EarnMoreSpinsCard:', err);
+                setTasks([]);
+            }
+        };
+        if (campaignId) fetchTasks();
+    }, [campaignId, userId]);
 
     const fetchReferralProgress = async () => {
         try {
@@ -144,58 +159,61 @@ export default function EarnMoreSpinsCard({
                 </div>
             </div>
 
-            {/* Social Tasks Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                {/* Follow Task */}
-                <div className={`flex items-center justify-between p-4 rounded-xl ${theme.taskBg} border`}>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-primary uppercase tracking-tighter">
-                            Social Bonus
-                        </span>
-                        <span className={`font-bold text-sm ${theme.text}` }>Follow @BrandWheel</span>
-                    </div>
-                    <button
-                        onClick={() => handleSocialTask('FOLLOW')}
-                        className={`h-9 px-4 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${theme.primaryBtn}`}
-                    >
-                        +1 Spin
-                    </button>
+            {/* Social Tasks Grid (render only if configured tasks exist) */}
+            {tasks && tasks.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    {tasks.map((t) => (
+                        <div key={t.id} className={`flex items-center justify-between p-4 rounded-xl ${theme.taskBg} border`}>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold text-primary uppercase tracking-tighter">
+                                    {t.platform}
+                                </span>
+                                <span className={`font-bold text-sm ${theme.text}`}>{t.description || t.title}</span>
+                            </div>
+                            <button
+                                onClick={() => handleSocialTask(t.actionType || t.type)}
+                                className={`h-9 px-4 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${theme.primaryBtn}`}
+                            >
+                                +{t.spinsReward || 1} Spin
+                            </button>
+                        </div>
+                    ))}
                 </div>
+            ) : null}
 
-                {/* WhatsApp Referral Task */}
-                <div className={`flex flex-col gap-3 p-4 rounded-xl ${theme.taskBg} border`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">
-                                Referral Power
-                            </span>
-                            <span className={`font-bold text-sm ${theme.text}`}>Invite {referralThreshold} friends</span>
-                        </div>
-                        <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
-                            +1 Spin
-                        </div>
+            {/* WhatsApp Referral Task (kept separate) */}
+            <div className={`flex flex-col gap-3 p-4 rounded-xl ${theme.taskBg} border mt-2`}>
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-[#25D366] uppercase tracking-tighter">
+                            Referral Power
+                        </span>
+                        <span className={`font-bold text-sm ${theme.text}`}>Invite {referralThreshold} friends</span>
                     </div>
-                    
-                    <button
-                        onClick={handleShareWhatsApp}
-                        disabled={isSharing}
-                        className={`w-full h-10 rounded-lg text-white text-sm font-bold flex items-center justify-center gap-2 transition-all ${theme.whatsappBtn}`}
-                    >
-                        <span className="material-symbols-outlined !text-[18px]">share</span>
-                        {isSharing ? 'Opening...' : 'Share on WhatsApp'}
-                    </button>
-                    
-                    {/* Progress bar */}
-                    <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden mt-1">
-                        <div 
-                            className="bg-[#25D366] h-full transition-all" 
-                            style={{ width: `${(referralProgress.current / referralProgress.total) * 100}%` }}
-                        ></div>
+                    <div className="bg-[#25D366]/10 text-[#25D366] px-2 py-1 rounded text-[10px] font-black uppercase">
+                        +1 Spin
                     </div>
-                    <p className={`text-[10px] text-center ${theme.textSecondary}`}>
-                        {referralProgress.current}/{referralProgress.total} friends invited
-                    </p>
                 </div>
+                
+                <button
+                    onClick={handleShareWhatsApp}
+                    disabled={isSharing}
+                    className={`w-full h-10 rounded-lg text-white text-sm font-bold flex items-center justify-center gap-2 transition-all ${theme.whatsappBtn}`}
+                >
+                    <span className="material-symbols-outlined !text-[18px]">share</span>
+                    {isSharing ? 'Opening...' : 'Share on WhatsApp'}
+                </button>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden mt-1">
+                    <div 
+                        className="bg-[#25D366] h-full transition-all" 
+                        style={{ width: `${(referralProgress.current / referralProgress.total) * 100}%` }}
+                    ></div>
+                </div>
+                <p className={`text-[10px] text-center ${theme.textSecondary}`}>
+                    {referralProgress.current}/{referralProgress.total} friends invited
+                </p>
             </div>
         </div>
     );

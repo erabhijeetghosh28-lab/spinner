@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-export function UsageStats({ tenantId }: { tenantId: string }) {
+export function UsageStats({ tenantId, campaignId }: { tenantId: string, campaignId?: string | null }) {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`/api/admin/usage?tenantId=${tenantId}`);
+        const url = `/api/admin/usage?tenantId=${tenantId}${campaignId ? `&campaignId=${campaignId}` : ''}`;
+        const res = await axios.get(url);
         setData(res.data);
       } catch (error) {
         console.error('Error fetching usage:', error);
@@ -19,7 +20,7 @@ export function UsageStats({ tenantId }: { tenantId: string }) {
       }
     };
     fetchData();
-  }, [tenantId]);
+  }, [tenantId, campaignId]);
   
   if (isLoading) {
     return <div className="animate-pulse bg-slate-800 h-32 rounded-xl"></div>;

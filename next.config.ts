@@ -10,10 +10,7 @@ const nextConfig: NextConfig = {
         ignoreBuildErrors: true,
     },
     
-    // @ts-ignore - Ignore ESLint errors during build
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
+
     
     // Security headers
     async headers() {

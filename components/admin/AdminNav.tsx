@@ -22,6 +22,7 @@ export default function AdminNav() {
     { href: '/admin/vouchers', label: 'Vouchers', icon: '🎟️' },
     { href: '/admin/managers', label: 'Managers', icon: '👥' },
     { href: '/admin/scanner', label: 'Scanner', icon: '📷' },
+    { href: '/admin/billing', label: 'Billing', icon: '💳' },
   ];
 
   const isActive = (href: string) => pathname === href;

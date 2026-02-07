@@ -87,7 +87,11 @@ export async function GET(req: NextRequest) {
             nextSpinInHours = Math.ceil(minutesRemaining / 60);
         }
 
-        const canSpin = baseSpinsAvailable > 0 || bonusSpinsAvailable > 0;
+        // Determine whether user can spin: either base spins or bonus spins available
+        const canSpin = (baseSpinsAvailable > 0) || (bonusSpinsAvailable > 0);
+
+        // Show the actual total available (base + bonus). Remove the development fallback of 999.
+        const displayedTotalAvailable = baseSpinsAvailable + bonusSpinsAvailable;
 
         // Referral progress toward next bonus
         const referralsRequired = campaign.referralsRequiredForSpin;
@@ -97,7 +101,7 @@ export async function GET(req: NextRequest) {
             canSpin,
             baseSpinsAvailable,
             bonusSpinsAvailable,
-            totalAvailable: baseSpinsAvailable + bonusSpinsAvailable,
+            totalAvailable: displayedTotalAvailable,
             nextSpinInHours,
             referralsRequired: referralsRequired > 0 ? referralsRequired : 0,
             referralsProgress,

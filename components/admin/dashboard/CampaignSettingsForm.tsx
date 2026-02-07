@@ -176,6 +176,36 @@ export function CampaignSettingsForm({
                 </div>
             </div>
 
+    {/* Social Media Configuration */}
+    <div className="border-t border-slate-700 pt-6 mt-6">
+        <div className="flex items-center justify-between mb-4">
+            <label className="block text-xs font-semibold text-slate-500 uppercase">Social Media Tasks</label>
+            <label className="flex items-center space-x-3">
+                <input
+                    type="checkbox"
+                    checked={(campaign as any).socialMediaEnabled || false}
+                    onChange={(e) => setCampaign({ ...campaign, socialMediaEnabled: e.target.checked })}
+                    className="w-5 h-5 rounded border-2 border-slate-700 bg-slate-800 text-amber-500 focus:ring-amber-500 focus:ring-2 cursor-pointer transition-all"
+                />
+                <span className="text-sm text-slate-400">Enable social tasks (Facebook/Instagram/WhatsApp)</span>
+            </label>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+            <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-2">Max Social Tasks</label>
+                <input
+                    type="number"
+                    min={0}
+                    value={(campaign as any).maxSocialTasks || 0}
+                    onChange={(e) => setCampaign({ ...campaign, maxSocialTasks: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-amber-500 transition-all font-mono text-sm"
+                />
+                <p className="text-[10px] text-slate-500 mt-2 italic">Set how many social tasks can be created for this campaign.</p>
+            </div>
+        </div>
+    </div>
+
         </div>
     );
 }

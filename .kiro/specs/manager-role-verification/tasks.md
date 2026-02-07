@@ -200,7 +200,7 @@ This implementation plan breaks down the Manager Role Verification feature into 
     - Test idempotency (duplicate approval prevention)
     - _Requirements: 3.1, 3.6, 4.1, 4.2, 4.3, 4.4, 4.5, 4.8, 8.2_
 
-- [~] 7. Checkpoint - Ensure manager verification flow works end-to-end
+- [ ] 7. Checkpoint - Ensure manager verification flow works end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Tenant Admin manager management API endpoints
@@ -233,13 +233,13 @@ This implementation plan breaks down the Manager Role Verification feature into 
     - Apply tenant admin authentication middleware
     - _Requirements: 7.3, 7.4_
   
-  - [~] 8.5 Write property tests for manager management
+  - [ ] 8.5 Write property tests for manager management
     - **Property 24: Tenant Admin Manager Listing**
     - **Property 26: Manager Limit Update Propagation**
     - **Property 27: Manager Tenant Association Preservation**
     - **Validates: Requirements 1.6, 1.7, 11.1, 11.4, 11.5**
   
-  - [~] 8.6 Write integration tests for manager management endpoints
+  - [ ] 8.6 Write integration tests for manager management endpoints
     - Test manager creation
     - Test manager listing with stats
     - Test manager update
@@ -360,7 +360,7 @@ This implementation plan breaks down the Manager Role Verification feature into 
     - Fetch managers from GET /api/admin/managers
     - _Requirements: 11.1, 11.5_
   
-  - [~] 14.2 Create manager creation form
+  - [ ] 14.2 Create manager creation form
     - Display form with fields: email, name, password, maxBonusSpinsPerApproval
     - Validate all required fields
     - Call POST /api/admin/managers on submit
@@ -368,7 +368,7 @@ This implementation plan breaks down the Manager Role Verification feature into 
     - Refresh manager list on success
     - _Requirements: 11.2, 11.3_
   
-  - [~] 14.3 Create manager edit form
+  - [ ] 14.3 Create manager edit form
     - Display form with fields: name, maxBonusSpinsPerApproval, isActive
     - Pre-populate with current values
     - Call PUT /api/admin/managers/:id on submit
@@ -376,28 +376,28 @@ This implementation plan breaks down the Manager Role Verification feature into 
     - Refresh manager list on success
     - _Requirements: 11.4, 11.6_
   
-  - [~] 14.4 Create audit log viewer
+  - [ ] 14.4 Create audit log viewer
     - Display audit logs for selected manager
     - Show columns: timestamp, action, task ID, comment, bonus spins granted
     - Implement filtering by date range and action type
     - Fetch logs from GET /api/admin/managers/:id/audit-logs
     - _Requirements: 7.3, 7.4_
 
-- [~] 15. Checkpoint - Ensure complete system works end-to-end
+- [ ] 15. Checkpoint - Ensure complete system works end-to-end
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 16. Integration and end-to-end testing
-  - [~] 16.1 Write end-to-end test for complete verification flow
+  - [ ] 16.1 Write end-to-end test for complete verification flow
     - Test: Tenant admin creates manager → Manager logs in → Manager views pending tasks → Manager approves task → Customer receives bonus spins and notification
     - Verify multi-tenant isolation throughout
     - Verify audit trail creation
     - _Requirements: All requirements_
   
-  - [~] 16.2 Write end-to-end test for rejection flow
+  - [ ] 16.2 Write end-to-end test for rejection flow
     - Test: Manager rejects task → Customer receives rejection notification → Audit log created
     - _Requirements: 4.5, 6.2, 7.1, 7.2_
   
-  - [~] 16.3 Write security tests
+  - [ ] 16.3 Write security tests
     - Test cross-tenant access prevention
     - Test RBAC enforcement
     - Test password hashing
@@ -406,20 +406,20 @@ This implementation plan breaks down the Manager Role Verification feature into 
     - _Requirements: 8.1, 8.2, 8.3, 10.1, 10.2, 10.3_
 
 - [ ] 17. Error handling and edge cases
-  - [~] 17.1 Implement comprehensive error handling
+  - [ ] 17.1 Implement comprehensive error handling
     - Add try-catch blocks in all service methods
     - Return appropriate HTTP status codes
     - Format error responses consistently
     - Log errors for debugging
     - _Requirements: All requirements_
   
-  - [~] 17.2 Handle external service failures
+  - [ ] 17.2 Handle external service failures
     - Implement retry logic for WhatsApp service
     - Handle database connection errors
     - Handle transaction failures with rollback
     - _Requirements: 6.4, 6.5_
   
-  - [~] 17.3 Write unit tests for error scenarios
+  - [ ] 17.3 Write unit tests for error scenarios
     - Test database connection failures
     - Test WhatsApp service failures
     - Test transaction rollbacks
@@ -427,7 +427,7 @@ This implementation plan breaks down the Manager Role Verification feature into 
     - Test authorization errors
     - _Requirements: All requirements_
 
-- [~] 18. Final checkpoint and documentation
+- [ ] 18. Final checkpoint and documentation
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

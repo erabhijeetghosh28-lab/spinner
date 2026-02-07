@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
             });
 
             if (spinCount >= campaign.spinLimit) {
+                // Enforce spin limit: user has used up base spins within cooldown window
                 return NextResponse.json({
                     error: `You have reached your limit of ${campaign.spinLimit} spin(s) in the last ${campaign.spinCooldown} hours.`
                 }, { status: 429 });

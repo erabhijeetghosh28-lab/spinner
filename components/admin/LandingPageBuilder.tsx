@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import ImageUploader from '@/components/admin/ImageUploader';
@@ -11,7 +12,7 @@ interface LandingPageBuilderProps {
     onClose: () => void;
 }
 
-export default function LandingPageBuilder({ campaignId, tenantId, onClose }: LandingPageBuilderProps) {
+export default function LandingPageBuilder({ campaignId, tenantId, onClose, embed = false }: LandingPageBuilderProps & { embed?: boolean }) {
     const [landingPage, setLandingPage] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -24,7 +25,12 @@ export default function LandingPageBuilder({ campaignId, tenantId, onClose }: La
 
     const fetchLandingPage = async () => {
         try {
-            const res = await axios.get(`/api/admin/landing-page?campaignId=${campaignId}&tenantId=${tenantId}`);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('admin-token') : null;
+            const storedTenant = tenantId || (typeof window !== 'undefined' ? localStorage.getItem('admin-tenant-id') : null);
+            const headers: any = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (storedTenant) headers['x-tenant-id'] = storedTenant;
+            const res = await axios.get(`/api/admin/landing-page?campaignId=${campaignId}&tenantId=${tenantId}`, { headers });
             setLandingPage(res.data.landingPage);
         } catch (err: any) {
             console.error('Error fetching landing page:', err);
@@ -80,11 +86,16 @@ export default function LandingPageBuilder({ campaignId, tenantId, onClose }: La
         
         setSaving(true);
         try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('admin-token') : null;
+            const storedTenant = tenantId || (typeof window !== 'undefined' ? localStorage.getItem('admin-tenant-id') : null);
+            const headers: any = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (storedTenant) headers['x-tenant-id'] = storedTenant;
             await axios.patch('/api/admin/landing-page', {
                 campaignId,
                 tenantId,
                 isPublished: true,
-            });
+            }, { headers });
             alert('✅ Landing page published successfully! It is now live and visible to users.');
             fetchLandingPage();
         } catch (err: any) {
@@ -99,11 +110,16 @@ export default function LandingPageBuilder({ campaignId, tenantId, onClose }: La
         
         setSaving(true);
         try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('admin-token') : null;
+            const storedTenant = tenantId || (typeof window !== 'undefined' ? localStorage.getItem('admin-tenant-id') : null);
+            const headers: any = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (storedTenant) headers['x-tenant-id'] = storedTenant;
             await axios.patch('/api/admin/landing-page', {
                 campaignId,
                 tenantId,
                 isPublished: false,
-            });
+            }, { headers });
             alert('⚠️ Landing page unpublished successfully! It is no longer visible to users.');
             fetchLandingPage();
         } catch (err: any) {
@@ -114,16 +130,32 @@ export default function LandingPageBuilder({ campaignId, tenantId, onClose }: La
     };
 
     if (loading) {
-        return (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-                <div className="text-white">Loading landing page builder...</div>
-            </div>
+        const loadingNode = (
+            embed ? (
+                <div className="w-full text-white py-6">
+                    <div className="text-white">Loading landing page builder...</div>
+                </div>
+            ) : (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80" />
+                    <div className="relative z-10 text-white">Loading landing page builder...</div>
+                </div>
+            )
         );
+        if (embed) return loadingNode;
+        return createPortal(loadingNode, typeof document !== 'undefined' ? document.body : document.createElement('div'));
     }
 
-    return (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col border border-slate-800">
+    const outerWrapper = embed
+        ? <div className="bg-slate-900 rounded-2xl w-full h-auto flex flex-col border border-slate-800">
+        </div>
+        : <div className="bg-slate-900 rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col border border-slate-800">
+        </div>;
+
+    const modalNode = (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/90" />
+            <div className={(embed ? "bg-slate-900 rounded-2xl w-full h-auto flex flex-col border border-slate-800 p-4" : "bg-slate-900 rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col border border-slate-800") + " relative z-10 pointer-events-auto"}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-800">
                     <div>
@@ -273,6 +305,14 @@ export default function LandingPageBuilder({ campaignId, tenantId, onClose }: La
             </div>
         </div>
     );
+
+    if (embed) {
+        // Render inline when embedded
+        return modalNode;
+    }
+
+    // When not embedded, portal modal to document.body to avoid stacking-context issues
+    return typeof document !== 'undefined' ? createPortal(modalNode, document.body) : modalNode;
 }
 
 // Sections Editor Component

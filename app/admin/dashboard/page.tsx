@@ -18,7 +18,7 @@ import LandingPageBuilder from '@/components/admin/LandingPageBuilder';
 import { UsageStats } from '@/components/admin/UsageStats';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<'overview' | 'campaigns' | 'analytics'>('overview');
@@ -50,6 +50,10 @@ export default function AdminDashboard() {
     const [showLandingPageBuilder, setShowLandingPageBuilder] = useState(false);
     const [showBrandedQRModal, setShowBrandedQRModal] = useState<boolean>(false);
     const [brandedQRCampaign, setBrandedQRCampaign] = useState<{id: string, name: string} | null>(null);
+    // Feature preview on hover
+    const [hoverPreviewFeature, setHoverPreviewFeature] = useState<any>(null);
+    const [showFeaturePreviewModal, setShowFeaturePreviewModal] = useState(false);
+    // hover timer removed — modal will open on click instead of hover
 
     // Debug log to verify state initialization
     useEffect(() => {
@@ -94,57 +98,112 @@ export default function AdminDashboard() {
             axios.defaults.headers.common['x-tenant-id'] = storedTenantId;
         }
 
-        fetchData();
+        // Do not call fetchData here; fetchData will be triggered once tenantId is set
     }, []);
 
+    // Fetch data when tenantId or campaign selection changes
+    useEffect(() => {
+        if (!tenantId) return;
+        fetchData();
+    }, [tenantId, campaignId]);
+
+    // Track previous active tab to handle analytics -> overview transition
+    const prevActiveTab = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (activeTab === 'overview' && prevActiveTab.current === 'analytics') {
+            // If analytics had 'All campaigns' selected (campaignId === '' or null), set recent campaign
+            if (campaignId === '' || campaignId === null) {
+                const recent = campaigns && campaigns.length > 0 ? campaigns[0].id : null;
+                if (recent) setCampaignId(recent);
+            }
+        }
+        prevActiveTab.current = activeTab;
+    }, [activeTab, campaignId, campaigns]);
+
     const fetchData = async () => {
+        const storedTenantId = tenantId || localStorage.getItem('admin-tenant-id');
+        if (!storedTenantId) {
+            console.error('No tenant ID found');
+            setLoading(false);
+            return;
+        }
+
+        // Helper to safely call endpoints and return null on failure
+        const safeGet = async (url: string) => {
+            try {
+                const res = await axios.get(url);
+                return res;
+            } catch (error: any) {
+                console.warn(`Request to ${url} failed:`, error.response?.status, error.response?.data || error.message);
+                return null;
+            }
+        };
+
         try {
-            const storedTenantId = localStorage.getItem('admin-tenant-id');
-            if (!storedTenantId) {
-                console.error('No tenant ID found');
-                setLoading(false);
-                return;
+            // Fetch templates for theme selector
+            const templatesRes = await safeGet('/api/admin/super/templates');
+            if (templatesRes?.data?.templates) {
+                setTemplates(templatesRes.data.templates.filter((t: any) => t.isActive));
+            } else {
+                setTemplates([]);
             }
 
-            // Fetch templates for theme selector
-            const templatesRes = await axios.get('/api/admin/super/templates');
-            setTemplates(templatesRes.data.templates.filter((t: any) => t.isActive));
-
             // Fetch all campaigns for tenant (including archived)
-            const campaignsRes = await axios.get(`/api/admin/campaigns?tenantId=${storedTenantId}&includeArchived=true`);
-            const allCampaigns = campaignsRes.data.campaigns || [];
+            const campaignsRes = await safeGet(`/api/admin/campaigns?tenantId=${storedTenantId}&includeArchived=true`);
+            const allCampaigns = campaignsRes?.data?.campaigns || [];
             setCampaigns(allCampaigns);
-            
+
             // Set plan info with debugging and normalization
-            const planData = campaignsRes.data.plan;
+            const planData = campaignsRes?.data?.plan;
             console.log('📊 Plan Info from API:', planData);
-            
-            // Normalize plan data to ensure all feature flags are boolean
             const normalizedPlanInfo = planData ? {
                 ...planData,
                 allowAnalytics: Boolean(planData.allowAnalytics),
                 allowQRCodeGenerator: Boolean(planData.allowQRCodeGenerator),
                 allowInventoryTracking: Boolean(planData.allowInventoryTracking)
             } : null;
-            
             setPlanInfo(normalizedPlanInfo);
-            
-            // Log premium features status
-            if (normalizedPlanInfo) {
-                console.log('✅ Premium Features Status:', {
-                    allowAnalytics: normalizedPlanInfo.allowAnalytics,
-                    allowQRCodeGenerator: normalizedPlanInfo.allowQRCodeGenerator,
-                    allowInventoryTracking: normalizedPlanInfo.allowInventoryTracking
-                });
-            } else {
-                console.warn('⚠️ Plan info is null or undefined');
-            }
 
-            // Fetch current active campaign for tenant (within date range)
+            // Determine which campaign to use: prefer selected campaignId state, else fetch active campaign
             let currentCampaignId: string | null = null;
-            try {
-                const campaignRes = await axios.get(`/api/admin/campaign?tenantId=${storedTenantId}`);
-                if (campaignRes.data.campaign) {
+            if (campaignId) {
+                currentCampaignId = campaignId;
+                // If campaignId chosen, try to set tenantSlug and campaign settings from the freshly fetched campaigns list
+                const selected = (allCampaigns || []).find((c: any) => c.id === campaignId);
+                if (selected) {
+                    setTenantSlug(selected.tenant?.slug || selected.tenantSlug || selected.slug || '');
+                    setCampaign({
+                        spinLimit: selected.spinLimit || 1,
+                        spinCooldown: selected.spinCooldown || 24,
+                        referralsRequiredForSpin: selected.referralsRequiredForSpin || 0,
+                        logoUrl: selected.logoUrl || '',
+                        templateId: selected.templateId || '',
+                        supportMobile: selected.supportMobile || '',
+                        websiteUrl: selected.websiteUrl || '',
+                        defaultSpinRewards: selected.defaultSpinRewards || {}
+                    });
+                } else {
+                    // fallback: fetch campaign details
+                    const campaignRes = await safeGet(`/api/admin/campaign?tenantId=${storedTenantId}`);
+                    if (campaignRes?.data?.campaign) {
+                        const camp = campaignRes.data.campaign;
+                        setTenantSlug(camp.tenantSlug || camp.tenant?.slug || '');
+                        setCampaign({
+                            spinLimit: camp.spinLimit,
+                            spinCooldown: camp.spinCooldown,
+                            referralsRequiredForSpin: camp.referralsRequiredForSpin || 0,
+                            logoUrl: camp.logoUrl || '',
+                            templateId: camp.templateId || '',
+                            supportMobile: camp.supportMobile || '',
+                            websiteUrl: camp.websiteUrl || '',
+                            defaultSpinRewards: camp.defaultSpinRewards || {}
+                        });
+                    }
+                }
+            } else {
+                const campaignRes = await safeGet(`/api/admin/campaign?tenantId=${storedTenantId}`);
+                if (campaignRes?.data?.campaign) {
                     const camp = campaignRes.data.campaign;
                     currentCampaignId = camp.id;
                     setCampaignId(camp.id);
@@ -159,36 +218,24 @@ export default function AdminDashboard() {
                         websiteUrl: camp.websiteUrl || '',
                         defaultSpinRewards: camp.defaultSpinRewards || {}
                     });
+                } else {
+                    // No active campaign found - keep prizes empty
+                    setPrizes([]);
                 }
-            } catch (error: any) {
-                if (error.response?.status !== 404) {
-                    console.error('Error fetching campaign:', error);
-                }
-                // Do NOT fallback to archived campaigns. 
-                // Let currentCampaignId remain null so we show Empty State.
             }
 
-            // Fetch prizes for campaign
+            // Fetch prizes for selected/current campaign (if any)
             if (currentCampaignId) {
-                try {
-                    const prizesRes = await axios.get(`/api/admin/prizes?campaignId=${currentCampaignId}&tenantId=${storedTenantId}`);
-                    setPrizes(prizesRes.data.prizes || []);
-                } catch (error: any) {
-                    // Handle case when no prizes exist yet
-                    if (error.response?.status === 404) {
-                        setPrizes([]);
-                    } else {
-                        console.error('Error fetching prizes:', error);
-                        setPrizes([]); // Set empty array to prevent crashes
-                    }
-                }
+                const prizesRes = await safeGet(`/api/admin/prizes?campaignId=${currentCampaignId}&tenantId=${storedTenantId}`);
+                setPrizes(prizesRes?.data?.prizes || []);
             } else {
-                setPrizes([]); // No campaign = no prizes
+                setPrizes([]);
             }
 
-            // Fetch stats (tenant-scoped)
-            const statsRes = await axios.get(`/api/admin/stats?tenantId=${storedTenantId}`);
-            setStats(statsRes.data);
+            // Fetch stats (tenant-scoped) — include campaign filter if selected
+            const statsUrl = `/api/admin/stats?tenantId=${storedTenantId}${currentCampaignId ? `&campaignId=${currentCampaignId}` : ''}`;
+            const statsRes = await safeGet(statsUrl);
+            if (statsRes?.data) setStats(statsRes.data);
         } catch (err) {
             console.error('Failed to fetch data:', err);
         } finally {
@@ -347,22 +394,55 @@ export default function AdminDashboard() {
 
                 {/* Tabs - Always Visible */}
                 <div className="bg-slate-900 border-b border-slate-800 mb-8">
-                    <div className="flex space-x-1 overflow-x-auto no-scrollbar whitespace-nowrap">
-                        {(['overview', 'campaigns', ...(planInfo?.allowAnalytics ? ['analytics'] : [])] as ('overview' | 'campaigns' | 'analytics')[]).map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab as 'overview' | 'campaigns' | 'analytics')}
-                                className={`px-6 py-4 font-semibold text-sm uppercase tracking-wider transition-colors ${activeTab === tab
-                                    ? 'text-amber-500 border-b-2 border-amber-500'
-                                    : 'text-slate-400 hover:text-slate-300'
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 flex items-center space-x-1 overflow-x-auto no-scrollbar whitespace-nowrap">
+                                {(['overview', 'campaigns', ...(planInfo?.allowAnalytics ? ['analytics'] : [])] as ('overview' | 'campaigns' | 'analytics')[]).map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab as 'overview' | 'campaigns' | 'analytics')}
+                                        className={`px-6 py-4 font-semibold text-sm uppercase tracking-wider transition-colors ${activeTab === tab
+                                            ? 'text-amber-500 border-b-2 border-amber-500'
+                                            : 'text-slate-400 hover:text-slate-300'
+                                            }`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Campaign selector in nav bar (All option only for Analytics) */}
+                            {campaigns.length > 1 && (
+                                <div className="hidden md:flex items-center space-x-3">
+                                    <label htmlFor="campaignSelect" className="text-sm text-slate-400">Campaign:</label>
+                            <div className="flex items-center space-x-3">
+                                <select
+                                    id="campaignSelect"
+                                    value={campaignId ?? ''}
+                                    onChange={(e) => setCampaignId(e.target.value || null)}
+                                    className="bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm"
+                                >
+                                    {activeTab === 'analytics' && <option value="">All campaigns</option>}
+                                    {campaigns.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                                {/* Campaign status badge */}
+                                {campaignId && (() => {
+                                    const sel = campaigns.find((c: any) => c.id === campaignId);
+                                    if (!sel) return null;
+                                    return (
+                                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${sel.isArchived ? 'bg-slate-700 text-slate-300 border border-slate-600' : 'bg-green-500/10 text-green-300 border border-green-500/30'}`}>
+                                            {sel.isArchived ? 'Archived' : 'Active'}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-                
                 {/* Tab Content */}
                 {activeTab === 'overview' && (
                     !campaignId ? (
@@ -377,15 +457,122 @@ export default function AdminDashboard() {
                                     ? "You don't have any active campaigns running. Create a new one or restore an archived campaign to get started."
                                     : "It looks like you haven't created any campaigns yet. Setup your first Spin & Win campaign in minutes to start engaging your customers."}
                             </p>
+                            {/* Feature Availability */}
+                            <div className="mt-6 max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                {[
+                                    { key: 'Campaigns', allowed: true, desc: 'Create and manage campaigns within your plan limits' },
+                                    { key: 'QR Code Generator', allowed: true, desc: 'Generate QR codes & branded posters' },
+                                    { key: 'Advanced Analytics', allowed: !!planInfo?.allowAnalytics, desc: 'Deep insights, referral charts & reports' },
+                                    { key: 'Inventory Tracking', allowed: !!planInfo?.allowInventoryTracking, desc: 'Prize inventory & low-stock alerts' },
+                                ].map((f) => (
+                                    <div
+                                        key={f.key}
+                                        onClick={() => {
+                                            setHoverPreviewFeature(f);
+                                            setShowFeaturePreviewModal(true);
+                                        }}
+                                        className="relative bg-gradient-to-br from-slate-800/60 to-slate-900/50 p-5 rounded-2xl border border-slate-700/60 shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all cursor-pointer"
+                                    >
+                                        <div className="flex items-start">
+                                            <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${f.allowed ? 'bg-green-500/10 text-green-400' : 'bg-slate-700 text-slate-400'}`}>
+                                                {f.allowed ? '✓' : '🔒'}
+                                            </div>
+                                            <div className="ml-4">
+                                                <div className={`text-sm font-semibold ${f.allowed ? 'text-white' : 'text-slate-300'}`}>{f.key}</div>
+                                                <div className="text-xs text-slate-400 mt-1 max-w-[12rem]">{f.desc}</div>
+                                            </div>
+                                            {!f.allowed && (
+                                                <div className="ml-auto self-center">
+                                                    <a
+                                                        href="/admin/billing/upgrade"
+                                                        className="inline-flex items-center space-x-2 px-3 py-1 bg-amber-500 text-slate-900 rounded-full text-xs font-bold shadow-sm"
+                                                    >
+                                                        <span>Upgrade</span>
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                             <button
                                 onClick={() => {
                                     setEditingWizardCampaign(null);
                                     setShowWizardModal(true);
                                 }}
-                                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black px-10 py-5 rounded-2xl text-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
+                                className="mt-8 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-black px-10 py-5 rounded-2xl text-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest"
                             >
                                 + Create New Campaign
                             </button>
+                            {/* Feature preview modal (opens on hover) */}
+                            {showFeaturePreviewModal && hoverPreviewFeature && (
+                                <div
+                                    onClick={() => {
+                                        setShowFeaturePreviewModal(false);
+                                        setHoverPreviewFeature(null);
+                                    }}
+                                    className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-auto"
+                                >
+                                    <div onClick={(e) => e.stopPropagation()} className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl p-6">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-white">{hoverPreviewFeature.key}</h3>
+                                                <p className="text-sm text-slate-400 mt-1">{hoverPreviewFeature.desc}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setShowFeaturePreviewModal(false);
+                                                    setHoverPreviewFeature(null);
+                                                }}
+                                                className="text-slate-400 hover:text-white"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Mock content for each feature */}
+                                            {hoverPreviewFeature.key === 'Campaigns' && (
+                                                <div className="space-y-2">
+                                                    <div className="text-xs text-slate-400">Example</div>
+                                                    <div className="flex items-center space-x-4">
+                                                        <div className="bg-indigo-700 text-white rounded-xl px-3 py-2">Active: 0</div>
+                                                        <div className="bg-amber-600 text-slate-900 rounded-xl px-3 py-2">Create New</div>
+                                                    </div>
+                                                    <p className="text-sm text-slate-300 mt-2">Create campaigns, set prizes, schedule duration and launch directly.</p>
+                                                </div>
+                                            )}
+                                            {hoverPreviewFeature.key === 'QR Code Generator' && (
+                                                <div className="space-y-2">
+                                                    <div className="text-xs text-slate-400">Preview</div>
+                                                    <div className="w-32 h-32 bg-white/5 rounded-lg flex items-center justify-center">QR</div>
+                                                    <p className="text-sm text-slate-300 mt-2">Generate PNG QR codes and branded posters for print or social.</p>
+                                                </div>
+                                            )}
+                                            {hoverPreviewFeature.key === 'Advanced Analytics' && (
+                                                <div className="space-y-2">
+                                                    <div className="text-xs text-slate-400">Snapshot</div>
+                                                    <div className="bg-slate-800 p-3 rounded-lg">
+                                                        <div className="text-xs text-slate-400">Spins Today</div>
+                                                        <div className="text-2xl font-bold text-amber-400">0</div>
+                                                    </div>
+                                                    <p className="text-sm text-slate-300 mt-2">View referral growth, conversion funnels and ROI simulations.</p>
+                                                </div>
+                                            )}
+                                            {hoverPreviewFeature.key === 'Inventory Tracking' && (
+                                                <div className="space-y-2">
+                                                    <div className="text-xs text-slate-400">Inventory</div>
+                                                    <div className="bg-slate-800 p-3 rounded-lg">
+                                                        <div className="text-sm text-slate-300">50% Off — Stock: 10</div>
+                                                        <div className="text-sm text-slate-300">Free Gift — Stock: 0 (low)</div>
+                                                    </div>
+                                                    <p className="text-sm text-slate-300 mt-2">Track prize stock levels and receive low-stock alerts.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <>
@@ -577,6 +764,7 @@ export default function AdminDashboard() {
                         planInfo={planInfo}
                         tenantId={tenantId}
                         tenantSlug={tenantSlug}
+                        campaignId={campaignId}
                         onRefresh={fetchData}
                         onCreate={() => {
                             setEditingWizardCampaign(null);
@@ -598,6 +786,9 @@ export default function AdminDashboard() {
                 {activeTab === 'analytics' && tenantId && planInfo?.allowAnalytics && (
                     <AnalyticsTab
                         tenantId={tenantId}
+                        campaignId={campaignId}
+                        campaigns={campaigns}
+                        onCampaignChange={(id?: string | null) => setCampaignId(id || null)}
                     />
                 )}
             </div>
@@ -660,12 +851,13 @@ export default function AdminDashboard() {
 
 
 // Campaigns Tab Component
-function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, onRefresh, onCreate, onEdit, onShowBrandedQR }: {
+function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, campaignId, onRefresh, onCreate, onEdit, onShowBrandedQR }: {
     campaigns: any[];
     templates: any[];
     planInfo: any;
     tenantId: string;
     tenantSlug: string;
+    campaignId?: string | null;
     onRefresh: () => void;
     onCreate: () => void;
     onEdit: (camp: any) => void;
@@ -724,7 +916,7 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
     };
 
     const handleDelete = async (campaignId: string) => {
-        if (!confirm('Are you sure you want to archive this campaign? It will be hidden but not deleted. You can restore it later if needed.')) return;
+        if (!confirm('Are you sure you want to archive this campaign? It will be hidden from the UI and retained for 1 year before permanent deletion.')) return;
 
         try {
             if (!tenantId) {
@@ -732,9 +924,8 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                 return;
             }
 
-            await axios.delete('/api/admin/campaigns', {
-                data: { campaignId, tenantId }
-            });
+            // Archive (soft-delete) the campaign instead of immediate permanent deletion
+            await axios.patch(`/api/admin/campaigns/${campaignId}/archive`, { tenantId });
             alert('Campaign archived successfully!');
             onRefresh();
             fetchLimitInfo(); // Refresh limit info after archiving
@@ -795,7 +986,7 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
     return (
         <>
             {/* Usage Stats Component */}
-            {tenantId && <UsageStats tenantId={tenantId} />}
+            {tenantId && <UsageStats tenantId={tenantId} campaignId={campaignId} />}
 
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mt-6">
                 <div className="flex justify-between items-center mb-6">
@@ -896,47 +1087,51 @@ function CampaignsTab({ campaigns, templates, planInfo, tenantId, tenantSlug, on
                                             <div className="flex items-center space-x-2">
                                                 {!camp.isArchived && (
                                                     <>
-                                                        {planInfo?.allowQRCodeGenerator && (
-                                                            <>
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        try {
-                                                                            const qrUrl = `/api/admin/qr?tenantId=${tenantId}&campaignId=${camp.id}&format=png`;
-                                                                            const response = await axios.get(qrUrl, {
-                                                                                responseType: 'blob'
-                                                                            });
-                                                                            
-                                                                            // Create a blob URL and download it
-                                                                            const blob = new Blob([response.data], { type: 'image/png' });
-                                                                            const url = window.URL.createObjectURL(blob);
-                                                                            const link = document.createElement('a');
-                                                                            link.href = url;
-                                                                            link.download = `qr-code-${camp.name.replace(/\s+/g, '-')}.png`;
-                                                                            document.body.appendChild(link);
-                                                                            link.click();
-                                                                            link.remove();
-                                                                            window.URL.revokeObjectURL(url);
-                                                                        } catch (err: any) {
-                                                                            console.error('QR Code generation error:', err);
-                                                                            alert(err.response?.data?.error || 'Failed to generate QR code');
-                                                                        }
-                                                                    }}
-                                                                    className="text-blue-500 hover:text-blue-400 text-sm font-bold"
-                                                                    title="Generate Simple QR Code"
-                                                                >
-                                                                    QR
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        onShowBrandedQR({ id: camp.id, name: camp.name });
-                                                                    }}
-                                                                    className="text-green-500 hover:text-green-400 text-sm font-bold"
-                                                                    title="Generate Branded QR Poster/Card"
-                                                                >
-                                                                    Branded
-                                                                </button>
-                                                            </>
-                                                        )}
+                                                        <>
+                                                            <button
+                                                            onClick={async () => {
+                                                                    try {
+                                                                        const storedTenantId = localStorage.getItem('admin-tenant-id') || tenantId;
+                                                                        const token = localStorage.getItem('admin-token');
+                                                                        const qrUrl = `/api/admin/qr?tenantId=${storedTenantId}&campaignId=${camp.id}&format=png`;
+                                                                        const response = await axios.get(qrUrl, {
+                                                                            responseType: 'blob',
+                                                                            headers: {
+                                                                                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                                                                ...(storedTenantId ? { 'x-tenant-id': storedTenantId } : {})
+                                                                            }
+                                                                        });
+
+                                                                        // Create a blob URL and download it
+                                                                        const blob = new Blob([response.data], { type: 'image/png' });
+                                                                        const url = window.URL.createObjectURL(blob);
+                                                                        const link = document.createElement('a');
+                                                                        link.href = url;
+                                                                        link.download = `qr-code-${camp.name.replace(/\s+/g, '-')}.png`;
+                                                                        document.body.appendChild(link);
+                                                                        link.click();
+                                                                        link.remove();
+                                                                        window.URL.revokeObjectURL(url);
+                                                                    } catch (err: any) {
+                                                                        console.error('QR Code generation error:', err);
+                                                                        alert(err.response?.data?.error || 'Failed to generate QR code');
+                                                                    }
+                                                                }}
+                                                                className="text-blue-500 hover:text-blue-400 text-sm font-bold"
+                                                                title="Generate Simple QR Code"
+                                                            >
+                                                                QR
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    onShowBrandedQR({ id: camp.id, name: camp.name });
+                                                                }}
+                                                                className="text-green-500 hover:text-green-400 text-sm font-bold"
+                                                                title="Generate Branded QR Poster/Card"
+                                                            >
+                                                                Branded
+                                                            </button>
+                                                        </>
                                                         <button
                                                             onClick={() => handleOpenSocialTasksModal(camp.id)}
                                                             className="text-purple-500 hover:text-purple-400 text-sm font-bold"
@@ -1366,7 +1561,7 @@ function SocialTasksModal({
 }
 
 // Analytics Tab Component
-function AnalyticsTab({ tenantId }: { tenantId: string }) {
+function AnalyticsTab({ tenantId, campaignId, campaigns, onCampaignChange }: { tenantId: string, campaignId?: string | null, campaigns?: any[], onCampaignChange?: (id?: string|null)=>void }) {
     const [analytics, setAnalytics] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [startDate, setStartDate] = useState(() => {
@@ -1383,16 +1578,17 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
 
     useEffect(() => {
         fetchAnalytics();
-    }, [startDate, endDate]);
+    }, [startDate, endDate, campaignId]);
 
     useEffect(() => {
         fetchUserReport();
-    }, [userReportPage]);
+    }, [userReportPage, campaignId]);
 
     const fetchUserReport = async () => {
         try {
             setUserReportLoading(true);
-            const res = await axios.get(`/api/admin/analytics/users?tenantId=${tenantId}&page=${userReportPage}&limit=10`);
+            const url = `/api/admin/analytics/users?tenantId=${tenantId}&page=${userReportPage}&limit=10${campaignId ? `&campaignId=${campaignId}` : ''}`;
+            const res = await axios.get(url);
             setUserReport(res.data);
         } catch (err) {
             console.error('Error fetching user report:', err);
@@ -1403,7 +1599,8 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
 
     const handleExportReport = async () => {
         try {
-            const response = await axios.get(`/api/admin/export/campaign-users?tenantId=${tenantId}`, {
+            const exportUrl = `/api/admin/export/campaign-users?tenantId=${tenantId}${campaignId ? `&campaignId=${campaignId}` : ''}`;
+            const response = await axios.get(exportUrl, {
                 responseType: 'blob'
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -1421,7 +1618,8 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
     const fetchAnalytics = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/admin/analytics?tenantId=${tenantId}&startDate=${startDate}&endDate=${endDate}`);
+            const url = `/api/admin/analytics?tenantId=${tenantId}&startDate=${startDate}&endDate=${endDate}${campaignId ? `&campaignId=${campaignId}` : ''}`;
+            const res = await axios.get(url);
             setAnalytics(res.data);
         } catch (err: any) {
             console.error('Error fetching analytics:', err);
@@ -1450,6 +1648,20 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
                     </p>
                 </div>
                 <div className="flex space-x-2">
+                    {/* Campaign selector (Analytics only) */}
+                    <div className="flex items-center space-x-3 mr-2">
+                        <label className="text-[10px] uppercase text-slate-500 mr-2">Campaign</label>
+                        <select
+                            value={campaignId ?? ''}
+                            onChange={(e) => onCampaignChange?.(e.target.value || null)}
+                            className="bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-lg text-sm"
+                        >
+                            <option value="">All campaigns</option>
+                            {campaigns?.map((c: any) => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
                     <div className="relative">
                          <div className="text-[10px] uppercase text-slate-500 absolute -top-2 left-2 bg-slate-900 px-1 font-bold">Start</div>
                          <input
@@ -1472,14 +1684,13 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
             </div>
 
             {/* KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {[
                     { label: 'Total Spins', value: analytics.kpis.totalSpins, icon: '🎡', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
                     { label: 'Total Users', value: analytics.kpis.totalUsers, icon: '👥', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
                     { label: 'Prizes Won', value: analytics.kpis.prizesWon, icon: '🏆', color: 'bg-green-500/10 text-green-500 border-green-500/20' },
                     { label: 'Win Rate', value: `${analytics.kpis.conversionRate}%`, icon: '📈', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
                     { label: 'Viral Spins', value: analytics.kpis.referralSpins, icon: '🎁', color: 'bg-pink-500/10 text-pink-500 border-pink-500/20' },
-                    { label: 'Viral Coeff.', value: analytics.kpis.viralCoefficient, icon: '🦠', color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' },
                 ].map((kpi, i) => (
                     <div key={i} className={`p-4 rounded-2xl border ${kpi.color} backdrop-blur-sm`}>
                         <div className="text-2xl mb-1">{kpi.icon}</div>
@@ -1489,14 +1700,93 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
                 ))}
             </div>
 
-            {/* ROW 1: Heatmap (Full Width) */}
-            <HeatmapChart data={analytics.charts?.heatmap || {}} />
-
-            {/* ROW 2: The Action Grid (Funnel + Retention) */}
-            <div className="grid md:grid-cols-2 gap-6 h-full">
+            {/* ROW 1: Action Grid (Funnel + Retention) */}
+            <div className="grid md:grid-cols-2 gap-6 h-full mb-6">
                 <RedemptionFunnel data={analytics.charts?.redemptionFunnel || { spins: 0, wins: 0, vouchers: 0, redeemed: 0 }} />
                 <RetentionChart data={analytics.charts?.retention || {}} />
             </div>
+
+            {/* ROW 2: Detailed User Report (moved above Heatmap) */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-6">
+               <div className="flex justify-between items-center mb-6">
+                   <div>
+                       <h3 className="text-lg font-bold text-white">Campaign Participants</h3>
+                       <p className="text-slate-500 text-sm">
+                           {campaignId ? `Detailed breakdown of user activity across ${campaigns?.find((c:any)=>c.id===campaignId)?.name || 'the selected campaign'}.` : 'Detailed breakdown of user activity across all campaigns.'}
+                       </p>
+                   </div>
+                   <button 
+                       onClick={handleExportReport}
+                       className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-amber-500 font-bold px-4 py-2 rounded-lg transition-colors text-sm"
+                   >
+                       <span>📥</span>
+                       <span>Export CSV</span>
+                   </button>
+               </div>
+               
+               <div className="overflow-x-auto">
+                   <table className="w-full text-sm text-left">
+                       <thead className="bg-slate-800/50 text-slate-400 uppercase text-xs">
+                           <tr>
+                               <th className="px-4 py-3 rounded-l-lg">User</th>
+                               <th className="px-4 py-3">Mobile</th>
+                               <th className="px-4 py-3">Campaign</th>
+                               <th className="px-4 py-3 text-center">Spins</th>
+                               <th className="px-4 py-3 text-center">Referrals</th>
+                               <th className="px-4 py-3 text-right rounded-r-lg">Last Active</th>
+                           </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-800">
+                           {userReportLoading ? (
+                               <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading details...</td></tr>
+                           ) : !userReport?.data?.length ? (
+                               <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No participants found.</td></tr>
+                           ) : (
+                               userReport.data.map((row: any, i: number) => (
+                                   <tr key={i} className="hover:bg-slate-800/30 transition-colors">
+                                       <td className="px-4 py-3 font-medium text-white">{row.userName}</td>
+                                       <td className="px-4 py-3 text-slate-400 font-mono text-xs">{row.userPhone}</td>
+                                       <td className="px-4 py-3 text-indigo-400">{row.campaignName}</td>
+                                       <td className="px-4 py-3 text-center font-bold text-amber-500">{row.spinCount}</td>
+                                       <td className="px-4 py-3 text-center text-slate-400">{row.referralCount}</td>
+                                       <td className="px-4 py-3 text-right text-slate-500 text-xs">
+                                           {new Date(row.lastActive).toLocaleDateString()}
+                                       </td>
+                                   </tr>
+                               ))
+                           )}
+                       </tbody>
+                   </table>
+               </div>
+               
+               {/* Pagination */}
+               {userReport?.pagination && userReport.pagination.pages > 1 && (
+                   <div className="flex justify-center items-center space-x-2 mt-6">
+                       <button 
+                           disabled={userReportPage === 1}
+                           onClick={() => setUserReportPage(p => p - 1)}
+                           className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 text-xs"
+                       >
+                           Previous
+                       </button>
+                       <span className="text-xs text-slate-500">
+                           Page {userReportPage} of {userReport.pagination.pages}
+                       </span>
+                       <button 
+                           disabled={userReportPage === userReport.pagination.pages}
+                           onClick={() => setUserReportPage(p => p + 1)}
+                           className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 text-xs"
+                       >
+                           Next
+                       </button>
+                   </div>
+               )}
+            </div>
+
+            {/* ROW 3: Heatmap (Full Width) */}
+            <HeatmapChart data={analytics.charts?.heatmap || {}} />
+
+            
 
             {/* ROW 3: Viral Engine */}
             <div className="grid md:grid-cols-3 gap-6">
@@ -1523,80 +1813,7 @@ function AnalyticsTab({ tenantId }: { tenantId: string }) {
                 <MissingVIPsTable data={analytics.deepAnalysis?.churnCandidates || []} />
              </div>
 
-             {/* ROW 6: Detailed User Report */}
-             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 className="text-lg font-bold text-white">Campaign Participants</h3>
-                        <p className="text-slate-500 text-sm">Detailed breakdown of user activity across all campaigns.</p>
-                    </div>
-                    <button 
-                        onClick={handleExportReport}
-                        className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-amber-500 font-bold px-4 py-2 rounded-lg transition-colors text-sm"
-                    >
-                        <span>📥</span>
-                        <span>Export CSV</span>
-                    </button>
-                </div>
-                
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-800/50 text-slate-400 uppercase text-xs">
-                            <tr>
-                                <th className="px-4 py-3 rounded-l-lg">User</th>
-                                <th className="px-4 py-3">Mobile</th>
-                                <th className="px-4 py-3">Campaign</th>
-                                <th className="px-4 py-3 text-center">Spins</th>
-                                <th className="px-4 py-3 text-center">Referrals</th>
-                                <th className="px-4 py-3 text-right rounded-r-lg">Last Active</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800">
-                            {userReportLoading ? (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading details...</td></tr>
-                            ) : !userReport?.data?.length ? (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No participants found.</td></tr>
-                            ) : (
-                                userReport.data.map((row: any, i: number) => (
-                                    <tr key={i} className="hover:bg-slate-800/30 transition-colors">
-                                        <td className="px-4 py-3 font-medium text-white">{row.userName}</td>
-                                        <td className="px-4 py-3 text-slate-400 font-mono text-xs">{row.userPhone}</td>
-                                        <td className="px-4 py-3 text-indigo-400">{row.campaignName}</td>
-                                        <td className="px-4 py-3 text-center font-bold text-amber-500">{row.spinCount}</td>
-                                        <td className="px-4 py-3 text-center text-slate-400">{row.referralCount}</td>
-                                        <td className="px-4 py-3 text-right text-slate-500 text-xs">
-                                            {new Date(row.lastActive).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-                
-                {/* Pagination */}
-                {userReport?.pagination && userReport.pagination.pages > 1 && (
-                    <div className="flex justify-center items-center space-x-2 mt-6">
-                        <button 
-                            disabled={userReportPage === 1}
-                            onClick={() => setUserReportPage(p => p - 1)}
-                            className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 text-xs"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-xs text-slate-500">
-                            Page {userReportPage} of {userReport.pagination.pages}
-                        </span>
-                        <button 
-                            disabled={userReportPage === userReport.pagination.pages}
-                            onClick={() => setUserReportPage(p => p + 1)}
-                            className="px-3 py-1 bg-slate-800 rounded hover:bg-slate-700 disabled:opacity-50 text-xs"
-                        >
-                            Next
-                        </button>
-                    </div>
-                )}
-             </div>
+            {/* Detailed User Report moved above; original instance removed here */}
         </div>
     );
 }
