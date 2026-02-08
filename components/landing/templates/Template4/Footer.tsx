@@ -1,6 +1,6 @@
 'use client';
 
-const PLATFORM_BRAND = 'TheLeadSpin';
+const PLATFORM_BRAND = 'SpinWheel';
 
 interface FooterProps {
     footer: any;
@@ -17,9 +17,12 @@ export default function Template4Footer({ footer, campaign, tenantSlug }: Footer
     return (
         <footer className="w-full py-12 px-6 border-t border-template4-primary/10 dark:border-gray-800">
             <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-template4-primary rounded-lg flex items-center justify-center text-white font-bold">NW</div>
-                    <span className="font-black text-xl tracking-tight uppercase text-template4-primary dark:text-white">{PLATFORM_BRAND}</span>
+                <div className="transition-transform hover:scale-105 active:scale-95">
+                    <img 
+                        src="/spinwheel-logo.svg" 
+                        alt="SpinWheel" 
+                        className="h-20 w-auto min-w-[150px] object-contain" 
+                    />
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
                     <div className="flex gap-8 text-[#6B7C75] dark:text-gray-400 text-sm font-medium">

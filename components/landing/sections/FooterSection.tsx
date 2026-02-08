@@ -15,17 +15,25 @@ export default function FooterSection({ footer, brandColor }: FooterSectionProps
             <div className="container mx-auto max-w-7xl px-6 py-16">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     {/* Column 1: Brand */}
-                    <div className="space-y-4">
-                        {footer.logoUrl ? (
-                            <img src={footer.logoUrl} alt={footer.companyName} className="h-10 mb-4" />
-                        ) : (
-                            <h3 
-                                className="text-2xl font-black"
-                                style={{ color: brandColor }}
-                            >
-                                {footer.companyName}
-                            </h3>
-                        )}
+                    <div className="space-y-6">
+                        {/* Platform Branding */}
+                        <a href="/" className="inline-block hover:opacity-80 transition-opacity">
+                            <img src="/spinwheel-logo.svg" alt="SpinWheel" className="h-6 w-auto" />
+                        </a>
+
+                        {/* Tenant Branding */}
+                        <div>
+                            {footer.logoUrl ? (
+                                <img src={footer.logoUrl} alt={footer.companyName} className="h-10 mb-4" />
+                            ) : (
+                                <h3 
+                                    className="text-2xl font-black"
+                                    style={{ color: brandColor }}
+                                >
+                                    {footer.companyName}
+                                </h3>
+                            )}
+                        </div>
                         {footer.companyTagline && (
                             <p className="text-slate-400 text-sm">
                                 {footer.companyTagline}

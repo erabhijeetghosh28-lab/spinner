@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface FooterData {
     companyName?: string;
     logoUrl?: string;
@@ -18,7 +20,7 @@ export default function MinimalFooter({
     variant = 'light' 
 }: MinimalFooterProps) {
     // Always show platform brand in footer
-    const companyName = 'TheLeadSpin';
+    const companyName = 'SpinWheel';
     const logoUrl = footer?.logoUrl;
     const privacyUrl = footer?.privacyPolicyUrl || '#';
     const termsUrl = footer?.termsUrl || '#';
@@ -57,25 +59,23 @@ export default function MinimalFooter({
     return (
         <footer className={`w-full py-12 px-6 border-t ${theme.borderColor} ${theme.bg}`}>
             <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                {/* Logo */}
-                <div className="flex items-center gap-2">
-                    {logoUrl ? (
-                        <img src={logoUrl} alt={companyName} className="h-8" />
-                    ) : (
-                        <>
-                            {variant === 'cyan' ? (
-                                <div className="w-8 h-8 bg-gradient-to-br from-[#00f2ff] to-[#0072ff] rounded-lg flex items-center justify-center text-[#0a0f1d] font-bold">
-                                    W
-                                </div>
-                            ) : (
-                                <div className={`w-8 h-8 ${variant === 'light' ? 'bg-[#f48c25]' : 'bg-[#f48c25]'} rounded-lg flex items-center justify-center text-white font-bold`}>
-                                    W
-                                </div>
-                            )}
-                            <span className={`font-black text-xl tracking-tight uppercase ${theme.logoColor}`}>
-                                {companyName.split(' ')[0]}<span className={theme.accentColor}>{companyName.split(' ')[1] || 'Wheel'}</span>
-                            </span>
-                        </>
+                {/* Logo Section */}
+                <div className="flex flex-col items-center md:items-start gap-6">
+                    {/* Official SpinWheel Branding */}
+                    <Link href="/" className="transition-transform hover:scale-105 active:scale-95">
+                        <img 
+                            src="/spinwheel-logo.svg" 
+                            alt="SpinWheel" 
+                            className="h-20 w-auto min-w-[150px] object-contain" 
+                        />
+                    </Link>
+
+                    {/* Optional Tenant Branding (if they want to show their logo) */}
+                    {logoUrl && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-white/5">
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Partnered with</span>
+                            <img src={logoUrl} alt={footer?.companyName || 'Brand'} className="h-6" />
+                        </div>
                     )}
                 </div>
 

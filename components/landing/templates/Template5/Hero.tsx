@@ -1,13 +1,13 @@
 'use client';
 
 import PrizeModal from '@/components/PrizeModal';
-import EarnMoreSpinsCard from '../../shared/EarnMoreSpinsCard';
 import SpinWheel from '@/components/SpinWheel_V2';
 import { soundEffects } from '@/lib/soundEffects';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import EarnMoreSpinsCard from '../../shared/EarnMoreSpinsCard';
 
 interface HeroProps {
     section: any;
@@ -230,25 +230,6 @@ export default function Template5Hero({ section, campaign, userId }: HeroProps) 
                 </div>
             </section>
 
-            {selectedTask && userId && campaign?.id && (
-                <TaskInstructionModal
-                    task={selectedTask}
-                    userId={userId}
-                    campaignId={campaign.id}
-                    onClose={() => setSelectedTask(null)}
-                    onComplete={() => {
-                        setSelectedTask(null);
-                        if (userId && campaign?.id) {
-                            axios.get(`/api/user/status?userId=${userId}&campaignId=${campaign.id}`)
-                                .then(res => setUserStatus(res.data))
-                                .catch(() => {});
-                            
-                            // Re-fetch social tasks to hide completed one
-                            fetchSocialTasks();
-                        }
-                    }}
-                />
-            )}
 
             {showPrizeModal && wonPrize && (
                 <PrizeModal

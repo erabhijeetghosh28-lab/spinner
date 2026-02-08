@@ -6,7 +6,7 @@ interface FooterProps {
     tenantSlug?: string;
 }
 
-const PLATFORM_BRAND = 'TheLeadSpin';
+const PLATFORM_BRAND = 'SpinWheel';
 
 export default function Template2Footer({ footer, campaign, tenantSlug }: FooterProps) {
     // Template 2 primary color from reference HTML (not used in footer, but kept for consistency)
@@ -18,9 +18,12 @@ export default function Template2Footer({ footer, campaign, tenantSlug }: Footer
     return (
         <footer className="w-full py-12 px-6 border-t border-white/5 bg-template2-navy-dark">
             <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-template2-primary to-template2-accent rounded-lg flex items-center justify-center text-template2-navy-dark font-bold">W</div>
-                    <span className="font-black text-xl tracking-tight uppercase text-white">{PLATFORM_BRAND}</span>
+                <div className="transition-transform hover:scale-105 active:scale-95">
+                    <img 
+                        src="/spinwheel-logo.svg" 
+                        alt="SpinWheel" 
+                        className="h-20 w-auto min-w-[150px] object-contain" 
+                    />
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
                     <div className="flex gap-8 text-gray-400 text-sm font-medium">

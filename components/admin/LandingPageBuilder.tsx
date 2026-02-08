@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import axios from 'axios';
-import { motion } from 'framer-motion';
 import ImageUploader from '@/components/admin/ImageUploader';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface LandingPageBuilderProps {
     campaignId: string;
@@ -143,7 +142,7 @@ export default function LandingPageBuilder({ campaignId, tenantId, onClose, embe
             )
         );
         if (embed) return loadingNode;
-        return createPortal(loadingNode, typeof document !== 'undefined' ? document.body : document.createElement('div'));
+        return createPortal(loadingNode, typeof document !== 'undefined' ? document.body : ({} as any));
     }
 
     const outerWrapper = embed

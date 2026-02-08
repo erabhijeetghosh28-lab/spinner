@@ -32,13 +32,12 @@ export default function ManagerNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <span className="text-2xl">🎯</span>
-            </div>
+          <div className="flex items-center gap-4">
+            <img src="/spinwheel-logo.svg" alt="SpinWheel" className="h-8 w-auto" />
+            <div className="border-l border-slate-700 h-6"></div>
             <div>
               <h1 className="text-lg font-bold text-white">Manager Portal</h1>
-              <p className="text-xs text-slate-400">Task Verification</p>
+              <p className="text-[10px] text-slate-400">Task Verification</p>
             </div>
           </div>
 

@@ -23,6 +23,7 @@ interface Plan {
 export default function MarketingLandingPage() {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
     useEffect(() => {
         const fetchPlans = async () => {
@@ -88,14 +89,13 @@ export default function MarketingLandingPage() {
             {/* Header */}
             <header className="w-full border-b border-gray-100 bg-white/95 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3 group cursor-pointer">
-                        <div className="size-11 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-cyan-500/30 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                        </div>
-                        <span className="text-2xl font-bold tracking-tight text-slate-900">SpinWheel</span>
-                    </div>
+                    <Link href="/" className="flex items-center gap-4 group cursor-pointer">
+                        <img 
+                            src="/spinwheel-logo.svg" 
+                            alt="SpinWheel Logo" 
+                            className="h-24 w-auto min-w-[180px] object-contain transition-transform duration-300 group-hover:scale-105"
+                        />
+                    </Link>
                     
                     <div className="flex items-center gap-8">
                         <nav className="hidden md:flex items-center gap-8">
@@ -113,7 +113,7 @@ export default function MarketingLandingPage() {
                             </button>
                         </nav>
                         
-                        <div className="flex items-center gap-6">
+                        <div className="hidden md:flex items-center gap-6">
                             <Link href="/admin" className="text-[15px] font-semibold text-slate-600 hover:text-cyan-500 transition-colors duration-200">
                                 Login
                             </Link>
@@ -121,8 +121,66 @@ export default function MarketingLandingPage() {
                                 Get Started
                             </Link>
                         </div>
+
+                        {/* Mobile Menu Toggle */}
+                        <button 
+                            className="md:hidden p-2 text-slate-600 hover:text-cyan-500 transition-colors"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
+                            {mobileMenuOpen ? (
+                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            )}
+                        </button>
                     </div>
                 </div>
+
+                {/* Mobile Navigation Overlay */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden bg-white border-t border-gray-100 py-6 px-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <nav className="flex flex-col gap-4">
+                            <button 
+                                onClick={() => { scrollToSection('features'); setMobileMenuOpen(false); }} 
+                                className="text-left py-2 text-lg font-semibold text-slate-600 hover:text-cyan-500"
+                            >
+                                Features
+                            </button>
+                            <button 
+                                onClick={() => { scrollToSection('how-it-works'); setMobileMenuOpen(false); }} 
+                                className="text-left py-2 text-lg font-semibold text-slate-600 hover:text-cyan-500"
+                            >
+                                How it Works
+                            </button>
+                            <button 
+                                onClick={() => { scrollToSection('pricing'); setMobileMenuOpen(false); }} 
+                                className="text-left py-2 text-lg font-semibold text-slate-600 hover:text-cyan-500"
+                            >
+                                Pricing
+                            </button>
+                        </nav>
+                        <div className="pt-4 flex flex-col gap-3">
+                            <Link 
+                                href="/admin" 
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="w-full py-3 text-center text-lg font-semibold text-slate-600 bg-gray-50 rounded-xl"
+                            >
+                                Login
+                            </Link>
+                            <Link 
+                                href="/admin/signup" 
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="w-full py-3 text-center text-lg font-bold text-white bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-xl shadow-lg shadow-cyan-500/20"
+                            >
+                                Get Started
+                            </Link>
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Hero Section */}
@@ -132,18 +190,11 @@ export default function MarketingLandingPage() {
                 <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl"></div>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-cyan-500/5 to-cyan-600/5 rounded-full blur-3xl"></div>
                 
-                <div className="max-w-7xl mx-auto px-6 lg:px-20 grid lg:grid-cols-2 gap-20 items-center relative z-10">
+                <div className="max-w-7xl mx-auto px-6 lg:px-20 grid lg:grid-cols-2 gap-12 lg:gap-20 items-center relative z-10">
                     {/* Left Content */}
                     <div className="max-w-2xl">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 text-cyan-600 text-xs font-bold uppercase tracking-wider border border-cyan-500/20 mb-8">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-500 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-                            </span>
-                            New: WhatsApp Automation 2.0
-                        </div>
                         
-                        <h1 className="text-5xl lg:text-7xl font-bold text-slate-900 leading-[1.1] mb-8">
+                        <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-slate-900 leading-[1.2] lg:leading-[1.1] mb-6 lg:mb-8">
                             Gamify Your Marketing. 
                             <span className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 via-cyan-400 to-cyan-500">
                                 Verify Every Voucher.
@@ -154,12 +205,12 @@ export default function MarketingLandingPage() {
                             The all-in-one platform to create <strong className="text-slate-900 font-semibold">viral spin-to-win campaigns</strong> and instantly verify rewards with our seamless web-scanner.
                         </p>
                         
-                        <div className="flex flex-wrap gap-4">
-                            <Link href="/admin/signup" className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:-translate-y-1 active:scale-95 group">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-4">
+                            <Link href="/admin/signup" className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:-translate-y-1 active:scale-95 group text-center">
                                 Start Free Trial
                                 <span className="inline-block ml-2 transition-transform duration-300 group-hover:translate-x-1">→</span>
                             </Link>
-                            <button className="bg-white border-2 border-gray-200 hover:border-cyan-500/50 text-slate-900 px-8 py-4 rounded-xl font-bold text-lg flex items-center gap-3 transition-all duration-300 hover:shadow-lg active:scale-95 group">
+                            <button className="w-full sm:w-auto bg-white border-2 border-gray-200 hover:border-cyan-500/50 text-slate-900 px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 hover:shadow-lg active:scale-95 group">
                                 <svg className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                 </svg>
@@ -199,7 +250,7 @@ export default function MarketingLandingPage() {
                         {/* Glow effect */}
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-cyan-600/20 blur-3xl rounded-full scale-75"></div>
                         
-                        <div className="relative mx-auto w-[300px] h-[620px] bg-slate-900 rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden">
+                        <div className="relative mx-auto max-w-[300px] w-full aspect-[300/620] bg-slate-900 rounded-[3.5rem] border-[10px] border-slate-900 shadow-2xl overflow-hidden">
                             {/* Notch */}
                             <div className="h-7 w-28 bg-slate-900 absolute top-0 left-1/2 -translate-x-1/2 rounded-b-3xl z-10 shadow-lg"></div>
                             
@@ -480,12 +531,13 @@ export default function MarketingLandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 pb-16 border-b border-white/10">
                         <div>
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="size-11 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center text-white">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                </div>
-                                <span className="text-2xl font-bold">SpinWheel</span>
+                                <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+                                    <img 
+                                        src="/spinwheel-logo.svg" 
+                                        alt="SpinWheel Logo" 
+                                        className="h-20 w-auto min-w-[150px] object-contain" 
+                                    />
+                                </Link>
                             </div>
                             <p className="text-gray-400 leading-relaxed mb-8">
                                 The ultimate gamification platform for digital marketing and secure voucher verification.
@@ -518,7 +570,7 @@ export default function MarketingLandingPage() {
                     </div>
                     
                     <div className="pt-10 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-gray-500">
-                        <p>© 2024 SpinWheel SaaS Platform. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} SpinWheel SaaS Platform. All rights reserved.</p>
                         <div className="flex gap-8">
                             <a href="#" className="hover:text-white transition-colors duration-200">Privacy Policy</a>
                             <a href="#" className="hover:text-white transition-colors duration-200">Terms of Service</a>

@@ -168,13 +168,13 @@ export default function EarnMoreSpinsCard({
                                 <span className="text-xs font-bold text-primary uppercase tracking-tighter">
                                     {t.platform}
                                 </span>
-                                <span className={`font-bold text-sm ${theme.text}`}>{t.description || t.title}</span>
+                                <span className={`font-bold text-sm ${theme.text}`}>{t.description}</span>
                             </div>
                             <button
-                                onClick={() => handleSocialTask(t.actionType || t.type)}
+                                onClick={() => handleSocialTask(t.type)}
                                 className={`h-9 px-4 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${theme.primaryBtn}`}
                             >
-                                +{t.spinsReward || 1} Spin
+                                +{t.reward || 1} Spin
                             </button>
                         </div>
                     ))}

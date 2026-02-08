@@ -32,13 +32,12 @@ export default function SuperAdminNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Logo and Title */}
-          <Link href="/admin/super/dashboard" className="flex items-center space-x-3 sm:space-x-4 hover:opacity-80 transition-opacity z-50 relative">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-500 rounded-xl flex items-center justify-center text-slate-900 text-xl sm:text-2xl font-black shrink-0">
-              👑
-            </div>
+          <Link href="/admin/super/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity z-50 relative">
+            <img src="/spinwheel-logo.svg" alt="SpinWheel" className="h-10 w-auto" />
+            <div className="hidden sm:block border-l border-slate-700 h-8 mx-2"></div>
             <div>
               <h1 className="text-lg sm:text-2xl font-bold text-amber-500 leading-tight">Super Admin</h1>
-              <p className="text-slate-400 text-xs sm:text-sm hidden sm:block">Platform Management</p>
+              <p className="text-slate-400 text-[10px] sm:text-xs">Platform Management</p>
             </div>
           </Link>
 

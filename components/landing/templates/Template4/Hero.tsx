@@ -1,13 +1,13 @@
 'use client';
 
 import PrizeModal from '@/components/PrizeModal';
-import EarnMoreSpinsCard from '../../shared/EarnMoreSpinsCard';
 import SpinWheel from '@/components/SpinWheel_V2';
 import { soundEffects } from '@/lib/soundEffects';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import EarnMoreSpinsCard from '../../shared/EarnMoreSpinsCard';
 
 interface HeroProps {
     section: any;
@@ -47,22 +47,6 @@ export default function Template4Hero({ section, campaign, userId }: HeroProps) 
         }
     }, [userId, campaign?.id]);
 
-    const fetchSocialTasks = () => {
-        if (campaign?.id) {
-            axios.get(`/api/social-tasks?campaignId=${campaign.id}${userId ? `&userId=${userId}` : ''}`)
-                .then(res => setSocialTasks(res.data.tasks || []))
-                .catch(() => {});
-        }
-    };
-
-    useEffect(() => {
-        fetchSocialTasks();
-    }, [campaign?.id, userId]);
-
-    const handleTaskClick = (task: any) => {
-        if (!userId) { alert('Please log in'); return; }
-        setSelectedTask(task);
-    };
 
     const handleWhatsAppShare = () => {
         if (!userId) { alert('Please log in'); return; }
