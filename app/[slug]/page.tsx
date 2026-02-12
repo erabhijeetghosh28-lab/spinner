@@ -600,7 +600,7 @@ export default function TenantCampaignPage() {
                             Visit Dashboard
                         </a>
                     </div>
-                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.3em]">Nexylo Offer Wheel</p>
+                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.3em]">The Lead Spin Team</p>
                 </div>
             </div>
         );

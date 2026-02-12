@@ -22,7 +22,9 @@ export function middleware(request: NextRequest) {
     const isMainDomain =
         hostname === 'localhost:3000' ||
         hostname.endsWith('.vercel.app') ||
-        hostname === 'spinner.vercel.app';
+        hostname === 'spinner.vercel.app' ||
+        hostname === 'theleadspin.com' ||
+        hostname === 'www.theleadspin.com';
 
     // 3. Handle Query Parameter Routing (?tenant=slug)
     // This allows backward compatibility with ?tenant=default style URLs
