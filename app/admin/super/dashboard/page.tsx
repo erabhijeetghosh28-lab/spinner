@@ -831,6 +831,7 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
         customBranding: boolean;
         advancedAnalytics: boolean;
         allowQRCodeGenerator: boolean;
+        isMostPopular: boolean;
     }>({
         name: '',
         price: 0,
@@ -844,7 +845,8 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
         maxSocialTasks: 0,
         customBranding: false,
         advancedAnalytics: false,
-        allowQRCodeGenerator: false
+        allowQRCodeGenerator: false,
+        isMostPopular: false
     });
 
     const handleOpenPlanModal = (plan?: any) => {
@@ -863,7 +865,8 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                 maxSocialTasks: plan.maxSocialTasks ?? 0,
                 customBranding: plan.customBranding ?? false,
                 advancedAnalytics: plan.advancedAnalytics ?? false,
-                allowQRCodeGenerator: plan.allowQRCodeGenerator ?? false
+                allowQRCodeGenerator: plan.allowQRCodeGenerator ?? false,
+                isMostPopular: plan.isMostPopular ?? false
             });
         } else {
             setEditingPlan(null);
@@ -880,7 +883,8 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                 maxSocialTasks: 0,
                 customBranding: false,
                 advancedAnalytics: false,
-                allowQRCodeGenerator: false
+                allowQRCodeGenerator: false,
+                isMostPopular: false
             });
         }
         setShowPlanModal(true);
@@ -930,8 +934,13 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                 </div>
                 <div className="grid md:grid-cols-3 gap-6">
                     {plans.map((plan) => (
-                        <div key={plan.id} className="bg-slate-800 border border-slate-700 rounded-xl p-6 relative">
-                            <div className="flex justify-between items-start mb-4">
+                                <div key={plan.id} className={`bg-slate-800 border ${plan.isMostPopular ? 'border-amber-500 shadow-lg shadow-amber-500/10' : 'border-slate-700'} rounded-xl p-6 relative`}>
+                                    {plan.isMostPopular && (
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-900 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                            Most Popular
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-xl font-bold">{plan.name}</h3>
                                 <div className="flex items-center space-x-2">
                                     <div className="text-2xl font-bold text-amber-500">
@@ -1122,16 +1131,25 @@ function PlansTab({ plans, onRefresh }: { plans: any[]; onRefresh: () => void })
                                     />
                                     <span className="text-sm text-slate-300">Advanced Analytics</span>
                                 </label>
-                                <label className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={planFormData.allowQRCodeGenerator}
-                                        onChange={(e) => setPlanFormData({ ...planFormData, allowQRCodeGenerator: e.target.checked })}
-                                        className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
-                                    />
-                                    <span className="text-sm text-slate-300">QR Code Generator</span>
-                                </label>
-                            </div>
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={planFormData.allowQRCodeGenerator}
+                                            onChange={(e) => setPlanFormData({ ...planFormData, allowQRCodeGenerator: e.target.checked })}
+                                            className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
+                                        />
+                                        <span className="text-sm text-slate-300">QR Code Generator</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={planFormData.isMostPopular}
+                                            onChange={(e) => setPlanFormData({ ...planFormData, isMostPopular: e.target.checked })}
+                                            className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-amber-500"
+                                        />
+                                        <span className="text-sm text-amber-500 font-bold">Mark as Most Popular</span>
+                                    </label>
+                                </div>
 
                             <div className="flex space-x-4 pt-4">
                                 <button

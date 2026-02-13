@@ -43,6 +43,7 @@ model SubscriptionPlan {
   customBranding       Boolean  @default(false)
   advancedAnalytics    Boolean  @default(false)
   isActive             Boolean  @default(true)
+  isMostPopular        Boolean  @default(false)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   allowQRCodeGenerator Boolean  @default(false)
