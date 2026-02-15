@@ -86,10 +86,11 @@ const Template1Wheel: React.FC<Template1WheelProps> = ({ prizes, controls, segme
                     const endAngle = startAngle + anglePerSlice;
                     
                     // Coordinates for Slice Path
-                    const x1 = 50 + 50 * Math.cos(startAngle * Math.PI / 180);
-                    const y1 = 50 + 50 * Math.sin(startAngle * Math.PI / 180);
-                    const x2 = 50 + 50 * Math.cos(endAngle * Math.PI / 180);
-                    const y2 = 50 + 50 * Math.sin(endAngle * Math.PI / 180);
+                    // Round to fixed decimal places to prevent hydration mismatches
+                    const x1 = Number((50 + 50 * Math.cos(startAngle * Math.PI / 180)).toFixed(6));
+                    const y1 = Number((50 + 50 * Math.sin(startAngle * Math.PI / 180)).toFixed(6));
+                    const x2 = Number((50 + 50 * Math.cos(endAngle * Math.PI / 180)).toFixed(6));
+                    const y2 = Number((50 + 50 * Math.sin(endAngle * Math.PI / 180)).toFixed(6));
 
                     const largeArcFlag = anglePerSlice > 180 ? 1 : 0;
                     const pathData = `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;

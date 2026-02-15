@@ -114,3 +114,31 @@ body {
     scrollbar-width: none;
   }
 }
+
+/* Custom Highlights for Landing Page */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes phone-scroll {
+  0%, 20% { transform: translateY(0); }
+  45%, 65% { transform: translateY(-33.33%); }
+  90%, 100% { transform: translateY(0); }
+}
+
+.animate-phone-scroll {
+  animation: phone-scroll 15s ease-in-out infinite;
+  /* Featured highlights underline */
+  .feature-underline {
+    @apply relative;
+  }
+  .feature-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-1 bg-amber-500/30 rounded-full;
+  }
+}
